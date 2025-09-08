@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This document explains the complete CI/CD pipeline setup, the troubleshooting process we went through when the mobile app stopped working, and guidelines for future maintenance.
+This document explains the complete CI/CD pipeline setup for the updated GitHub account and AWS EC2 backend hosting configuration.
 
 ---
 
@@ -13,9 +13,9 @@ This document explains the complete CI/CD pipeline setup, the troubleshooting pr
 Your application uses a **Docker-based CI/CD pipeline** with **GitHub Actions** for automated building and deployment.
 
 #### Components:
-1. **GitHub Repository**: `GitGuruSL/request`
+1. **GitHub Repository**: `cybersec-git-expert/request`
 2. **Container Registry**: GitHub Container Registry (GHCR)
-3. **Deployment Target**: AWS EC2 instance (`ec2-54-144-9-226.compute-1.amazonaws.com`)
+3. **Deployment Target**: AWS EC2 instance (`54.144.9.226`)
 4. **Database**: AWS RDS PostgreSQL
 5. **File Storage**: AWS S3
 

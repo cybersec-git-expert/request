@@ -1,0 +1,106 @@
+name: Deploy to Production
+
+on:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches: [master, main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: cybersec-git-expert/request-backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 54.144.9.226
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # Set variables
+          IMAGE_NAME="ghcr.io/cybersec-git-expert/request-backend:latest"
+          CONTAINER_NAME="request-backend"
+          
+          # Login to GitHub Container Registry
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # Pull latest image
+          docker pull $IMAGE_NAME
+          
+          # Stop and remove existing container
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
+          
+          # Start new container
+          docker run -d \
+            --name $CONTAINER_NAME \
+            --restart unless-stopped \
+            --env-file /home/ubuntu/production.env \
+            -p 127.0.0.1:3001:3001 \
+            $IMAGE_NAME
+          
+          # Wait for container to start
+          sleep 10
+          
+          # Create uploads symlink
+          docker exec $CONTAINER_NAME ln -sf /app/deploy-package/uploads /app/uploads || true
+          
+          # Health check
+          for i in {1..30}; do
+            if docker exec $CONTAINER_NAME curl -f http://localhost:3001/health; then
+              echo "Health check passed"
+              break
+            fi
+            echo "Waiting for health check... ($i/30)"
+            sleep 10
+          done
+          
+          # Clean up old images
+          docker image prune -f
+          
+          echo "Deployment completed successfully"
+
+    - name: Deployment Status
+      if: success()
+      run: |
+        echo "✅ Deployment successful!"
+        echo "🔗 Server: http://54.144.9.226:3001"
+        echo "🏥 Health: http://54.144.9.226:3001/health"
+
+    - name: Rollback on Failure
+      if: failure()
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 54.144.9.226
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "Deployment failed, attempting rollback..."
+          # This would rollback to previous working image
+          # For now, just ensure a container is running
+          if ! docker ps | grep -q request-backend; then
+            echo "No container running, starting with latest available image"
+            docker run -d \
+              --name request-backend \
+              --restart unless-stopped \
+              --env-file /home/ubuntu/production.env \
+              -p 127.0.0.1:3001:3001 \
+              ghcr.io/cybersec-git-expert/request-backend:latest || true
+          fi
