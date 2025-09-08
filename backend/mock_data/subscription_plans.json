@@ -1,0 +1,4 @@
+[
+  {"id":"plan_basic","code":"BASIC","name":"Basic Plan","price_cents":5000,"billing_interval":"monthly","is_active":true},
+  {"id":"plan_pro","code":"PRO","name":"Pro Plan","price_cents":15000,"billing_interval":"monthly","is_active":true}
+]

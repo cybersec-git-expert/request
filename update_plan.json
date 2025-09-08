@@ -1,0 +1,12 @@
+{
+  "planName": "Updated Test Plan API",
+  "features": {
+    "basic_analytics": true,
+    "customer_messaging": true,
+    "premium_support": true
+  },
+  "pricing": {
+    "cost_per_response": 35,
+    "currency": "LKR"
+  }
+}

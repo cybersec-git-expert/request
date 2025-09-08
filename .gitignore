@@ -1,0 +1,113 @@
+# Node modules
+node_modules/
+
+# Environment files with sensitive data
+.env*
+*.env
+.env.rds
+.env.local
+.env.production
+serviceAccount.json
+*serviceAccount*.json
+
+# Firebase service account credentials
+*-firebase-adminsdk-*.json
+request-marketplace-*.json
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Flutter build files
+request/.dart_tool/
+request/build/
+request/.flutter-plugins
+request/.flutter-plugins-dependencies
+request/.packages
+
+# Android specific build files
+request/android/.gradle/
+request/android/app/build/
+request/android/local.properties
+request/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# iOS specific build files
+request/ios/Pods/
+request/ios/.symlinks/
+request/ios/Flutter/Generated.xcconfig
+request/ios/Flutter/ephemeral/
+request/ios/Flutter/flutter_export_environment.sh
+
+# macOS specific build files
+request/macos/Flutter/ephemeral/
+
+# Linux specific build files
+request/linux/flutter/ephemeral/
+
+# Windows specific build files
+request/windows/flutter/ephemeral/
+
+# Web specific build files
+request/web/packages/
+request/web/.packages
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# Build outputs
+request/build/
+
+# Flutter specific
+request/.dart_tool/
+request/.packages
+request/pubspec.lock
+
+# Firebase local config
+.firebase/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Admin server logs
+admin-web-app/server.log
+request/android/key.properties
+
+# Additional security exclusions
+*.pem
+*.key
+*.keystore
+*.jks
+*.p12
+request/android/app/upload-keystore.jks
+request/android/app/request-marketplace-release-key.keystore
+request/android/upload-keystore.jks
+
+# Build artifacts
+.next/
+build/
+dist/
+*.tgz
+*.zip
+admin-dist.*
+backend/request-backend-deploy.zip
+backend/temp_*
+backend/schema_audit_output.json
+
+# Uploads
+uploads/
+backend/uploads/
+backend/deploy-package/uploads/

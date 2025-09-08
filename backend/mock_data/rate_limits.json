@@ -1,0 +1,4 @@
+[
+  {"id":"rl1","key":"login:u1","window_seconds":60,"max_requests":10},
+  {"id":"rl2","key":"login:u2","window_seconds":60,"max_requests":10}
+]

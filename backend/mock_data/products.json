@@ -1,0 +1,4 @@
+[
+  {"id":"p1","name":"Basic Faucet","slug":"basic-faucet","brand_id":null,"base_unit":"unit","is_active":true,"updatedAt":"2025-08-05T10:00:00Z"},
+  {"id":"p2","name":"Copper Wire","slug":"copper-wire","brand_id":null,"base_unit":"meter","is_active":true,"updatedAt":"2025-08-05T11:00:00Z"}
+]

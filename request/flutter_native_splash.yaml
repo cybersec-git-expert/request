@@ -1,0 +1,5 @@
+flutter_native_splash:
+  # Disable generation to remove default splash setup; handled via transparent LaunchTheme
+  android: false
+  ios: false
+  web: false

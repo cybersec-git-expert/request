@@ -1,0 +1,4 @@
+[
+  {"id":"otp1","user_id":"u1","channel":"sms","token":"AAA111","expires_at":"2025-09-01T00:00:00Z"},
+  {"id":"otp2","user_id":"u2","channel":"email","token":"BBB222","expires_at":"2025-09-01T00:00:00Z"}
+]

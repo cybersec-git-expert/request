@@ -1,0 +1,4 @@
+[
+  {"id":"val1","subject_type":"business","subject_id":"biz1","action":"approve","actor_id":"u1","metadata":{"note":"ok"}},
+  {"id":"val2","subject_type":"driver","subject_id":"drv1","action":"reject","actor_id":"u2","metadata":{"reason":"docs"}}
+]

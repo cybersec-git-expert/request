@@ -1,0 +1,4 @@
+[
+  {"id":"cat1","name":"Plumbing","status":"active","updatedAt":"2025-08-02T09:00:00Z"},
+  {"id":"cat2","name":"Electrical","status":"active","updatedAt":"2025-08-03T11:15:00Z"}
+]

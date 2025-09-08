@@ -1,0 +1,869 @@
+const express = require('express');
+const router = express.Router();
+const smsService = require('../services/smsService');
+const database = require('../services/database');
+const auth = require('../services/auth');
+
+console.log('📱 SMS routes loaded');
+
+// Helper function to clean and validate phone numbers
+function cleanPhoneNumber(phoneNumber) {
+  // Remove all spaces and other formatting
+  const cleaned = phoneNumber.replace(/\s+/g, '');
+  const phoneRegex = /^\+[1-9]\d{1,14}$/;
+  
+  if (!phoneRegex.test(cleaned)) {
+    throw new Error('Invalid phone number format. Expected format: +94xxxxxxxxx');
+  }
+  
+  return cleaned;
+}
+
+/**
+ * @route POST /api/sms/send-otp
+ * @desc Send OTP to phone number
+ * @access Public
+ */
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { phoneNumber, countryCode, purpose = 'login' } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid phone number format'
+      });
+    }
+
+    console.log(`📱 Sending OTP to ${phoneNumber} for purpose: ${purpose}`);
+
+    const result = await smsService.sendOTP(phoneNumber, countryCode);
+
+    res.json({
+      success: true,
+      data: {
+        otpId: result.otpId,
+        expiresIn: result.expiresIn,
+        provider: result.provider,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to send OTP'
+    });
+  }
+});
+
+/**
+ * @route POST /api/sms/verify-otp
+ * @desc Verify OTP code
+ * @access Public
+ */
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { phoneNumber, otp, otpId, purpose = 'login' } = req.body;
+
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number and OTP are required'
+      });
+    }
+
+    console.log(`✅ Verifying OTP for ${phoneNumber}`);
+
+    const result = await smsService.verifyOTP(phoneNumber, otp, otpId);
+
+    if (result.success) {
+      // Handle different verification purposes
+      await handleOTPVerificationSuccess(phoneNumber, purpose, req);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        verified: result.verified,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'OTP verification failed'
+    });
+  }
+});
+
+/**
+ * @route POST /api/sms/add-phone
+ * @desc Add phone number to user account
+ * @access Private
+ */
+router.post('/add-phone', auth.authMiddleware(), async (req, res) => {
+  try {
+    const { phoneNumber, label = 'personal', purpose = 'general', isPrimary = false } = req.body;
+    const userId = req.user.id;
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Check if phone already exists for this user
+    const existingPhone = await database.query(
+      'SELECT id FROM user_phone_numbers WHERE user_id = $1 AND phone_number = $2',
+      [userId, phoneNumber]
+    );
+
+    if (existingPhone.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number already exists for this user'
+      });
+    }
+
+    // Detect country from phone number
+    const countryCode = smsService.detectCountry(phoneNumber);
+
+    // Insert new phone number
+    const result = await database.query(`
+      INSERT INTO user_phone_numbers 
+      (user_id, phone_number, country_code, label, purpose, is_primary, is_verified)
+      VALUES ($1, $2, $3, $4, $5, $6, false)
+      RETURNING *
+    `, [userId, phoneNumber, countryCode, label, purpose, isPrimary]);
+
+    const newPhone = result.rows[0];
+
+    res.json({
+      success: true,
+      data: {
+        phoneId: newPhone.id,
+        phoneNumber: newPhone.phone_number,
+        label: newPhone.label,
+        purpose: newPhone.purpose,
+        isPrimary: newPhone.is_primary,
+        isVerified: newPhone.is_verified,
+        message: 'Phone number added successfully. Please verify it.'
+      }
+    });
+
+  } catch (error) {
+    console.error('Add phone error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to add phone number'
+    });
+  }
+});
+
+/**
+ * @route GET /api/sms/user-phones
+ * @desc Get all phone numbers for user
+ * @access Private
+ */
+router.get('/user-phones', auth.authMiddleware(), async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await database.query(`
+      SELECT 
+        id,
+        phone_number,
+        country_code,
+        label,
+        purpose,
+        is_verified,
+        is_primary,
+        verified_at,
+        created_at
+      FROM user_phone_numbers 
+      WHERE user_id = $1 
+      ORDER BY is_primary DESC, created_at ASC
+    `, [userId]);
+
+    res.json({
+      success: true,
+      data: result.rows.map(phone => ({
+        phoneId: phone.id,
+        phoneNumber: phone.phone_number,
+        countryCode: phone.country_code,
+        label: phone.label,
+        purpose: phone.purpose,
+        isVerified: phone.is_verified,
+        isPrimary: phone.is_primary,
+        verifiedAt: phone.verified_at,
+        createdAt: phone.created_at
+      }))
+    });
+
+  } catch (error) {
+    console.error('Get user phones error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch phone numbers'
+    });
+  }
+});
+
+/**
+ * @route PUT /api/sms/set-primary/:phoneId
+ * @desc Set phone as primary for user
+ * @access Private
+ */
+router.put('/set-primary/:phoneId', auth.authMiddleware(), async (req, res) => {
+  try {
+    const { phoneId } = req.params;
+    const userId = req.user.id;
+
+    // Verify phone belongs to user and is verified
+    const phoneResult = await database.query(
+      'SELECT * FROM user_phone_numbers WHERE id = $1 AND user_id = $2 AND is_verified = true',
+      [phoneId, userId]
+    );
+
+    if (phoneResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Phone number not found or not verified'
+      });
+    }
+
+    // Update primary status (trigger will handle unsetting other primary phones)
+    await database.query(
+      'UPDATE user_phone_numbers SET is_primary = true WHERE id = $1',
+      [phoneId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        phoneId: phoneId,
+        message: 'Primary phone updated successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Set primary phone error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update primary phone'
+    });
+  }
+});
+
+/**
+ * @route DELETE /api/sms/remove-phone/:phoneId
+ * @desc Remove phone number from user account
+ * @access Private
+ */
+router.delete('/remove-phone/:phoneId', auth.authMiddleware(), async (req, res) => {
+  try {
+    const { phoneId } = req.params;
+    const userId = req.user.id;
+
+    // Check if this is the primary phone
+    const phoneResult = await database.query(
+      'SELECT is_primary FROM user_phone_numbers WHERE id = $1 AND user_id = $2',
+      [phoneId, userId]
+    );
+
+    if (phoneResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Phone number not found'
+      });
+    }
+
+    // Don't allow removing primary phone if user has multiple phones
+    if (phoneResult.rows[0].is_primary) {
+      const phoneCount = await database.query(
+        'SELECT COUNT(*) as count FROM user_phone_numbers WHERE user_id = $1',
+        [userId]
+      );
+
+      if (parseInt(phoneCount.rows[0].count) > 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot remove primary phone. Set another phone as primary first.'
+        });
+      }
+    }
+
+    // Remove phone number
+    await database.query(
+      'DELETE FROM user_phone_numbers WHERE id = $1 AND user_id = $2',
+      [phoneId, userId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Phone number removed successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Remove phone error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to remove phone number'
+    });
+  }
+});
+
+/**
+ * Handle OTP verification success based on purpose
+ */
+async function handleOTPVerificationSuccess(phoneNumber, purpose, req) {
+  try {
+    switch (purpose) {
+      case 'login':
+        // Find or create user account
+        await handleLoginVerification(phoneNumber);
+        break;
+      
+      case 'driver_verification':
+        // Update driver verification phone status
+        if (req.user) {
+          await handleDriverVerification(phoneNumber, req.user.id);
+        }
+        break;
+      
+      case 'business_profile':
+        // Update business profile phone status
+        if (req.user) {
+          await handleBusinessProfileVerification(phoneNumber, req.user.id);
+        }
+        break;
+      
+      case 'profile_update':
+        // Add verified phone to user profile
+        if (req.user) {
+          await handleProfilePhoneVerification(phoneNumber, req.user.id);
+        }
+        break;
+      
+      default:
+        console.log(`Unknown verification purpose: ${purpose}`);
+    }
+  } catch (error) {
+    console.error('Error handling OTP verification success:', error);
+  }
+}
+
+/**
+ * Handle login verification
+ */
+async function handleLoginVerification(phoneNumber) {
+  try {
+    // Check if user exists with this phone
+    let user = await database.query(
+      'SELECT u.* FROM users u JOIN user_phone_numbers up ON u.id = up.user_id WHERE up.phone_number = $1',
+      [phoneNumber]
+    );
+
+    if (user.rows.length === 0) {
+      // Create new user account
+      const newUser = await database.query(`
+        INSERT INTO users (email, display_name, role, is_active, email_verified, phone_verified, country_code, created_at, updated_at)
+        VALUES ($1, $2, 'user', true, false, true, $3, NOW(), NOW())
+        RETURNING *
+      `, [`${phoneNumber.replace(/[^\d]/g, '')}@phone.local`, `User ${phoneNumber}`, smsService.detectCountry(phoneNumber)]);
+
+      const userId = newUser.rows[0].id;
+
+      // Add phone number to user_phone_numbers
+      await database.query(`
+        INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, is_primary, label, purpose, verified_at)
+        VALUES ($1, $2, $3, true, true, 'personal', 'login', NOW())
+      `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+      console.log(`📱 Created new user account for ${phoneNumber}`);
+    } else {
+      // Update existing user phone verification
+      await database.query(
+        'UPDATE user_phone_numbers SET is_verified = true, verified_at = NOW() WHERE phone_number = $1',
+        [phoneNumber]
+      );
+      
+      console.log(`📱 Updated phone verification for existing user: ${phoneNumber}`);
+    }
+  } catch (error) {
+    console.error('Error handling login verification:', error);
+  }
+}
+
+/**
+ * Handle driver verification
+ */
+async function handleDriverVerification(phoneNumber, userId) {
+  try {
+    // Update user's phone number in users table if needed
+    await database.query(
+      'UPDATE users SET phone = $1, phone_verified = true WHERE id = $2 AND (phone IS NULL OR phone = \'\')',
+      [phoneNumber, userId]
+    );
+
+    // Add/update phone in user_phone_numbers if not exists
+    await database.query(`
+      INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, label, purpose, verified_at)
+      VALUES ($1, $2, $3, true, 'driver', 'driver_verification', NOW())
+      ON CONFLICT (user_id, phone_number) 
+      DO UPDATE SET is_verified = true, verified_at = NOW(), purpose = 'driver_verification'
+    `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+    console.log(`🚗 Updated driver verification phone for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling driver verification:', error);
+  }
+}
+
+/**
+ * Handle business profile verification
+ */
+async function handleBusinessProfileVerification(phoneNumber, userId) {
+  try {
+    // Add/update phone in user_phone_numbers
+    await database.query(`
+      INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, label, purpose, verified_at)
+      VALUES ($1, $2, $3, true, 'business', 'business_profile', NOW())
+      ON CONFLICT (user_id, phone_number) 
+      DO UPDATE SET is_verified = true, verified_at = NOW(), purpose = 'business_profile'
+    `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+    console.log(`🏢 Updated business profile phone for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling business profile verification:', error);
+  }
+}
+
+/**
+ * Handle profile phone verification
+ */
+async function handleProfilePhoneVerification(phoneNumber, userId) {
+  try {
+    // Add verified phone to user profile
+    await database.query(`
+      INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, label, purpose, verified_at)
+      VALUES ($1, $2, $3, true, 'personal', 'profile_update', NOW())
+      ON CONFLICT (user_id, phone_number) 
+      DO UPDATE SET is_verified = true, verified_at = NOW()
+    `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+    console.log(`👤 Updated profile phone for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling profile phone verification:', error);
+  }
+}
+
+module.exports = router;
+
+/**
+ * @route POST /api/sms/send-otp
+ * @desc Send OTP to phone number
+ * @access Public
+ */
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { phoneNumber, countryCode, purpose = 'login' } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid phone number format'
+      });
+    }
+
+    console.log(`📱 Sending OTP to ${phoneNumber} for purpose: ${purpose}`);
+
+    const result = await smsService.sendOTP(phoneNumber, countryCode);
+
+    res.json({
+      success: true,
+      data: {
+        otpId: result.otpId,
+        expiresIn: result.expiresIn,
+        provider: result.provider,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to send OTP'
+    });
+  }
+});
+
+/**
+ * @route POST /api/sms/verify-otp
+ * @desc Verify OTP code
+ * @access Public
+ */
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { phoneNumber, otp, otpId, purpose = 'login' } = req.body;
+
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number and OTP are required'
+      });
+    }
+
+    console.log(`✅ Verifying OTP for ${phoneNumber}`);
+
+    const result = await smsService.verifyOTP(phoneNumber, otp, otpId);
+
+    if (result.success) {
+      // Handle different verification purposes
+      await handleOTPVerificationSuccess(phoneNumber, purpose, req);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        verified: result.verified,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'OTP verification failed'
+    });
+  }
+});
+
+/**
+ * @route POST /api/sms/add-phone
+ * @desc Add phone number to user account
+ * @access Private
+ */
+router.post('/add-phone', auth.authMiddleware(), async (req, res) => {
+  try {
+    const { phoneNumber, label = 'personal', purpose = 'general', isPrimary = false } = req.body;
+    const userId = req.user.id;
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Check if phone already exists for this user
+    const existingPhone = await database.query(
+      'SELECT id FROM user_phone_numbers WHERE user_id = $1 AND phone_number = $2',
+      [userId, phoneNumber]
+    );
+
+    if (existingPhone.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number already exists for this user'
+      });
+    }
+
+    // Detect country from phone number
+    const countryCode = smsService.detectCountry(phoneNumber);
+
+    // Insert new phone number
+    const result = await database.query(`
+      INSERT INTO user_phone_numbers 
+      (user_id, phone_number, country_code, label, purpose, is_primary, is_verified)
+      VALUES ($1, $2, $3, $4, $5, $6, false)
+      RETURNING *
+    `, [userId, phoneNumber, countryCode, label, purpose, isPrimary]);
+
+    const newPhone = result.rows[0];
+
+    res.json({
+      success: true,
+      data: {
+        phoneId: newPhone.id,
+        phoneNumber: newPhone.phone_number,
+        label: newPhone.label,
+        purpose: newPhone.purpose,
+        isPrimary: newPhone.is_primary,
+        isVerified: newPhone.is_verified,
+        message: 'Phone number added successfully. Please verify it.'
+      }
+    });
+
+  } catch (error) {
+    console.error('Add phone error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to add phone number'
+    });
+  }
+});
+
+/**
+ * Handle OTP verification success based on purpose
+ */
+async function handleOTPVerificationSuccess(phoneNumber, purpose, req) {
+  try {
+    switch (purpose) {
+      case 'login':
+        // Find or create user account
+        await handleLoginVerification(phoneNumber);
+        break;
+      
+      case 'driver_verification':
+        // Update driver verification phone status
+        if (req.user) {
+          await handleDriverVerification(phoneNumber, req.user.id);
+        }
+        break;
+      
+      case 'business_profile':
+        // Update business profile phone status
+        if (req.user) {
+          await handleBusinessProfileVerification(phoneNumber, req.user.id);
+        }
+        break;
+      
+      case 'profile_update':
+        // Add verified phone to user profile
+        if (req.user) {
+          await handleProfilePhoneVerification(phoneNumber, req.user.id);
+        }
+        break;
+      
+      default:
+        console.log(`Unknown verification purpose: ${purpose}`);
+    }
+  } catch (error) {
+    console.error('Error handling OTP verification success:', error);
+  }
+}
+
+/**
+ * Handle login verification
+ */
+async function handleLoginVerification(phoneNumber) {
+  try {
+    // Check if user exists with this phone
+    let user = await database.query(
+      'SELECT u.* FROM users u JOIN user_phone_numbers up ON u.id = up.user_id WHERE up.phone_number = $1',
+      [phoneNumber]
+    );
+
+    if (user.rows.length === 0) {
+      // Create new user account
+      const newUser = await database.query(`
+        INSERT INTO users (email, display_name, role, is_active, email_verified, phone_verified, country_code, created_at, updated_at)
+        VALUES ($1, $2, 'user', true, false, true, $3, NOW(), NOW())
+        RETURNING *
+      `, [`${phoneNumber.replace(/[^\d]/g, '')}@phone.local`, `User ${phoneNumber}`, smsService.detectCountry(phoneNumber)]);
+
+      const userId = newUser.rows[0].id;
+
+      // Add phone number to user_phone_numbers
+      await database.query(`
+        INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, is_primary, label, purpose, verified_at)
+        VALUES ($1, $2, $3, true, true, 'personal', 'login', NOW())
+      `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+      console.log(`📱 Created new user account for ${phoneNumber}`);
+    } else {
+      // Update existing user phone verification
+      await database.query(
+        'UPDATE user_phone_numbers SET is_verified = true, verified_at = NOW() WHERE phone_number = $1',
+        [phoneNumber]
+      );
+      
+      console.log(`📱 Updated phone verification for existing user: ${phoneNumber}`);
+    }
+  } catch (error) {
+    console.error('Error handling login verification:', error);
+  }
+}
+
+/**
+ * Handle driver verification
+ */
+async function handleDriverVerification(phoneNumber, userId) {
+  try {
+    // Update user's phone number in users table if needed
+    await database.query(
+      'UPDATE users SET phone = $1, phone_verified = true WHERE id = $2 AND (phone IS NULL OR phone = \'\')',
+      [phoneNumber, userId]
+    );
+
+    // Add/update phone in user_phone_numbers if not exists
+    await database.query(`
+      INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, label, purpose, verified_at)
+      VALUES ($1, $2, $3, true, 'driver', 'driver_verification', NOW())
+      ON CONFLICT (user_id, phone_number) 
+      DO UPDATE SET is_verified = true, verified_at = NOW(), purpose = 'driver_verification'
+    `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+    console.log(`🚗 Updated driver verification phone for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling driver verification:', error);
+  }
+}
+
+/**
+ * Handle business profile verification
+ */
+async function handleBusinessProfileVerification(phoneNumber, userId) {
+  try {
+    // Add/update phone in user_phone_numbers
+    await database.query(`
+      INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, label, purpose, verified_at)
+      VALUES ($1, $2, $3, true, 'business', 'business_profile', NOW())
+      ON CONFLICT (user_id, phone_number) 
+      DO UPDATE SET is_verified = true, verified_at = NOW(), purpose = 'business_profile'
+    `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+    console.log(`🏢 Updated business profile phone for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling business profile verification:', error);
+  }
+}
+
+/**
+ * Handle profile phone verification
+ */
+async function handleProfilePhoneVerification(phoneNumber, userId) {
+  try {
+    // Add verified phone to user profile
+    await database.query(`
+      INSERT INTO user_phone_numbers (user_id, phone_number, country_code, is_verified, label, purpose, verified_at)
+      VALUES ($1, $2, $3, true, 'personal', 'profile_update', NOW())
+      ON CONFLICT (user_id, phone_number) 
+      DO UPDATE SET is_verified = true, verified_at = NOW()
+    `, [userId, phoneNumber, smsService.detectCountry(phoneNumber)]);
+
+    console.log(`👤 Updated profile phone for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling profile phone verification:', error);
+  }
+}
+
+// List provider configs for a country
+router.get('/config/:countryCode', auth.authMiddleware(), auth.roleMiddleware(['super_admin','country_admin']), async (req,res)=>{
+  try {
+    const { countryCode } = req.params;
+    await ensureProviderTable();
+    const rows = await db.query('SELECT provider, config, is_active FROM sms_provider_configs WHERE country_code = $1 ORDER BY updated_at DESC', [countryCode.toUpperCase()]);
+    res.json({ success:true, data: rows.rows });
+  } catch(e){
+    console.error('[sms][get-config] error', e);
+    res.status(500).json({ success:false, message:'Failed to fetch config' });
+  }
+});
+
+// Upsert a provider config
+router.put('/config/:countryCode/:provider', auth.authMiddleware(), auth.roleMiddleware(['super_admin','country_admin']), async (req,res)=>{
+  try {
+    const { countryCode, provider } = req.params;
+  const { config = {}, is_active = true, exclusive = true } = req.body || {};
+    if (!smsService.supportedProviders.has(provider)) {
+      return res.status(400).json({ success:false, message:'Unsupported provider' });
+    }
+    await ensureProviderTable();
+    const upsert = await db.queryOne(`
+      INSERT INTO sms_provider_configs (country_code, provider, config, is_active)
+      VALUES ($1,$2,$3::jsonb,$4)
+      ON CONFLICT (country_code, provider) DO UPDATE SET config = EXCLUDED.config, is_active = EXCLUDED.is_active, updated_at = NOW()
+      RETURNING country_code, provider, config, is_active, updated_at
+    `, [countryCode.toUpperCase(), provider, JSON.stringify(config), is_active]);
+    if (exclusive && is_active) {
+      // Deactivate other providers for this country
+      await db.query('UPDATE sms_provider_configs SET is_active = FALSE, updated_at = NOW() WHERE country_code=$1 AND provider <> $2', [countryCode.toUpperCase(), provider]);
+    }
+    res.json({ success:true, message:'Configuration saved', data: upsert });
+  } catch(e){
+    console.error('[sms][upsert-config] error', e);
+    res.status(500).json({ success:false, message:'Failed to save config' });
+  }
+});
+
+// Send OTP
+router.post('/send-otp', async (req,res)=>{
+  try { 
+    const { phone, country_code } = req.body || {}; 
+    if (!phone) return res.status(400).json({ success:false, message:'phone required'});
+    const otp = Math.floor(100000 + Math.random()*900000).toString();
+    await db.query(`CREATE TABLE IF NOT EXISTS otp_codes (id SERIAL PRIMARY KEY, phone TEXT, country_code TEXT, code TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
+    await db.query('INSERT INTO otp_codes (phone, country_code, code) VALUES ($1,$2,$3)', [phone, (country_code||'').toUpperCase() || null, otp]);
+    const result = await smsService.sendOTP({ phone, otp, countryCode: country_code });
+    res.json({ success:true, message:'OTP sent', provider: result.provider });
+  } catch(e){
+    console.error('[sms][send-otp] error', e);
+    res.status(500).json({ success:false, message:'Failed to send OTP' });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req,res)=>{
+  try { 
+    const { phone, code } = req.body || {}; 
+    if (!phone || !code) return res.status(400).json({ success:false, message:'phone & code required'});
+    await db.query(`CREATE TABLE IF NOT EXISTS otp_codes (id SERIAL PRIMARY KEY, phone TEXT, country_code TEXT, code TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
+    const row = await db.queryOne('SELECT * FROM otp_codes WHERE phone=$1 ORDER BY created_at DESC LIMIT 1', [phone]);
+    if (!row) return res.status(400).json({ success:false, message:'No OTP sent' });
+    if (Date.now() - new Date(row.created_at).getTime() > 10*60*1000) return res.status(400).json({ success:false, message:'OTP expired'});
+    if (row.code !== code) return res.status(400).json({ success:false, message:'Invalid code'});
+    res.json({ success:true, message:'OTP verified' });
+  } catch(e){
+    console.error('[sms][verify-otp] error', e);
+    res.status(500).json({ success:false, message:'Failed to verify OTP' });
+  }
+});
+
+// Basic statistics per country
+router.get('/statistics/:countryCode', auth.authMiddleware(), auth.roleMiddleware(['super_admin','country_admin']), async (req,res)=>{
+  try {
+    const { countryCode } = req.params;
+    await db.query(`CREATE TABLE IF NOT EXISTS otp_codes (id SERIAL PRIMARY KEY, phone TEXT, country_code TEXT, code TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
+    const totalRow = await db.queryOne('SELECT COUNT(*)::int AS total FROM otp_codes WHERE country_code = $1', [countryCode.toUpperCase()]);
+    const totalSent = totalRow.total || 0;
+    const { provider } = await smsService.getActiveProvider(countryCode.toUpperCase());
+    const providerUnitCost = (p=>({ twilio:0.0075, aws_sns:0.0075, vonage:0.0072, local_http:0.003, dev:0 })(p) || 0.0075)(provider);
+    const firebaseAvg = 0.015; // assumed
+    const costSavings = Math.max(0, (firebaseAvg - providerUnitCost) * totalSent).toFixed(2);
+    res.json({ success:true, data:{ countryCode: countryCode.toUpperCase(), totalSent, successRate: 100, costSavings: Number(costSavings), provider, lastMonth:{ sent: totalSent, cost: Number((totalSent*providerUnitCost).toFixed(2)) } } });
+  } catch(e){
+    console.error('[sms][statistics] error', e);
+    res.status(500).json({ success:false, message:'Failed to load statistics' });
+  }
+});
+
+module.exports = router;

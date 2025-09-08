@@ -1,0 +1,14 @@
+# Normalize line endings and avoid CRLF issues in deployment scripts
+* text=auto eol=lf
+
+# Shell scripts must be LF on Linux servers
+*.sh text eol=lf
+backend/deploy/*.sh text eol=lf
+backend/scripts/**/*.sh text eol=lf
+
+# Windows PowerShell scripts can use CRLF locally
+*.ps1 text eol=crlf
+
+# Keep Docker-related files LF
+Dockerfile text eol=lf
+backend/Dockerfile text eol=lf

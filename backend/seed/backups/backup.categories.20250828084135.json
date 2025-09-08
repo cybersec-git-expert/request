@@ -1,0 +1,1714 @@
+{
+  "categories": [
+    {
+      "id": "2e39df43-aa21-4ad6-85b1-59f36f14a270",
+      "name": "Electronics",
+      "slug": "item-electronics",
+      "type": "product",
+      "is_active": true,
+      "metadata": {
+        "module": "item"
+      },
+      "created_at": "2025-08-28T07:28:14.113Z",
+      "updated_at": "2025-08-28T08:24:16.752Z",
+      "firebase_id": null,
+      "request_type": "item"
+    },
+    {
+      "id": "059dd032-fc4d-4125-bd92-b34df50f8f4b",
+      "name": "Home & Kitchen",
+      "slug": "item-home-kitchen",
+      "type": "product",
+      "is_active": true,
+      "metadata": {
+        "module": "item"
+      },
+      "created_at": "2025-08-28T07:28:18.781Z",
+      "updated_at": "2025-08-28T08:24:20.904Z",
+      "firebase_id": null,
+      "request_type": "item"
+    },
+    {
+      "id": "e7db5fca-4702-47a9-8436-a92386869a59",
+      "name": "Fashion",
+      "slug": "item-fashion",
+      "type": "product",
+      "is_active": true,
+      "metadata": {
+        "module": "item"
+      },
+      "created_at": "2025-08-28T07:28:23.328Z",
+      "updated_at": "2025-08-28T08:24:24.966Z",
+      "firebase_id": null,
+      "request_type": "item"
+    },
+    {
+      "id": "24b2bf1a-b8c8-41d7-b32c-4c814cf15995",
+      "name": "Vehicles",
+      "slug": "rent-vehicles",
+      "type": "product",
+      "is_active": true,
+      "metadata": {
+        "module": "rent"
+      },
+      "created_at": "2025-08-28T07:28:27.880Z",
+      "updated_at": "2025-08-28T08:24:28.974Z",
+      "firebase_id": null,
+      "request_type": "rent"
+    },
+    {
+      "id": "62244455-a7f2-4c1b-8485-3a7a34ae8bc2",
+      "name": "Equipment",
+      "slug": "rent-equipment",
+      "type": "product",
+      "is_active": true,
+      "metadata": {
+        "module": "rent"
+      },
+      "created_at": "2025-08-28T07:28:32.924Z",
+      "updated_at": "2025-08-28T08:24:33.446Z",
+      "firebase_id": null,
+      "request_type": "rent"
+    },
+    {
+      "id": "79258f35-9203-4eed-a631-d0fbde3bd703",
+      "name": "Parcel Delivery",
+      "slug": "delivery-parcel-delivery",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "delivery"
+      },
+      "created_at": "2025-08-28T07:28:37.468Z",
+      "updated_at": "2025-08-28T08:24:37.489Z",
+      "firebase_id": null,
+      "request_type": "delivery"
+    },
+    {
+      "id": "00311017-6c1f-4f0d-8253-991656c831f0",
+      "name": "Food & Groceries",
+      "slug": "delivery-food-groceries",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "delivery"
+      },
+      "created_at": "2025-08-28T07:28:42.290Z",
+      "updated_at": "2025-08-28T08:24:41.510Z",
+      "firebase_id": null,
+      "request_type": "delivery"
+    },
+    {
+      "id": "23ce2045-ecd2-4631-8ac2-bb2472f12d8b",
+      "name": "Transport",
+      "slug": "ride-transport",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "ride"
+      },
+      "created_at": "2025-08-28T07:28:45.808Z",
+      "updated_at": "2025-08-28T08:24:44.529Z",
+      "firebase_id": null,
+      "request_type": "ride"
+    },
+    {
+      "id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Tours & Experiences",
+      "slug": "tours-tours-experiences",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "tours"
+      },
+      "created_at": "2025-08-28T07:28:50.372Z",
+      "updated_at": "2025-08-28T08:24:49.970Z",
+      "firebase_id": null,
+      "request_type": "tours"
+    },
+    {
+      "id": "8b7f0f74-354d-4f6b-8ab4-a37190410460",
+      "name": "Transportation",
+      "slug": "tours-transportation",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "tours"
+      },
+      "created_at": "2025-08-28T07:29:00.668Z",
+      "updated_at": "2025-08-28T08:24:58.995Z",
+      "firebase_id": null,
+      "request_type": "tours"
+    },
+    {
+      "id": "65860af1-0ae5-4928-a7eb-1a484a66d62d",
+      "name": "Accommodation",
+      "slug": "tours-accommodation",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "tours"
+      },
+      "created_at": "2025-08-28T07:29:05.304Z",
+      "updated_at": "2025-08-28T08:25:03.015Z",
+      "firebase_id": null,
+      "request_type": "tours"
+    },
+    {
+      "id": "12a22602-6caf-47df-a1e7-22f77cfba3f1",
+      "name": "Event Services",
+      "slug": "events-event-services",
+      "type": "service",
+      "is_active": false,
+      "metadata": {
+        "legacy": true,
+        "module": "events"
+      },
+      "created_at": "2025-08-28T07:29:15.273Z",
+      "updated_at": "2025-08-28T08:24:16.248Z",
+      "firebase_id": null,
+      "request_type": "events"
+    },
+    {
+      "id": "f82fb9e2-badf-4a64-aa2e-07cf022d6099",
+      "name": "Skilled Trades",
+      "slug": "construction-skilled-trades",
+      "type": "service",
+      "is_active": false,
+      "metadata": {
+        "legacy": true,
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T07:29:19.928Z",
+      "updated_at": "2025-08-28T08:24:16.248Z",
+      "firebase_id": null,
+      "request_type": "construction"
+    },
+    {
+      "id": "85b78a66-9672-44c6-aa5a-c4d185633a29",
+      "name": "Learning",
+      "slug": "education-learning",
+      "type": "service",
+      "is_active": false,
+      "metadata": {
+        "legacy": true,
+        "module": "education"
+      },
+      "created_at": "2025-08-28T07:29:25.688Z",
+      "updated_at": "2025-08-28T08:24:16.248Z",
+      "firebase_id": null,
+      "request_type": "education"
+    },
+    {
+      "id": "c4367d6f-6274-4652-ba05-13c8b1f33c10",
+      "name": "Hiring",
+      "slug": "hiring-hiring",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "hiring"
+      },
+      "created_at": "2025-08-28T07:29:31.304Z",
+      "updated_at": "2025-08-28T08:26:27.767Z",
+      "firebase_id": null,
+      "request_type": "hiring"
+    },
+    {
+      "id": "a09b77bd-c895-478a-8542-7fc352f61cf7",
+      "name": "Other Services",
+      "slug": "other-other-services",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "other"
+      },
+      "created_at": "2025-08-28T07:29:36.008Z",
+      "updated_at": "2025-08-28T08:26:32.307Z",
+      "firebase_id": null,
+      "request_type": "other"
+    },
+    {
+      "id": "8582a010-206c-4518-8712-f36257075454",
+      "name": "New Construction",
+      "slug": "construction-new-construction",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T07:52:07.016Z",
+      "updated_at": "2025-08-28T08:25:36.006Z",
+      "firebase_id": null,
+      "request_type": "construction"
+    },
+    {
+      "id": "6e50efc2-f2f7-412c-992d-ead80c70c0b4",
+      "name": "Renovation & Remodeling",
+      "slug": "construction-renovation-remodeling",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T07:52:12.949Z",
+      "updated_at": "2025-08-28T08:25:41.034Z",
+      "firebase_id": null,
+      "request_type": "construction"
+    },
+    {
+      "id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Specialized Trades",
+      "slug": "construction-specialized-trades",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T07:52:19.961Z",
+      "updated_at": "2025-08-28T08:25:47.075Z",
+      "firebase_id": null,
+      "request_type": "construction"
+    },
+    {
+      "id": "c728ca6e-76e0-422c-a637-052d4d55b411",
+      "name": "Consultation & Design",
+      "slug": "construction-consultation-design",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T07:52:30.477Z",
+      "updated_at": "2025-08-28T08:25:56.157Z",
+      "firebase_id": null,
+      "request_type": "construction"
+    },
+    {
+      "id": "e23558f3-d4ce-4229-a35d-7b3f8395da36",
+      "name": "Material & Equipment",
+      "slug": "construction-material-equipment",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T07:52:36.568Z",
+      "updated_at": "2025-08-28T08:26:01.338Z",
+      "firebase_id": null,
+      "request_type": "construction"
+    },
+    {
+      "id": "aa387a1e-9b84-4121-9879-4e70f219944f",
+      "name": "Venues",
+      "slug": "events-venues",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "events"
+      },
+      "created_at": "2025-08-28T08:10:32.906Z",
+      "updated_at": "2025-08-28T08:25:08.064Z",
+      "firebase_id": null,
+      "request_type": "events"
+    },
+    {
+      "id": "96baf59b-5e42-416b-9c91-3464f491c8d7",
+      "name": "Food & Beverage",
+      "slug": "events-food-beverage",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "events"
+      },
+      "created_at": "2025-08-28T08:10:38.301Z",
+      "updated_at": "2025-08-28T08:25:13.182Z",
+      "firebase_id": null,
+      "request_type": "events"
+    },
+    {
+      "id": "1204be8b-bde5-4446-99b5-bd347578f6ec",
+      "name": "Entertainment & Talent",
+      "slug": "events-entertainment-talent",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "events"
+      },
+      "created_at": "2025-08-28T08:10:46.382Z",
+      "updated_at": "2025-08-28T08:25:18.218Z",
+      "firebase_id": null,
+      "request_type": "events"
+    },
+    {
+      "id": "e4cf913d-7f23-40ab-93ca-3340ce2696e6",
+      "name": "Services & Staff",
+      "slug": "events-services-staff",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "events"
+      },
+      "created_at": "2025-08-28T08:10:52.774Z",
+      "updated_at": "2025-08-28T08:25:24.266Z",
+      "firebase_id": null,
+      "request_type": "events"
+    },
+    {
+      "id": "a8baa516-c57f-488d-a88b-6344995b6571",
+      "name": "Rentals & Supplies",
+      "slug": "events-rentals-supplies",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "events"
+      },
+      "created_at": "2025-08-28T08:10:59.187Z",
+      "updated_at": "2025-08-28T08:25:30.770Z",
+      "firebase_id": null,
+      "request_type": "events"
+    },
+    {
+      "id": "308b1590-81ea-4b60-8911-be35ff610010",
+      "name": "Academic Tutoring",
+      "slug": "education-academic-tutoring",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "education"
+      },
+      "created_at": "2025-08-28T08:26:04.719Z",
+      "updated_at": "2025-08-28T08:26:04.719Z",
+      "firebase_id": null,
+      "request_type": "education"
+    },
+    {
+      "id": "f9be9998-24d6-4450-a2d4-6714ff5cbbcf",
+      "name": "Professional & Skill Development",
+      "slug": "education-professional-skill-development",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "education"
+      },
+      "created_at": "2025-08-28T08:26:11.225Z",
+      "updated_at": "2025-08-28T08:26:11.225Z",
+      "firebase_id": null,
+      "request_type": "education"
+    },
+    {
+      "id": "bf686274-4184-4c4b-81d7-758359232613",
+      "name": "Arts & Hobbies",
+      "slug": "education-arts-hobbies",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "education"
+      },
+      "created_at": "2025-08-28T08:26:16.238Z",
+      "updated_at": "2025-08-28T08:26:16.238Z",
+      "firebase_id": null,
+      "request_type": "education"
+    },
+    {
+      "id": "6f6bd62e-f7e1-4112-a81a-f32a26b3e078",
+      "name": "Admissions & Consulting",
+      "slug": "education-admissions-consulting",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "education"
+      },
+      "created_at": "2025-08-28T08:26:23.051Z",
+      "updated_at": "2025-08-28T08:26:23.051Z",
+      "firebase_id": null,
+      "request_type": "education"
+    }
+  ],
+  "sub_categories": [
+    {
+      "id": "3682bf9a-c9e0-424b-9789-7f1bbb9f4b6b",
+      "category_id": "2e39df43-aa21-4ad6-85b1-59f36f14a270",
+      "name": "Phones",
+      "slug": "phones",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:15.372Z",
+      "updated_at": "2025-08-28T08:24:17.760Z",
+      "firebase_id": null
+    },
+    {
+      "id": "2d8dd6db-5bea-4dbd-aaba-b6910856667b",
+      "category_id": "2e39df43-aa21-4ad6-85b1-59f36f14a270",
+      "name": "Laptops",
+      "slug": "laptops",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:16.508Z",
+      "updated_at": "2025-08-28T08:24:18.768Z",
+      "firebase_id": null
+    },
+    {
+      "id": "38791762-62e9-40b5-b409-1ab2cc881906",
+      "category_id": "2e39df43-aa21-4ad6-85b1-59f36f14a270",
+      "name": "Accessories",
+      "slug": "accessories",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:17.645Z",
+      "updated_at": "2025-08-28T08:24:19.828Z",
+      "firebase_id": null
+    },
+    {
+      "id": "900d166c-88ee-4998-a824-4e1961184250",
+      "category_id": "059dd032-fc4d-4125-bd92-b34df50f8f4b",
+      "name": "Furniture",
+      "slug": "furniture",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:19.920Z",
+      "updated_at": "2025-08-28T08:24:21.908Z",
+      "firebase_id": null
+    },
+    {
+      "id": "0bf295d6-3473-44b2-ae79-4c0ac8391a29",
+      "category_id": "059dd032-fc4d-4125-bd92-b34df50f8f4b",
+      "name": "Appliances",
+      "slug": "appliances",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:21.053Z",
+      "updated_at": "2025-08-28T08:24:22.933Z",
+      "firebase_id": null
+    },
+    {
+      "id": "204d080e-e18c-498f-bdd9-e1ba2e202f8c",
+      "category_id": "059dd032-fc4d-4125-bd92-b34df50f8f4b",
+      "name": "Cookware",
+      "slug": "cookware",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:22.193Z",
+      "updated_at": "2025-08-28T08:24:23.962Z",
+      "firebase_id": null
+    },
+    {
+      "id": "4220e0e5-1788-4f57-a703-f98926386d66",
+      "category_id": "e7db5fca-4702-47a9-8436-a92386869a59",
+      "name": "Men",
+      "slug": "men",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:24.465Z",
+      "updated_at": "2025-08-28T08:24:25.979Z",
+      "firebase_id": null
+    },
+    {
+      "id": "620da48c-08db-4436-a15c-cb0fff19cc06",
+      "category_id": "e7db5fca-4702-47a9-8436-a92386869a59",
+      "name": "Women",
+      "slug": "women",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:25.605Z",
+      "updated_at": "2025-08-28T08:24:26.975Z",
+      "firebase_id": null
+    },
+    {
+      "id": "c1775b4c-3603-4692-8da9-0d0886c47d3d",
+      "category_id": "e7db5fca-4702-47a9-8436-a92386869a59",
+      "name": "Kids",
+      "slug": "kids",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:26.740Z",
+      "updated_at": "2025-08-28T08:24:27.970Z",
+      "firebase_id": null
+    },
+    {
+      "id": "be16d45e-111e-42b8-80a8-649bedc3cce3",
+      "category_id": "24b2bf1a-b8c8-41d7-b32c-4c814cf15995",
+      "name": "Cars",
+      "slug": "cars",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:29.016Z",
+      "updated_at": "2025-08-28T08:24:29.979Z",
+      "firebase_id": null
+    },
+    {
+      "id": "b93cf23f-eedd-4db0-9708-9120a2cf76d9",
+      "category_id": "24b2bf1a-b8c8-41d7-b32c-4c814cf15995",
+      "name": "Vans",
+      "slug": "vans",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:30.641Z",
+      "updated_at": "2025-08-28T08:24:31.442Z",
+      "firebase_id": null
+    },
+    {
+      "id": "90558f62-eddf-49c5-8216-a15836231c39",
+      "category_id": "24b2bf1a-b8c8-41d7-b32c-4c814cf15995",
+      "name": "Motorbikes",
+      "slug": "motorbikes",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:31.776Z",
+      "updated_at": "2025-08-28T08:24:32.446Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f338c635-a50e-4d1a-8acd-2dc44686c7da",
+      "category_id": "62244455-a7f2-4c1b-8485-3a7a34ae8bc2",
+      "name": "Power Tools",
+      "slug": "power-tools",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:34.060Z",
+      "updated_at": "2025-08-28T08:24:34.453Z",
+      "firebase_id": null
+    },
+    {
+      "id": "00534b21-e174-4e11-80f6-05b2f7f210f7",
+      "category_id": "62244455-a7f2-4c1b-8485-3a7a34ae8bc2",
+      "name": "Cameras",
+      "slug": "cameras",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:35.196Z",
+      "updated_at": "2025-08-28T08:24:35.474Z",
+      "firebase_id": null
+    },
+    {
+      "id": "14646ce9-f809-4a14-91d1-34cc923bb19d",
+      "category_id": "62244455-a7f2-4c1b-8485-3a7a34ae8bc2",
+      "name": "Party & Events",
+      "slug": "party-events",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:36.332Z",
+      "updated_at": "2025-08-28T08:24:36.481Z",
+      "firebase_id": null
+    },
+    {
+      "id": "a6a60a64-4848-445d-ba6b-ecdc75082a88",
+      "category_id": "79258f35-9203-4eed-a631-d0fbde3bd703",
+      "name": "Documents",
+      "slug": "documents",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:38.607Z",
+      "updated_at": "2025-08-28T08:24:38.495Z",
+      "firebase_id": null
+    },
+    {
+      "id": "765c4935-7980-41fb-94e8-645a32a29390",
+      "category_id": "79258f35-9203-4eed-a631-d0fbde3bd703",
+      "name": "Small Parcel",
+      "slug": "small-parcel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:39.744Z",
+      "updated_at": "2025-08-28T08:24:39.497Z",
+      "firebase_id": null
+    },
+    {
+      "id": "811cc4bb-dd86-429a-ba21-8bfb25310ed6",
+      "category_id": "79258f35-9203-4eed-a631-d0fbde3bd703",
+      "name": "Large Parcel",
+      "slug": "large-parcel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:41.149Z",
+      "updated_at": "2025-08-28T08:24:40.502Z",
+      "firebase_id": null
+    },
+    {
+      "id": "cabed09f-386d-4d25-9cb0-034e3292e534",
+      "category_id": "00311017-6c1f-4f0d-8253-991656c831f0",
+      "name": "Groceries",
+      "slug": "groceries",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:43.426Z",
+      "updated_at": "2025-08-28T08:24:42.513Z",
+      "firebase_id": null
+    },
+    {
+      "id": "b66ab655-7b65-4bbf-9b3e-e4c677a86bc1",
+      "category_id": "00311017-6c1f-4f0d-8253-991656c831f0",
+      "name": "Meals",
+      "slug": "meals",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:44.562Z",
+      "updated_at": "2025-08-28T08:24:43.521Z",
+      "firebase_id": null
+    },
+    {
+      "id": "b2e1addc-cbd6-4f4a-86f3-30c576707a82",
+      "category_id": "23ce2045-ecd2-4631-8ac2-bb2472f12d8b",
+      "name": "Airport",
+      "slug": "airport",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:46.954Z",
+      "updated_at": "2025-08-28T08:24:45.533Z",
+      "firebase_id": null
+    },
+    {
+      "id": "1d7102b0-167c-4549-9151-4b0c6265847a",
+      "category_id": "23ce2045-ecd2-4631-8ac2-bb2472f12d8b",
+      "name": "City Ride",
+      "slug": "city-ride",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:48.103Z",
+      "updated_at": "2025-08-28T08:24:46.653Z",
+      "firebase_id": null
+    },
+    {
+      "id": "b07916b5-cb11-47f2-9899-45cff342083a",
+      "category_id": "23ce2045-ecd2-4631-8ac2-bb2472f12d8b",
+      "name": "Outstation",
+      "slug": "outstation",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:49.236Z",
+      "updated_at": "2025-08-28T08:24:48.957Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f28e6b31-27d4-497f-95a3-7b2816bb9199",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Cultural & Heritage",
+      "slug": "cultural-heritage",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:51.512Z",
+      "updated_at": "2025-08-28T08:24:50.978Z",
+      "firebase_id": null
+    },
+    {
+      "id": "003d36c6-0160-47d9-ab8f-795902bcb835",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Nature & Wildlife",
+      "slug": "nature-wildlife",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:52.649Z",
+      "updated_at": "2025-08-28T08:24:51.977Z",
+      "firebase_id": null
+    },
+    {
+      "id": "e3076131-914c-468a-8643-de9bdac930a8",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Adventure & Water Sports",
+      "slug": "adventure-water-sports",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:53.821Z",
+      "updated_at": "2025-08-28T08:24:52.974Z",
+      "firebase_id": null
+    },
+    {
+      "id": "a5d645e2-b45b-4df2-b7be-16602311176f",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Pilgrimage & Religious",
+      "slug": "pilgrimage-religious",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:54.960Z",
+      "updated_at": "2025-08-28T08:24:53.979Z",
+      "firebase_id": null
+    },
+    {
+      "id": "00baffbc-2876-424e-9b53-f0c4aaffccce",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Wellness & Retreats",
+      "slug": "wellness-retreats",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:56.109Z",
+      "updated_at": "2025-08-28T08:24:54.977Z",
+      "firebase_id": null
+    },
+    {
+      "id": "be6f28b1-0dda-4ac1-a380-1738c79298ca",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Food & Culinary",
+      "slug": "food-culinary",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:57.256Z",
+      "updated_at": "2025-08-28T08:24:55.976Z",
+      "firebase_id": null
+    },
+    {
+      "id": "cce19204-bb45-48c1-86c7-bb34c7f5225f",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Photography & Sightseeing",
+      "slug": "photography-sightseeing",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:58.397Z",
+      "updated_at": "2025-08-28T08:24:56.981Z",
+      "firebase_id": null
+    },
+    {
+      "id": "db43dee2-e82d-4c3b-9d1b-96ba86c78e77",
+      "category_id": "c9ccc425-5b38-4615-abc8-8fa74ec1b295",
+      "name": "Other Experiences",
+      "slug": "other-experiences",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:28:59.533Z",
+      "updated_at": "2025-08-28T08:24:57.991Z",
+      "firebase_id": null
+    },
+    {
+      "id": "7998ce73-714d-40dd-a8e1-a785d94cdbd1",
+      "category_id": "8b7f0f74-354d-4f6b-8ab4-a37190410460",
+      "name": "Hire Driver for Tour",
+      "slug": "hire-driver-for-tour",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:01.871Z",
+      "updated_at": "2025-08-28T08:24:59.994Z",
+      "firebase_id": null
+    },
+    {
+      "id": "a3394ffc-216d-4fc6-a226-63dc9b1589d9",
+      "category_id": "8b7f0f74-354d-4f6b-8ab4-a37190410460",
+      "name": "Airport Transfer",
+      "slug": "airport-transfer",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:03.031Z",
+      "updated_at": "2025-08-28T08:25:00.995Z",
+      "firebase_id": null
+    },
+    {
+      "id": "d88c38bc-a111-4af3-b60f-6f9cf7c5be39",
+      "category_id": "8b7f0f74-354d-4f6b-8ab4-a37190410460",
+      "name": "Vehicle Rental (Self-Drive)",
+      "slug": "vehicle-rental-self-drive",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:04.164Z",
+      "updated_at": "2025-08-28T08:25:02.007Z",
+      "firebase_id": null
+    },
+    {
+      "id": "7cbab20b-4921-44f8-9a90-c92f71fa4d31",
+      "category_id": "65860af1-0ae5-4928-a7eb-1a484a66d62d",
+      "name": "Hotel",
+      "slug": "hotel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:06.516Z",
+      "updated_at": "2025-08-28T08:25:04.027Z",
+      "firebase_id": null
+    },
+    {
+      "id": "1d42144b-3dc7-4d49-b33c-0bfd7f3107d2",
+      "category_id": "65860af1-0ae5-4928-a7eb-1a484a66d62d",
+      "name": "Villa/Bungalow",
+      "slug": "villa-bungalow",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:07.657Z",
+      "updated_at": "2025-08-28T08:25:05.034Z",
+      "firebase_id": null
+    },
+    {
+      "id": "7d6b188d-5736-4504-b247-7ed42a5135b1",
+      "category_id": "65860af1-0ae5-4928-a7eb-1a484a66d62d",
+      "name": "Guesthouse/Homestay",
+      "slug": "guesthouse-homestay",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:10.342Z",
+      "updated_at": "2025-08-28T08:25:06.046Z",
+      "firebase_id": null
+    },
+    {
+      "id": "9bdbb590-21ff-4d06-9da2-ff03905e20c8",
+      "category_id": "65860af1-0ae5-4928-a7eb-1a484a66d62d",
+      "name": "Hostel",
+      "slug": "hostel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:14.030Z",
+      "updated_at": "2025-08-28T08:25:07.055Z",
+      "firebase_id": null
+    },
+    {
+      "id": "cb4c805e-e38a-4d89-98e9-82d8e6942811",
+      "category_id": "12a22602-6caf-47df-a1e7-22f77cfba3f1",
+      "name": "Catering",
+      "slug": "catering",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:16.497Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "97b8a63a-b006-454b-ae33-244bafa76a58",
+      "category_id": "12a22602-6caf-47df-a1e7-22f77cfba3f1",
+      "name": "Decor",
+      "slug": "decor",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:17.637Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "170c1a78-35aa-4a3f-8a10-129b8b6e65b5",
+      "category_id": "12a22602-6caf-47df-a1e7-22f77cfba3f1",
+      "name": "Photography",
+      "slug": "photography",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:18.780Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "7c0186a8-6b06-49b4-b5a8-9fc3d25d4016",
+      "category_id": "f82fb9e2-badf-4a64-aa2e-07cf022d6099",
+      "name": "Masonry",
+      "slug": "masonry",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:21.071Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "9c148c12-0d18-48a2-8dff-bba304bb68b7",
+      "category_id": "f82fb9e2-badf-4a64-aa2e-07cf022d6099",
+      "name": "Carpentry",
+      "slug": "carpentry",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:22.208Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "9741b093-8ed6-408c-8e81-7ef8a94ef412",
+      "category_id": "f82fb9e2-badf-4a64-aa2e-07cf022d6099",
+      "name": "Plumbing",
+      "slug": "plumbing",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:23.360Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "426c117f-2177-4189-ab26-b5dd8efbed4c",
+      "category_id": "f82fb9e2-badf-4a64-aa2e-07cf022d6099",
+      "name": "Electrical",
+      "slug": "electrical",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:24.536Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f66ef39c-64cb-43c8-a3e0-7544a44152ad",
+      "category_id": "85b78a66-9672-44c6-aa5a-c4d185633a29",
+      "name": "Tutoring",
+      "slug": "tutoring",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:27.729Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "717c51c7-683a-45e7-8820-1b3f6562d60f",
+      "category_id": "85b78a66-9672-44c6-aa5a-c4d185633a29",
+      "name": "Language",
+      "slug": "language",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:29.020Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ddffb7ac-1314-43bf-832e-a54cc9f56b85",
+      "category_id": "85b78a66-9672-44c6-aa5a-c4d185633a29",
+      "name": "Music",
+      "slug": "music",
+      "is_active": false,
+      "metadata": {
+        "legacy": true
+      },
+      "created_at": "2025-08-28T07:29:30.168Z",
+      "updated_at": "2025-08-28T08:24:15.992Z",
+      "firebase_id": null
+    },
+    {
+      "id": "c899a423-03a7-446b-8bff-d368f752b537",
+      "category_id": "c4367d6f-6274-4652-ba05-13c8b1f33c10",
+      "name": "Full-time",
+      "slug": "full-time",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:32.490Z",
+      "updated_at": "2025-08-28T08:26:28.819Z",
+      "firebase_id": null
+    },
+    {
+      "id": "e5bdc2fe-be2a-4f0a-9764-b9c2623e94e2",
+      "category_id": "c4367d6f-6274-4652-ba05-13c8b1f33c10",
+      "name": "Part-time",
+      "slug": "part-time",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:33.689Z",
+      "updated_at": "2025-08-28T08:26:30.291Z",
+      "firebase_id": null
+    },
+    {
+      "id": "29b80ffe-7470-44c3-a1f0-e329497f08e4",
+      "category_id": "c4367d6f-6274-4652-ba05-13c8b1f33c10",
+      "name": "Freelance",
+      "slug": "freelance",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:34.872Z",
+      "updated_at": "2025-08-28T08:26:31.299Z",
+      "firebase_id": null
+    },
+    {
+      "id": "8fb52452-f8a6-4768-978a-70d669da86eb",
+      "category_id": "a09b77bd-c895-478a-8542-7fc352f61cf7",
+      "name": "Miscellaneous",
+      "slug": "miscellaneous",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:29:37.147Z",
+      "updated_at": "2025-08-28T08:26:33.783Z",
+      "firebase_id": null
+    },
+    {
+      "id": "47b90c29-1247-4399-ad4c-dfb338a7b206",
+      "category_id": "8582a010-206c-4518-8712-f36257075454",
+      "name": "Residential House",
+      "slug": "residential-house",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:08.189Z",
+      "updated_at": "2025-08-28T08:25:37.014Z",
+      "firebase_id": null
+    },
+    {
+      "id": "86445d3c-4518-4262-9766-290368995fc0",
+      "category_id": "8582a010-206c-4518-8712-f36257075454",
+      "name": "Commercial Building (Shops, Offices)",
+      "slug": "commercial-building-shops-offices",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:09.360Z",
+      "updated_at": "2025-08-28T08:25:38.018Z",
+      "firebase_id": null
+    },
+    {
+      "id": "439111a0-0c53-487c-a906-e80761c17253",
+      "category_id": "8582a010-206c-4518-8712-f36257075454",
+      "name": "Annex or Building Extension",
+      "slug": "annex-or-building-extension",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:10.529Z",
+      "updated_at": "2025-08-28T08:25:39.034Z",
+      "firebase_id": null
+    },
+    {
+      "id": "c7642dee-dc85-4f48-8cb2-d66d0b6b8317",
+      "category_id": "8582a010-206c-4518-8712-f36257075454",
+      "name": "Boundary Wall & Gate",
+      "slug": "boundary-wall-gate",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:11.767Z",
+      "updated_at": "2025-08-28T08:25:40.031Z",
+      "firebase_id": null
+    },
+    {
+      "id": "6585dd0d-983b-4d86-832d-5dd950962442",
+      "category_id": "6e50efc2-f2f7-412c-992d-ead80c70c0b4",
+      "name": "Full House Renovation",
+      "slug": "full-house-renovation",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:14.117Z",
+      "updated_at": "2025-08-28T08:25:42.042Z",
+      "firebase_id": null
+    },
+    {
+      "id": "6127fdb7-7324-43fb-872f-080c8aafbc90",
+      "category_id": "6e50efc2-f2f7-412c-992d-ead80c70c0b4",
+      "name": "Bathroom Remodeling",
+      "slug": "bathroom-remodeling",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:15.288Z",
+      "updated_at": "2025-08-28T08:25:43.050Z",
+      "firebase_id": null
+    },
+    {
+      "id": "2594a466-9cce-43e3-a17b-867734437e4e",
+      "category_id": "6e50efc2-f2f7-412c-992d-ead80c70c0b4",
+      "name": "Kitchen Remodeling",
+      "slug": "kitchen-remodeling",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:16.458Z",
+      "updated_at": "2025-08-28T08:25:44.059Z",
+      "firebase_id": null
+    },
+    {
+      "id": "c5edb695-96e7-4ccf-90f4-a9c6476d6d02",
+      "category_id": "6e50efc2-f2f7-412c-992d-ead80c70c0b4",
+      "name": "Roof Replacement or Repair",
+      "slug": "roof-replacement-or-repair",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:17.624Z",
+      "updated_at": "2025-08-28T08:25:45.066Z",
+      "firebase_id": null
+    },
+    {
+      "id": "e0668690-82a5-4041-a5b0-ec293fcaa10a",
+      "category_id": "6e50efc2-f2f7-412c-992d-ead80c70c0b4",
+      "name": "Room Addition",
+      "slug": "room-addition",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:18.792Z",
+      "updated_at": "2025-08-28T08:25:46.070Z",
+      "firebase_id": null
+    },
+    {
+      "id": "114a7818-5031-4c0e-826f-fdf6553d93ce",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Masonry & Concrete Work",
+      "slug": "masonry-concrete-work",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:21.127Z",
+      "updated_at": "2025-08-28T08:25:48.083Z",
+      "firebase_id": null
+    },
+    {
+      "id": "28281d2c-de79-47a8-a034-5f747b5e094e",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Structural Steel & Welding",
+      "slug": "structural-steel-welding",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:22.292Z",
+      "updated_at": "2025-08-28T08:25:49.091Z",
+      "firebase_id": null
+    },
+    {
+      "id": "836cc4a9-b2f3-46ee-958f-6eadc6da0875",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Tiling & Flooring",
+      "slug": "tiling-flooring",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:23.459Z",
+      "updated_at": "2025-08-28T08:25:50.101Z",
+      "firebase_id": null
+    },
+    {
+      "id": "8c69c944-a7c9-487e-9b88-46bd21051f78",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Plumbing Installation",
+      "slug": "plumbing-installation",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:24.627Z",
+      "updated_at": "2025-08-28T08:25:51.109Z",
+      "firebase_id": null
+    },
+    {
+      "id": "e2993a65-fd0e-46fb-8c7d-d0835c80402c",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Electrical Wiring",
+      "slug": "electrical-wiring",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:25.799Z",
+      "updated_at": "2025-08-28T08:25:52.121Z",
+      "firebase_id": null
+    },
+    {
+      "id": "777993a8-52e5-4e97-b0fb-fb4af7aa8b11",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Painting & Finishing",
+      "slug": "painting-finishing",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:26.968Z",
+      "updated_at": "2025-08-28T08:25:53.137Z",
+      "firebase_id": null
+    },
+    {
+      "id": "67b40610-f14b-434a-9e57-4f6b23d4b142",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Waterproofing",
+      "slug": "waterproofing",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:28.139Z",
+      "updated_at": "2025-08-28T08:25:54.141Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f89d8dd5-1d8c-401c-bdcf-f2bac8caa5a0",
+      "category_id": "ebbd4aa2-0aed-493e-82bf-3a027e1523d0",
+      "name": "Aluminum Fabrication (Windows, Doors)",
+      "slug": "aluminum-fabrication-windows-doors",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:29.311Z",
+      "updated_at": "2025-08-28T08:25:55.149Z",
+      "firebase_id": null
+    },
+    {
+      "id": "08152b8d-3bdc-4104-870c-57065f6e87a5",
+      "category_id": "c728ca6e-76e0-422c-a637-052d4d55b411",
+      "name": "Architectural Design & Drawings",
+      "slug": "architectural-design-drawings",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:31.648Z",
+      "updated_at": "2025-08-28T08:25:57.165Z",
+      "firebase_id": null
+    },
+    {
+      "id": "fb06d613-9f8b-4524-9c8c-eb1e7eaf8d8f",
+      "category_id": "c728ca6e-76e0-422c-a637-052d4d55b411",
+      "name": "Structural Engineering Plans",
+      "slug": "structural-engineering-plans",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:32.816Z",
+      "updated_at": "2025-08-28T08:25:58.173Z",
+      "firebase_id": null
+    },
+    {
+      "id": "7f4a66ef-c05f-4bb8-bad1-18bdfbd12146",
+      "category_id": "c728ca6e-76e0-422c-a637-052d4d55b411",
+      "name": "BOQ (Bill of Quantities) Preparation",
+      "slug": "boq-bill-of-quantities-preparation",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:33.983Z",
+      "updated_at": "2025-08-28T08:25:59.237Z",
+      "firebase_id": null
+    },
+    {
+      "id": "68aefd4d-7bec-4441-a22c-871111fee784",
+      "category_id": "c728ca6e-76e0-422c-a637-052d4d55b411",
+      "name": "Land Surveying",
+      "slug": "land-surveying",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:35.150Z",
+      "updated_at": "2025-08-28T08:26:00.329Z",
+      "firebase_id": null
+    },
+    {
+      "id": "1b6ee352-4017-4990-a1bc-ae0cd3e20e0f",
+      "category_id": "e23558f3-d4ce-4229-a35d-7b3f8395da36",
+      "name": "Building Material Supply (Sand, Cement, Bricks)",
+      "slug": "building-material-supply-sand-cement-bricks",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:37.750Z",
+      "updated_at": "2025-08-28T08:26:02.345Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f7fc2675-b13a-467d-a23a-bd91656a31c2",
+      "category_id": "e23558f3-d4ce-4229-a35d-7b3f8395da36",
+      "name": "Hardware Supply (Pipes, Fittings, Wires)",
+      "slug": "hardware-supply-pipes-fittings-wires",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:38.919Z",
+      "updated_at": "2025-08-28T08:26:03.353Z",
+      "firebase_id": null
+    },
+    {
+      "id": "b85dba7d-cfc0-40d7-8b37-8b35d7c74a0f",
+      "category_id": "e23558f3-d4ce-4229-a35d-7b3f8395da36",
+      "name": "Construction Equipment Rental (Mixers, Scaffolding)",
+      "slug": "construction-equipment-rental-mixers-scaffolding",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T07:52:40.086Z",
+      "updated_at": "2025-08-28T08:26:04.369Z",
+      "firebase_id": null
+    },
+    {
+      "id": "648c0951-666a-450d-9e61-661f4c00708f",
+      "category_id": "aa387a1e-9b84-4121-9879-4e70f219944f",
+      "name": "Banquet Halls",
+      "slug": "banquet-halls",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:33.971Z",
+      "updated_at": "2025-08-28T08:25:09.107Z",
+      "firebase_id": null
+    },
+    {
+      "id": "afdf65db-eced-4206-ac53-609e40b0b427",
+      "category_id": "aa387a1e-9b84-4121-9879-4e70f219944f",
+      "name": "Outdoor & Garden Venues",
+      "slug": "outdoor-garden-venues",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:35.043Z",
+      "updated_at": "2025-08-28T08:25:10.139Z",
+      "firebase_id": null
+    },
+    {
+      "id": "d8ca9b9c-03c9-4534-aefb-55dbb858a63c",
+      "category_id": "aa387a1e-9b84-4121-9879-4e70f219944f",
+      "name": "Conference Rooms",
+      "slug": "conference-rooms",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:36.110Z",
+      "updated_at": "2025-08-28T08:25:11.142Z",
+      "firebase_id": null
+    },
+    {
+      "id": "a0e11c1d-3ca0-47f4-b023-c5c1884bdeac",
+      "category_id": "aa387a1e-9b84-4121-9879-4e70f219944f",
+      "name": "Villas & Bungalows for Parties",
+      "slug": "villas-bungalows-for-parties",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:37.183Z",
+      "updated_at": "2025-08-28T08:25:12.146Z",
+      "firebase_id": null
+    },
+    {
+      "id": "904b9ef2-ad37-40a2-b5e7-4cfd05aa19ed",
+      "category_id": "96baf59b-5e42-416b-9c91-3464f491c8d7",
+      "name": "Catering Services (Buffet, Plated)",
+      "slug": "catering-services-buffet-plated",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:40.128Z",
+      "updated_at": "2025-08-28T08:25:14.186Z",
+      "firebase_id": null
+    },
+    {
+      "id": "34b7f3cc-055e-437b-892a-ae63faab992e",
+      "category_id": "96baf59b-5e42-416b-9c91-3464f491c8d7",
+      "name": "Live Cooking Stations (Hoppers, Kottu)",
+      "slug": "live-cooking-stations-hoppers-kottu",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:43.128Z",
+      "updated_at": "2025-08-28T08:25:15.189Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ed38fb24-c360-49e8-a615-1fedf7dc318e",
+      "category_id": "96baf59b-5e42-416b-9c91-3464f491c8d7",
+      "name": "Cake & Dessert Makers",
+      "slug": "cake-dessert-makers",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:44.199Z",
+      "updated_at": "2025-08-28T08:25:16.210Z",
+      "firebase_id": null
+    },
+    {
+      "id": "248599ab-566c-4e5e-932e-34cd327c79a0",
+      "category_id": "96baf59b-5e42-416b-9c91-3464f491c8d7",
+      "name": "Bartenders & Mobile Bars",
+      "slug": "bartenders-mobile-bars",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:45.279Z",
+      "updated_at": "2025-08-28T08:25:17.210Z",
+      "firebase_id": null
+    },
+    {
+      "id": "9a4ccc04-6084-409a-b196-e4a5bac0e697",
+      "category_id": "1204be8b-bde5-4446-99b5-bd347578f6ec",
+      "name": "Photographers & Videographers",
+      "slug": "photographers-videographers",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:47.448Z",
+      "updated_at": "2025-08-28T08:25:19.226Z",
+      "firebase_id": null
+    },
+    {
+      "id": "36e69d43-5807-4705-9722-dd80bcb9563a",
+      "category_id": "1204be8b-bde5-4446-99b5-bd347578f6ec",
+      "name": "DJs & Live Bands",
+      "slug": "djs-live-bands",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:48.507Z",
+      "updated_at": "2025-08-28T08:25:20.234Z",
+      "firebase_id": null
+    },
+    {
+      "id": "1baa9c3a-0caa-479f-a8e3-f5863e8c7684",
+      "category_id": "1204be8b-bde5-4446-99b5-bd347578f6ec",
+      "name": "Dancers (Traditional, Modern)",
+      "slug": "dancers-traditional-modern",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:49.575Z",
+      "updated_at": "2025-08-28T08:25:21.242Z",
+      "firebase_id": null
+    },
+    {
+      "id": "fb0217e6-214d-4557-9981-f9d61834bc36",
+      "category_id": "1204be8b-bde5-4446-99b5-bd347578f6ec",
+      "name": "MCs / Announcers",
+      "slug": "mcs-announcers",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:50.646Z",
+      "updated_at": "2025-08-28T08:25:22.250Z",
+      "firebase_id": null
+    },
+    {
+      "id": "d97ee3d9-4c17-4042-8e4e-03718a0b3c39",
+      "category_id": "1204be8b-bde5-4446-99b5-bd347578f6ec",
+      "name": "Magicians & Children's Entertainers",
+      "slug": "magicians-children-s-entertainers",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:51.710Z",
+      "updated_at": "2025-08-28T08:25:23.258Z",
+      "firebase_id": null
+    },
+    {
+      "id": "968396cb-f6d8-43b1-866a-deeb8b0113b5",
+      "category_id": "e4cf913d-7f23-40ab-93ca-3340ce2696e6",
+      "name": "Event Planners & Coordinators",
+      "slug": "event-planners-coordinators",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:53.835Z",
+      "updated_at": "2025-08-28T08:25:25.746Z",
+      "firebase_id": null
+    },
+    {
+      "id": "31981215-5920-4899-a07b-2d58220006ed",
+      "category_id": "e4cf913d-7f23-40ab-93ca-3340ce2696e6",
+      "name": "Decoration Services",
+      "slug": "decoration-services",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:54.899Z",
+      "updated_at": "2025-08-28T08:25:26.751Z",
+      "firebase_id": null
+    },
+    {
+      "id": "20823b87-d6d4-43e9-997a-4bded74c58b2",
+      "category_id": "e4cf913d-7f23-40ab-93ca-3340ce2696e6",
+      "name": "Servers & Waitstaff",
+      "slug": "servers-waitstaff",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:55.965Z",
+      "updated_at": "2025-08-28T08:25:27.755Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f97162dd-f619-4130-9bb7-e8ce9be1bf6e",
+      "category_id": "e4cf913d-7f23-40ab-93ca-3340ce2696e6",
+      "name": "Sound & Lighting Technicians",
+      "slug": "sound-lighting-technicians",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:57.039Z",
+      "updated_at": "2025-08-28T08:25:28.758Z",
+      "firebase_id": null
+    },
+    {
+      "id": "97a146cd-4329-454c-a8ce-eb3fd939b569",
+      "category_id": "e4cf913d-7f23-40ab-93ca-3340ce2696e6",
+      "name": "Security Staff",
+      "slug": "security-staff",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:10:58.118Z",
+      "updated_at": "2025-08-28T08:25:29.762Z",
+      "firebase_id": null
+    },
+    {
+      "id": "bf5ab36d-b1bd-4e28-94b3-0ac17eadca74",
+      "category_id": "a8baa516-c57f-488d-a88b-6344995b6571",
+      "name": "Chairs, Tables & Marquees",
+      "slug": "chairs-tables-marquees",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:11:00.251Z",
+      "updated_at": "2025-08-28T08:25:31.778Z",
+      "firebase_id": null
+    },
+    {
+      "id": "95088fa6-9ca7-46ad-9e0c-c6c6ee98534f",
+      "category_id": "a8baa516-c57f-488d-a88b-6344995b6571",
+      "name": "Sound Systems & Projectors",
+      "slug": "sound-systems-projectors",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:11:01.320Z",
+      "updated_at": "2025-08-28T08:25:32.786Z",
+      "firebase_id": null
+    },
+    {
+      "id": "afcaec6f-046e-47fa-bd6e-f1efc09f2a8e",
+      "category_id": "a8baa516-c57f-488d-a88b-6344995b6571",
+      "name": "Lighting & Generators",
+      "slug": "lighting-generators",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:11:02.409Z",
+      "updated_at": "2025-08-28T08:25:33.991Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ac9944b2-b182-4bd5-a1f0-9526a0868a6f",
+      "category_id": "a8baa516-c57f-488d-a88b-6344995b6571",
+      "name": "Flower & Decoration Supplies",
+      "slug": "flower-decoration-supplies",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:11:03.495Z",
+      "updated_at": "2025-08-28T08:25:34.998Z",
+      "firebase_id": null
+    },
+    {
+      "id": "eefc93c9-d271-411c-8729-869144ed8b57",
+      "category_id": "308b1590-81ea-4b60-8911-be35ff610010",
+      "name": "School Level (Grade 1 - 9)",
+      "slug": "school-level-grade-1-9",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:06.200Z",
+      "updated_at": "2025-08-28T08:26:06.200Z",
+      "firebase_id": null
+    },
+    {
+      "id": "045d4579-e917-48ac-8ccd-e46573220e3b",
+      "category_id": "308b1590-81ea-4b60-8911-be35ff610010",
+      "name": "O/L (Ordinary Level) Subjects",
+      "slug": "o-l-ordinary-level-subjects",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:07.204Z",
+      "updated_at": "2025-08-28T08:26:07.204Z",
+      "firebase_id": null
+    },
+    {
+      "id": "fba4b567-6443-4462-ba54-42e29565079a",
+      "category_id": "308b1590-81ea-4b60-8911-be35ff610010",
+      "name": "A/L (Advanced Level) Streams",
+      "slug": "a-l-advanced-level-streams",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:08.208Z",
+      "updated_at": "2025-08-28T08:26:08.208Z",
+      "firebase_id": null
+    },
+    {
+      "id": "0b66503e-f2f3-4110-8112-213f98f333d7",
+      "category_id": "308b1590-81ea-4b60-8911-be35ff610010",
+      "name": "University & Higher Education Subjects",
+      "slug": "university-higher-education-subjects",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:09.212Z",
+      "updated_at": "2025-08-28T08:26:09.212Z",
+      "firebase_id": null
+    },
+    {
+      "id": "928e1511-9960-4c65-9c3d-73b3fa5c832e",
+      "category_id": "308b1590-81ea-4b60-8911-be35ff610010",
+      "name": "International School Curriculums (Cambridge, Edexcel)",
+      "slug": "international-school-curriculums-cambridge-edexcel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:10.216Z",
+      "updated_at": "2025-08-28T08:26:10.216Z",
+      "firebase_id": null
+    },
+    {
+      "id": "24d348c7-9bbf-4f17-940a-c4b77fe1108c",
+      "category_id": "f9be9998-24d6-4450-a2d4-6714ff5cbbcf",
+      "name": "Language Courses (Spoken English, IELTS, Japanese)",
+      "slug": "language-courses-spoken-english-ielts-japanese",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:12.227Z",
+      "updated_at": "2025-08-28T08:26:12.227Z",
+      "firebase_id": null
+    },
+    {
+      "id": "5cf9b1fd-afc0-4e70-948f-3003ed0813cc",
+      "category_id": "f9be9998-24d6-4450-a2d4-6714ff5cbbcf",
+      "name": "IT & Software Courses (Programming, Graphic Design)",
+      "slug": "it-software-courses-programming-graphic-design",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:13.229Z",
+      "updated_at": "2025-08-28T08:26:13.229Z",
+      "firebase_id": null
+    },
+    {
+      "id": "e61dc4fe-b66a-432a-ab69-524e3d41a952",
+      "category_id": "f9be9998-24d6-4450-a2d4-6714ff5cbbcf",
+      "name": "Business & Marketing Skills (CIMA, Digital Marketing)",
+      "slug": "business-marketing-skills-cima-digital-marketing",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:14.232Z",
+      "updated_at": "2025-08-28T08:26:14.232Z",
+      "firebase_id": null
+    },
+    {
+      "id": "8a2bb1c4-5b48-428d-92ab-e428915a4c89",
+      "category_id": "f9be9998-24d6-4450-a2d4-6714ff5cbbcf",
+      "name": "Vocational & Technical Training (Mechanics, Electrical)",
+      "slug": "vocational-technical-training-mechanics-electrical",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:15.232Z",
+      "updated_at": "2025-08-28T08:26:15.232Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ff162411-5c60-420b-8258-ed795ec4052e",
+      "category_id": "bf686274-4184-4c4b-81d7-758359232613",
+      "name": "Music Lessons (Guitar, Piano, Violin, Vocals)",
+      "slug": "music-lessons-guitar-piano-violin-vocals",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:17.996Z",
+      "updated_at": "2025-08-28T08:26:17.996Z",
+      "firebase_id": null
+    },
+    {
+      "id": "fb1f90e5-c718-4c62-9e15-9b73df2adf62",
+      "category_id": "bf686274-4184-4c4b-81d7-758359232613",
+      "name": "Art & Design Classes (Drawing, Painting, Fashion Design)",
+      "slug": "art-design-classes-drawing-painting-fashion-design",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:19.002Z",
+      "updated_at": "2025-08-28T08:26:19.002Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f59b09e0-d6cc-4bd8-b43e-01db21e523b7",
+      "category_id": "bf686274-4184-4c4b-81d7-758359232613",
+      "name": "Dance & Drama Classes",
+      "slug": "dance-drama-classes",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:20.009Z",
+      "updated_at": "2025-08-28T08:26:20.009Z",
+      "firebase_id": null
+    },
+    {
+      "id": "5e5e614b-bff2-41d3-a989-b2358f500be3",
+      "category_id": "bf686274-4184-4c4b-81d7-758359232613",
+      "name": "Cooking & Baking Workshops",
+      "slug": "cooking-baking-workshops",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:21.014Z",
+      "updated_at": "2025-08-28T08:26:21.014Z",
+      "firebase_id": null
+    },
+    {
+      "id": "6f56723a-afd7-4391-bbdf-5da1cf855781",
+      "category_id": "bf686274-4184-4c4b-81d7-758359232613",
+      "name": "Sports Coaching (Cricket, Swimming, Athletics)",
+      "slug": "sports-coaching-cricket-swimming-athletics",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:22.039Z",
+      "updated_at": "2025-08-28T08:26:22.039Z",
+      "firebase_id": null
+    },
+    {
+      "id": "3ea3c5f1-3230-443f-ba22-bb051d4685ea",
+      "category_id": "6f6bd62e-f7e1-4112-a81a-f32a26b3e078",
+      "name": "University Admission Guidance (Local & Foreign)",
+      "slug": "university-admission-guidance-local-foreign",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:24.078Z",
+      "updated_at": "2025-08-28T08:26:24.078Z",
+      "firebase_id": null
+    },
+    {
+      "id": "4df8a54a-abdb-40b7-84e5-da87c4937e69",
+      "category_id": "6f6bd62e-f7e1-4112-a81a-f32a26b3e078",
+      "name": "Career Counseling & Mentoring",
+      "slug": "career-counseling-mentoring",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:25.090Z",
+      "updated_at": "2025-08-28T08:26:25.090Z",
+      "firebase_id": null
+    },
+    {
+      "id": "447b3ea7-05a9-48ed-84cf-b7f74e01cc21",
+      "category_id": "6f6bd62e-f7e1-4112-a81a-f32a26b3e078",
+      "name": "Scholarship & Visa Assistance",
+      "slug": "scholarship-visa-assistance",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T08:26:26.098Z",
+      "updated_at": "2025-08-28T08:26:26.098Z",
+      "firebase_id": null
+    }
+  ]
+}

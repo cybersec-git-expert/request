@@ -1,0 +1,35 @@
+version: 0.0
+os: linux
+files:
+  - source: backend
+    destination: /var/www/request-backend
+    overwrite: true
+permissions:
+  - object: /var/www/request-backend
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
+    type:
+      - file
+hooks:
+  ApplicationStop:
+    - location: backend/scripts/codedeploy/stop.sh
+      timeout: 60
+      runas: ubuntu
+  BeforeInstall:
+    - location: backend/scripts/codedeploy/before_install.sh
+      timeout: 300
+      runas: ubuntu
+  AfterInstall:
+    - location: backend/scripts/codedeploy/install_dependencies.sh
+      timeout: 900
+      runas: ubuntu
+  ApplicationStart:
+    - location: backend/scripts/codedeploy/start.sh
+      timeout: 120
+      runas: ubuntu
+  ValidateService:
+    - location: backend/scripts/codedeploy/validate.sh
+      timeout: 120
+      runas: ubuntu

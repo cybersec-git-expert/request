@@ -1,0 +1,21 @@
+require('dotenv').config();
+const { Client } = require('pg');
+const admin = require('firebase-admin');
+const sa = require('../serviceAccount.json');
+if(sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g,'\n');
+if(!admin.apps.length) admin.initializeApp({credential:admin.credential.cert(sa)});
+(async () => {
+  const c=new Client({host:process.env.PGHOST||process.env.DB_HOST,user:process.env.PGUSER||process.env.DB_USERNAME,password:process.env.PGPASSWORD||process.env.DB_PASSWORD,database:process.env.PGDATABASE||process.env.DB_NAME,port:process.env.PGPORT||process.env.DB_PORT,ssl:(process.env.PGSSL==='true'||process.env.DB_SSL==='true')?{rejectUnauthorized:false}:undefined});
+  await c.connect();
+  const citiesCols = await c.query('SELECT column_name FROM information_schema.columns WHERE table_schema=\'public\' AND table_name=\'cities\' ORDER BY ordinal_position');
+  console.log('Cities columns:', citiesCols.rows.map(r=>r.column_name));
+  const citiesCount = await c.query('SELECT count(*)::int FROM cities');
+  console.log('Cities count:', citiesCount.rows[0].count);
+  const reqSnap = await admin.firestore().collection('requests').limit(5).get();
+  const sample = reqSnap.docs.map(d=>({id:d.id,userId:d.get('userId')||d.get('user_id'),categoryId:d.get('categoryId')||d.get('category_id'),subcategoryId:d.get('subcategoryId')||d.get('subcategory_id'),cityId:d.get('cityId')||d.get('city_id')}));
+  console.log('Firestore request sample:', sample);
+  const userIds=[...new Set(sample.map(r=>r.userId).filter(Boolean))];
+  const dbUsers = await c.query('SELECT firebase_uid FROM users WHERE firebase_uid = ANY($1)', [userIds]);
+  console.log('Matched userIds in DB:', dbUsers.rows.map(r=>r.firebase_uid));
+  await c.end();
+})();

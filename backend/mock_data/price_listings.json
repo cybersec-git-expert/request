@@ -1,0 +1,4 @@
+[
+  {"id":"pl1","product_id":"prod1","country_code":"LK","unit_price_cents":1200,"currency":"LKR","is_active":true},
+  {"id":"pl2","product_id":"prod2","country_code":"LK","unit_price_cents":3400,"currency":"LKR","is_active":true}
+]

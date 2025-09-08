@@ -1,0 +1,4 @@
+[
+  {"id":"veh_car","name":"Car","is_active":true},
+  {"id":"veh_van","name":"Van","is_active":true}
+]

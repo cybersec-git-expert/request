@@ -1,0 +1,15 @@
+{
+  "countryId": 14,
+  "businessTypeId": 1,
+  "planCode": "test_plan_api",
+  "planName": "Test Plan API",
+  "pricingModel": "response_based",
+  "features": {
+    "basic_analytics": true,
+    "customer_messaging": true
+  },
+  "pricing": {
+    "cost_per_response": 30,
+    "currency": "LKR"
+  }
+}

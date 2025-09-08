@@ -1,0 +1,4 @@
+[
+  {"id":"eov1","user_id":"u1","email":"alice@example.com","otp_code":"111111","attempts":0,"verified":true,"expires_at":"2025-09-01T00:00:00Z"},
+  {"id":"eov2","user_id":"u2","email":"bob@example.com","otp_code":"222222","attempts":2,"verified":false,"expires_at":"2025-09-01T00:00:00Z"}
+]

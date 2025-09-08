@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Module Configuration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .module { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .enabled { background: #e8f5e8; border: 2px solid #4caf50; }
+        .disabled { background: #fafafa; border: 2px solid #ccc; opacity: 0.5; }
+        .title { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Module Configuration Test for Sri Lanka</h1>
+    <p>This shows what your mobile app should display based on admin panel settings.</p>
+    
+    <div id="modules">Loading...</div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCtuD42SzwxKmSY5p-x5olFex2U_S9YrMk",
+            authDomain: "request-marketplace.firebaseapp.com",
+            projectId: "request-marketplace",
+            storageBucket: "request-marketplace.firebasestorage.app",
+            messagingSenderId: "355474518888",
+            appId: "1:355474518888:web:7b3a7f6f7d7a8b0d8e8f9f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const moduleInfo = {
+            item: { name: 'Item Request', desc: 'Request for products or items', icon: '🛍️' },
+            service: { name: 'Service Request', desc: 'Request for services', icon: '🔧' },
+            rent: { name: 'Rental Request', desc: 'Rent vehicles, equipment, or items', icon: '📅' },
+            delivery: { name: 'Delivery Request', desc: 'Request for delivery services', icon: '📦' },
+            ride: { name: 'Ride Request', desc: 'Request for transportation', icon: '🚗' },
+            price: { name: 'Price Request', desc: 'Request price quotes for items or services', icon: '💰' }
+        };
+
+        async function loadModules() {
+            try {
+                const lkModulesRef = doc(db, 'country_modules', 'LK');
+                const lkDoc = await getDoc(lkModulesRef);
+                
+                if (lkDoc.exists()) {
+                    const data = lkDoc.data();
+                    const modules = data.modules || {};
+                    
+                    let html = '<h2>📱 What Your Mobile App Should Show:</h2>';
+                    
+                    Object.entries(moduleInfo).forEach(([moduleId, info]) => {
+                        const enabled = modules[moduleId] || false;
+                        const cssClass = enabled ? 'enabled' : 'disabled';
+                        const status = enabled ? '✅ ENABLED - Will show in app' : '❌ DISABLED - Will be hidden';
+                        
+                        html += `
+                            <div class="module ${cssClass}">
+                                <h3>${info.icon} ${info.name}</h3>
+                                <p>${info.desc}</p>
+                                <p><strong>${status}</strong></p>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                        <h3>📊 Summary for Sri Lanka:</h3>
+                        <ul>
+                            <li>Enabled modules: ${Object.entries(modules).filter(([k,v]) => v).length}</li>
+                            <li>Disabled modules: ${Object.entries(modules).filter(([k,v]) => !v).length}</li>
+                            <li>Last updated: ${data.updatedAt?.toDate() || 'Unknown'}</li>
+                        </ul>
+                        <p><strong>💡 Your mobile app should only show the ENABLED modules above.</strong></p>
+                    `;
+                    
+                    document.getElementById('modules').innerHTML = html;
+                } else {
+                    document.getElementById('modules').innerHTML = '<p>❌ No configuration found for Sri Lanka</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('modules').innerHTML = '<p>❌ Error loading modules</p>';
+            }
+        }
+
+        loadModules();
+    </script>
+</body>
+</html>

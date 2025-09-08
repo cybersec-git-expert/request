@@ -1,0 +1,4 @@
+[
+  {"id":"var_temp","code":"TEMP","name":"Temperature","data_type":"number","is_active":true},
+  {"id":"var_speed","code":"SPEED","name":"Speed","data_type":"number","is_active":true}
+]

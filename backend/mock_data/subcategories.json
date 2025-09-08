@@ -1,0 +1,4 @@
+[
+  {"id":"sub1","category_id":"cat1","name":"Pipes","status":"active","updatedAt":"2025-08-04T08:00:00Z"},
+  {"id":"sub2","category_id":"cat2","name":"Wiring","status":"active","updatedAt":"2025-08-04T09:00:00Z"}
+]

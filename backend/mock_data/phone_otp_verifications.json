@@ -1,0 +1,4 @@
+[
+  {"id":"pov1","user_id":"u1","phone":"+94770000001","country_code":"LK","otp_code":"123456","attempts":1,"verified":true,"expires_at":"2025-09-01T00:00:00Z"},
+  {"id":"pov2","user_id":"u2","phone":"+94770000002","country_code":"LK","otp_code":"654321","attempts":0,"verified":false,"expires_at":"2025-09-01T00:00:00Z"}
+]

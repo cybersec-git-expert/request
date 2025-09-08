@@ -1,0 +1,4 @@
+[
+  {"id":"nbv1","user_id":"u1","status":"approved","submitted_at":"2025-08-10T00:00:00Z","reviewed_at":"2025-08-12T00:00:00Z"},
+  {"id":"nbv2","user_id":"u2","status":"pending","submitted_at":"2025-08-15T00:00:00Z"}
+]

@@ -1,0 +1,632 @@
+{
+  "categories": [
+    {
+      "id": "81e402a5-d8da-42fa-87eb-8d32be41ef36",
+      "name": "Electronics",
+      "slug": "electronics",
+      "type": "item",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:36:56.348Z",
+      "updated_at": "2025-08-28T05:36:56.348Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "0af30f8d-8207-477f-a11a-6f1d63a46519",
+      "name": "Home & Kitchen",
+      "slug": "home-kitchen",
+      "type": "item",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:00.263Z",
+      "updated_at": "2025-08-28T05:37:00.263Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "c5df15d5-e625-44fb-a351-11ee3d8a65cc",
+      "name": "Fashion",
+      "slug": "fashion",
+      "type": "item",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:04.179Z",
+      "updated_at": "2025-08-28T05:37:04.179Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "82331667-152c-4b13-a227-eff1410a319d",
+      "name": "Vehicles",
+      "slug": "vehicles",
+      "type": "rental",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:08.086Z",
+      "updated_at": "2025-08-28T05:37:08.086Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "f2c31807-4dd2-4f88-b13a-8ff04bc8554f",
+      "name": "Equipment",
+      "slug": "equipment",
+      "type": "rental",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:11.998Z",
+      "updated_at": "2025-08-28T05:37:11.998Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "0b43a71d-3da1-48d6-a8c5-906330b53631",
+      "name": "Parcel Delivery",
+      "slug": "delivery-parcel-delivery",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "delivery"
+      },
+      "created_at": "2025-08-28T05:37:15.907Z",
+      "updated_at": "2025-08-28T05:37:15.907Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "5b110819-9aaa-44d9-8dc7-76558eae0f53",
+      "name": "Food & Groceries",
+      "slug": "delivery-food-groceries",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "delivery"
+      },
+      "created_at": "2025-08-28T05:37:19.885Z",
+      "updated_at": "2025-08-28T05:37:19.885Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "0e40a97c-bf30-4934-9f5d-8941546f6cfe",
+      "name": "Transport",
+      "slug": "ride-transport",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "ride"
+      },
+      "created_at": "2025-08-28T05:37:22.815Z",
+      "updated_at": "2025-08-28T05:37:22.815Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "110ac220-7059-4d8c-a9fd-3f330a59e8ff",
+      "name": "Tours",
+      "slug": "tours-tours",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "tours"
+      },
+      "created_at": "2025-08-28T05:37:26.722Z",
+      "updated_at": "2025-08-28T05:37:26.722Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "41a430b4-3039-4d62-878b-ed76ac4ccbc7",
+      "name": "Event Services",
+      "slug": "events-event-services",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "events"
+      },
+      "created_at": "2025-08-28T05:37:30.641Z",
+      "updated_at": "2025-08-28T05:37:30.641Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "74c54b04-d774-4c9d-b707-b03ca7b292ce",
+      "name": "Skilled Trades",
+      "slug": "construction-skilled-trades",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "construction"
+      },
+      "created_at": "2025-08-28T05:37:34.549Z",
+      "updated_at": "2025-08-28T05:37:34.549Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "fd4acf75-2505-4d3f-afa7-80f1c2f8bcb3",
+      "name": "Learning",
+      "slug": "education-learning",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "education"
+      },
+      "created_at": "2025-08-28T05:37:39.473Z",
+      "updated_at": "2025-08-28T05:37:39.473Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "ef454cca-b187-47d3-9a0d-7fd69c77261f",
+      "name": "Hiring",
+      "slug": "jobs-hiring",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "jobs"
+      },
+      "created_at": "2025-08-28T05:37:43.430Z",
+      "updated_at": "2025-08-28T05:37:43.430Z",
+      "firebase_id": null,
+      "request_type": null
+    },
+    {
+      "id": "5d031145-b296-4cf2-8231-ced87fd9d627",
+      "name": "Other Services",
+      "slug": "other-other-services",
+      "type": "service",
+      "is_active": true,
+      "metadata": {
+        "module": "other"
+      },
+      "created_at": "2025-08-28T05:37:47.397Z",
+      "updated_at": "2025-08-28T05:37:47.397Z",
+      "firebase_id": null,
+      "request_type": null
+    }
+  ],
+  "sub_categories": [
+    {
+      "id": "ec8acbab-b7fc-4e99-a60a-01e4cd7fca9e",
+      "category_id": "81e402a5-d8da-42fa-87eb-8d32be41ef36",
+      "name": "Phones",
+      "slug": "phones",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:36:57.331Z",
+      "updated_at": "2025-08-28T05:36:57.331Z",
+      "firebase_id": null
+    },
+    {
+      "id": "760378e8-7f0a-409b-8540-ff4fe932e541",
+      "category_id": "81e402a5-d8da-42fa-87eb-8d32be41ef36",
+      "name": "Laptops",
+      "slug": "laptops",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:36:58.311Z",
+      "updated_at": "2025-08-28T05:36:58.311Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ff894af6-f480-4f90-9282-6bb13776feb5",
+      "category_id": "81e402a5-d8da-42fa-87eb-8d32be41ef36",
+      "name": "Accessories",
+      "slug": "accessories",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:36:59.288Z",
+      "updated_at": "2025-08-28T05:36:59.288Z",
+      "firebase_id": null
+    },
+    {
+      "id": "4fe20bd5-c552-4b62-857c-2ca7c8a7715b",
+      "category_id": "0af30f8d-8207-477f-a11a-6f1d63a46519",
+      "name": "Furniture",
+      "slug": "furniture",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:01.243Z",
+      "updated_at": "2025-08-28T05:37:01.243Z",
+      "firebase_id": null
+    },
+    {
+      "id": "0ff45ce1-2ddf-4fb0-ac41-0dfb5e357f58",
+      "category_id": "0af30f8d-8207-477f-a11a-6f1d63a46519",
+      "name": "Appliances",
+      "slug": "appliances",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:02.224Z",
+      "updated_at": "2025-08-28T05:37:02.224Z",
+      "firebase_id": null
+    },
+    {
+      "id": "121fa6d9-3c14-4d21-8a9d-61be32b7c48c",
+      "category_id": "0af30f8d-8207-477f-a11a-6f1d63a46519",
+      "name": "Cookware",
+      "slug": "cookware",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:03.203Z",
+      "updated_at": "2025-08-28T05:37:03.203Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ff61741e-e9b1-4306-a08c-05443cd23d67",
+      "category_id": "c5df15d5-e625-44fb-a351-11ee3d8a65cc",
+      "name": "Men",
+      "slug": "men",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:05.156Z",
+      "updated_at": "2025-08-28T05:37:05.156Z",
+      "firebase_id": null
+    },
+    {
+      "id": "99e355a1-5836-4caa-a922-d3f66ec187ab",
+      "category_id": "c5df15d5-e625-44fb-a351-11ee3d8a65cc",
+      "name": "Women",
+      "slug": "women",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:06.135Z",
+      "updated_at": "2025-08-28T05:37:06.135Z",
+      "firebase_id": null
+    },
+    {
+      "id": "bccf8642-33a0-4f92-8e00-30805796758e",
+      "category_id": "c5df15d5-e625-44fb-a351-11ee3d8a65cc",
+      "name": "Kids",
+      "slug": "kids",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:07.110Z",
+      "updated_at": "2025-08-28T05:37:07.110Z",
+      "firebase_id": null
+    },
+    {
+      "id": "069ab6d5-6dbb-4e11-bb8f-0285b8fd3668",
+      "category_id": "82331667-152c-4b13-a227-eff1410a319d",
+      "name": "Cars",
+      "slug": "cars",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:09.063Z",
+      "updated_at": "2025-08-28T05:37:09.063Z",
+      "firebase_id": null
+    },
+    {
+      "id": "d99d24aa-7fb7-414b-aa9e-7d3c534442f9",
+      "category_id": "82331667-152c-4b13-a227-eff1410a319d",
+      "name": "Vans",
+      "slug": "vans",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:10.042Z",
+      "updated_at": "2025-08-28T05:37:10.042Z",
+      "firebase_id": null
+    },
+    {
+      "id": "3506fc7b-bc1e-4822-b72c-4e3f590a3dcd",
+      "category_id": "82331667-152c-4b13-a227-eff1410a319d",
+      "name": "Motorbikes",
+      "slug": "motorbikes",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:11.018Z",
+      "updated_at": "2025-08-28T05:37:11.018Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ca1471e1-9117-4883-8776-8aa14163025d",
+      "category_id": "f2c31807-4dd2-4f88-b13a-8ff04bc8554f",
+      "name": "Power Tools",
+      "slug": "power-tools",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:12.974Z",
+      "updated_at": "2025-08-28T05:37:12.974Z",
+      "firebase_id": null
+    },
+    {
+      "id": "c8c83b28-55af-49ca-be6c-f57a81c3d9d9",
+      "category_id": "f2c31807-4dd2-4f88-b13a-8ff04bc8554f",
+      "name": "Cameras",
+      "slug": "cameras",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:13.951Z",
+      "updated_at": "2025-08-28T05:37:13.951Z",
+      "firebase_id": null
+    },
+    {
+      "id": "417e673c-7cdc-42a0-af56-dbda25bc9aec",
+      "category_id": "f2c31807-4dd2-4f88-b13a-8ff04bc8554f",
+      "name": "Party & Events",
+      "slug": "party-events",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:14.931Z",
+      "updated_at": "2025-08-28T05:37:14.931Z",
+      "firebase_id": null
+    },
+    {
+      "id": "da384cd3-a030-47e3-97c7-28b3b93d665a",
+      "category_id": "0b43a71d-3da1-48d6-a8c5-906330b53631",
+      "name": "Documents",
+      "slug": "documents",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:16.895Z",
+      "updated_at": "2025-08-28T05:37:16.895Z",
+      "firebase_id": null
+    },
+    {
+      "id": "aed3e8fa-9a41-46f9-aa20-f59ac858cb7f",
+      "category_id": "0b43a71d-3da1-48d6-a8c5-906330b53631",
+      "name": "Small Parcel",
+      "slug": "small-parcel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:17.870Z",
+      "updated_at": "2025-08-28T05:37:17.870Z",
+      "firebase_id": null
+    },
+    {
+      "id": "f0b599a1-a34e-4502-b5e8-e82ddfad5836",
+      "category_id": "0b43a71d-3da1-48d6-a8c5-906330b53631",
+      "name": "Large Parcel",
+      "slug": "large-parcel",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:18.850Z",
+      "updated_at": "2025-08-28T05:37:18.850Z",
+      "firebase_id": null
+    },
+    {
+      "id": "14c8587e-9aa8-4efa-99c8-05e7da89d087",
+      "category_id": "5b110819-9aaa-44d9-8dc7-76558eae0f53",
+      "name": "Groceries",
+      "slug": "groceries",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:20.861Z",
+      "updated_at": "2025-08-28T05:37:20.861Z",
+      "firebase_id": null
+    },
+    {
+      "id": "138a68e2-32ee-45b2-ab74-fed5a09da5ae",
+      "category_id": "5b110819-9aaa-44d9-8dc7-76558eae0f53",
+      "name": "Meals",
+      "slug": "meals",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:21.837Z",
+      "updated_at": "2025-08-28T05:37:21.837Z",
+      "firebase_id": null
+    },
+    {
+      "id": "99a44eb4-170c-4103-ab85-de5932dffb18",
+      "category_id": "0e40a97c-bf30-4934-9f5d-8941546f6cfe",
+      "name": "Airport",
+      "slug": "airport",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:23.793Z",
+      "updated_at": "2025-08-28T05:37:23.793Z",
+      "firebase_id": null
+    },
+    {
+      "id": "33442019-a266-4527-8311-4069df936227",
+      "category_id": "0e40a97c-bf30-4934-9f5d-8941546f6cfe",
+      "name": "City Ride",
+      "slug": "city-ride",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:24.767Z",
+      "updated_at": "2025-08-28T05:37:24.767Z",
+      "firebase_id": null
+    },
+    {
+      "id": "a807448f-af4b-41eb-b57f-4d6e72eac324",
+      "category_id": "0e40a97c-bf30-4934-9f5d-8941546f6cfe",
+      "name": "Outstation",
+      "slug": "outstation",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:25.742Z",
+      "updated_at": "2025-08-28T05:37:25.742Z",
+      "firebase_id": null
+    },
+    {
+      "id": "45125561-1cd0-4839-af4c-e8a1d32d1593",
+      "category_id": "110ac220-7059-4d8c-a9fd-3f330a59e8ff",
+      "name": "City Tour",
+      "slug": "city-tour",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:27.698Z",
+      "updated_at": "2025-08-28T05:37:27.698Z",
+      "firebase_id": null
+    },
+    {
+      "id": "8f42933d-0df6-49ff-926b-6873331ee609",
+      "category_id": "110ac220-7059-4d8c-a9fd-3f330a59e8ff",
+      "name": "Nature & Wildlife",
+      "slug": "nature-wildlife",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:28.686Z",
+      "updated_at": "2025-08-28T05:37:28.686Z",
+      "firebase_id": null
+    },
+    {
+      "id": "8f288d59-3841-472d-823e-efc804e9a5b2",
+      "category_id": "110ac220-7059-4d8c-a9fd-3f330a59e8ff",
+      "name": "Cultural",
+      "slug": "cultural",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:29.665Z",
+      "updated_at": "2025-08-28T05:37:29.665Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ad535dd0-7599-45ec-aef1-28251af37222",
+      "category_id": "41a430b4-3039-4d62-878b-ed76ac4ccbc7",
+      "name": "Catering",
+      "slug": "catering",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:31.619Z",
+      "updated_at": "2025-08-28T05:37:31.619Z",
+      "firebase_id": null
+    },
+    {
+      "id": "c723c8bb-08f8-42da-811b-be329f282750",
+      "category_id": "41a430b4-3039-4d62-878b-ed76ac4ccbc7",
+      "name": "Decor",
+      "slug": "decor",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:32.593Z",
+      "updated_at": "2025-08-28T05:37:32.593Z",
+      "firebase_id": null
+    },
+    {
+      "id": "2d2c73f7-a859-4632-8c9f-70a2306b74f9",
+      "category_id": "41a430b4-3039-4d62-878b-ed76ac4ccbc7",
+      "name": "Photography",
+      "slug": "photography",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:33.568Z",
+      "updated_at": "2025-08-28T05:37:33.568Z",
+      "firebase_id": null
+    },
+    {
+      "id": "46871026-1b3c-40a6-ab72-f6c26df46a32",
+      "category_id": "74c54b04-d774-4c9d-b707-b03ca7b292ce",
+      "name": "Masonry",
+      "slug": "masonry",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:35.525Z",
+      "updated_at": "2025-08-28T05:37:35.525Z",
+      "firebase_id": null
+    },
+    {
+      "id": "53fb5b7b-8cf2-4196-a7ac-4036d73de9a5",
+      "category_id": "74c54b04-d774-4c9d-b707-b03ca7b292ce",
+      "name": "Carpentry",
+      "slug": "carpentry",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:36.507Z",
+      "updated_at": "2025-08-28T05:37:36.507Z",
+      "firebase_id": null
+    },
+    {
+      "id": "326e618b-b113-4d10-9166-ce7495c91257",
+      "category_id": "74c54b04-d774-4c9d-b707-b03ca7b292ce",
+      "name": "Plumbing",
+      "slug": "plumbing",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:37.522Z",
+      "updated_at": "2025-08-28T05:37:37.522Z",
+      "firebase_id": null
+    },
+    {
+      "id": "55301605-5a79-452f-9a64-9822fe4f406a",
+      "category_id": "74c54b04-d774-4c9d-b707-b03ca7b292ce",
+      "name": "Electrical",
+      "slug": "electrical",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:38.497Z",
+      "updated_at": "2025-08-28T05:37:38.497Z",
+      "firebase_id": null
+    },
+    {
+      "id": "151877d5-682e-4d8e-a744-0f3a81e1c360",
+      "category_id": "fd4acf75-2505-4d3f-afa7-80f1c2f8bcb3",
+      "name": "Tutoring",
+      "slug": "tutoring",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:40.496Z",
+      "updated_at": "2025-08-28T05:37:40.496Z",
+      "firebase_id": null
+    },
+    {
+      "id": "1e1de177-8795-472d-be9d-65894a642785",
+      "category_id": "fd4acf75-2505-4d3f-afa7-80f1c2f8bcb3",
+      "name": "Language",
+      "slug": "language",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:41.476Z",
+      "updated_at": "2025-08-28T05:37:41.476Z",
+      "firebase_id": null
+    },
+    {
+      "id": "af53813f-d8d2-49fa-a464-5427215e21f2",
+      "category_id": "fd4acf75-2505-4d3f-afa7-80f1c2f8bcb3",
+      "name": "Music",
+      "slug": "music",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:42.453Z",
+      "updated_at": "2025-08-28T05:37:42.453Z",
+      "firebase_id": null
+    },
+    {
+      "id": "654f203e-26b7-463c-b0ec-553821659ded",
+      "category_id": "ef454cca-b187-47d3-9a0d-7fd69c77261f",
+      "name": "Full-time",
+      "slug": "full-time",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:44.445Z",
+      "updated_at": "2025-08-28T05:37:44.445Z",
+      "firebase_id": null
+    },
+    {
+      "id": "ee1c0a4a-c07a-44ca-8e6a-431f4b5272a0",
+      "category_id": "ef454cca-b187-47d3-9a0d-7fd69c77261f",
+      "name": "Part-time",
+      "slug": "part-time",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:45.421Z",
+      "updated_at": "2025-08-28T05:37:45.421Z",
+      "firebase_id": null
+    },
+    {
+      "id": "25a02ea0-5988-4a79-9656-f461df3a7a16",
+      "category_id": "ef454cca-b187-47d3-9a0d-7fd69c77261f",
+      "name": "Freelance",
+      "slug": "freelance",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:46.397Z",
+      "updated_at": "2025-08-28T05:37:46.397Z",
+      "firebase_id": null
+    },
+    {
+      "id": "daf7f2bf-da49-4003-98ee-a1b01b126bac",
+      "category_id": "5d031145-b296-4cf2-8231-ced87fd9d627",
+      "name": "Miscellaneous",
+      "slug": "miscellaneous",
+      "is_active": true,
+      "metadata": null,
+      "created_at": "2025-08-28T05:37:48.483Z",
+      "updated_at": "2025-08-28T05:37:48.483Z",
+      "firebase_id": null
+    }
+  ]
+}

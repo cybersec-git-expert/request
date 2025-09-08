@@ -1,0 +1,4 @@
+[
+  {"id":"r1","user_id":"u1","status":"pending","countryCode":"US","city_id":null,"createdAt":"2025-08-06T10:00:00Z"},
+  {"id":"r2","user_id":"u2","status":"open","countryCode":"US","city_id":null,"createdAt":"2025-08-07T15:45:00Z"}
+]
