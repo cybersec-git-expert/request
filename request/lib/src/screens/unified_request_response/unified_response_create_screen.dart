@@ -1777,20 +1777,9 @@ class _UnifiedResponseCreateScreenState
     if (!_formKey.currentState!.validate()) {
       return;
     }
-
-    // Check entitlements before proceeding
-    final currentUser = await _userService.getCurrentUserModel();
-    if (currentUser?.id != null) {
-      final canRespond = await checkCanRespond(
-        userId: currentUser!.id,
-        showDialog: true,
-      );
-
-      if (!canRespond) {
-        // User hit limit or cancelled subscription dialog
-        return;
-      }
-    }
+    // Entitlement gating removed here. UnifiedRequestViewScreen now controls
+    // visibility and access to the Respond action, so this secondary check
+    // caused duplicate/incorrect blocking. (See commit removing canMessage check.)
 
     setState(() {
       _isLoading = true;
