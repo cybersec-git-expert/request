@@ -195,20 +195,46 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   }
 
   bool get _canRespond {
-    if (_request == null) return false;
+    if (_request == null) {
+      print('DEBUG: _canRespond = false (no request)');
+      return false;
+    }
     final userId = RestAuthService.instance.currentUser?.uid;
-    if (userId == null) return false;
-    if (userId == _request!.userId) return false; // owner cannot respond
+    if (userId == null) {
+      print('DEBUG: _canRespond = false (no user ID)');
+      return false;
+    }
+    if (userId == _request!.userId) {
+      print('DEBUG: _canRespond = false (user is owner)');
+      return false; // owner cannot respond
+    }
     final status = _request!.status.toLowerCase();
-    if (!(status == 'active' || status == 'open')) return false;
+    if (!(status == 'active' || status == 'open')) {
+      print('DEBUG: _canRespond = false (status not active/open: $status)');
+      return false;
+    }
     // Respect backend gating flag
-    if (_request?.canMessage == false) return false;
+    if (_request?.canMessage == false) {
+      print('DEBUG: _canRespond = false (canMessage = false)');
+      return false;
+    }
     // If entitlements loaded and specifically deny, block response
     // Otherwise allow response (default to true for new users)
-    if (_entitlements != null && _entitlements!.canRespond == false)
+    if (_entitlements != null && _entitlements!.canRespond == false) {
+      print(
+          'DEBUG: _canRespond = false (entitlements deny: ${_entitlements!.canRespond})');
       return false;
+    }
     // Only allow one response per user on this screen
-    return !_responses.any((r) => r.userId == userId);
+    final hasExistingResponse = _responses.any((r) => r.userId == userId);
+    if (hasExistingResponse) {
+      print('DEBUG: _canRespond = false (user already responded)');
+      return false;
+    }
+
+    print(
+        'DEBUG: _canRespond = true (all checks passed, entitlements: ${_entitlements?.canRespond})');
+    return true;
   }
 
   void _openCreateResponseSheet() {
