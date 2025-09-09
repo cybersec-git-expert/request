@@ -41,7 +41,7 @@ class CountryService {
     const defined = String.fromEnvironment('API_BASE_URL');
     if (defined.isNotEmpty) return defined;
     // 2. Production URLs for all platforms
-    return 'https://api.alphabet.lk';
+    return 'http://3.92.216.149:3001';
   }
 
   Future<List<Country>> getAllCountries({bool forceRefresh = false}) async {

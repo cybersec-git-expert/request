@@ -1,11 +1,11 @@
 // API Configuration for REST API Backend
 class ApiConfig {
   // Base URL for the API
-  static const String baseUrl = 'https://api.alphabet.lk/api';
+  static const String baseUrl = 'http://3.92.216.149:3001/api';
 
   // Alternative URLs for different environments
   static const String developmentUrl = 'http://localhost:3001/api';
-  static const String productionUrl = 'https://api.alphabet.lk/api';
+  static const String productionUrl = 'http://3.92.216.149:3001/api';
 
   // Get the appropriate base URL based on environment
   static String get apiBaseUrl {

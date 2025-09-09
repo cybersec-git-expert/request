@@ -31,7 +31,7 @@ class CountryBusinessType {
 
 class CountryBusinessTypeService {
   static const String baseUrl =
-      'https://api.alphabet.lk/api/country-business-types';
+      'http://3.92.216.149:3001/api/country-business-types';
 
   static Future<List<CountryBusinessType>> fetchBusinessTypes(
       String countryCode) async {

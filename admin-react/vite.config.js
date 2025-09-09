@@ -11,9 +11,9 @@ export default defineConfig({
     proxy: {
       // Proxy API calls to the AWS EC2 production server
       '/api': {
-        target: 'https://api.alphabet.lk', // AWS EC2 production server
+        target: 'http://3.92.216.149:3001', // AWS EC2 production server
         changeOrigin: true,
-        secure: true, // Enable SSL verification for HTTPS
+        secure: false, // Disable SSL verification for HTTP
         // Avoid Vite rewriting or serving index.html for API routes
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {

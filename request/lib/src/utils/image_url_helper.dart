@@ -6,13 +6,13 @@ class ImageUrlHelper {
   // Get the base URL for the API
   static String get _baseUrl {
     if (kIsWeb) {
-      return 'https://api.alphabet.lk'; // Production Web
+      return 'http://3.92.216.149:3001'; // Production Web
     } else if (Platform.isAndroid) {
-      return 'https://api.alphabet.lk'; // Production Android
+      return 'http://3.92.216.149:3001'; // Production Android
     } else if (Platform.isIOS) {
-      return 'https://api.alphabet.lk'; // Production iOS
+      return 'http://3.92.216.149:3001'; // Production iOS
     } else {
-      return 'https://api.alphabet.lk'; // Production Desktop/other
+      return 'http://3.92.216.149:3001'; // Production Desktop/other
     }
   }
 

@@ -11,10 +11,10 @@ class S3ImageUploadService {
   static const String _apiHostOverride = String.fromEnvironment('API_HOST');
   static String get _baseUrl {
     if (_apiHostOverride.isNotEmpty) return _apiHostOverride;
-    if (kIsWeb) return 'https://api.alphabet.lk';
-    if (Platform.isAndroid) return 'https://api.alphabet.lk';
-    if (Platform.isIOS) return 'https://api.alphabet.lk';
-    return 'https://api.alphabet.lk';
+    if (kIsWeb) return 'http://3.92.216.149:3001';
+    if (Platform.isAndroid) return 'http://3.92.216.149:3001';
+    if (Platform.isIOS) return 'http://3.92.216.149:3001';
+    return 'http://3.92.216.149:3001';
   }
 
   /// Get signed URL for S3 object

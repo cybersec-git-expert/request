@@ -15,14 +15,14 @@ class ApiClient {
   // Platform-specific base URLs
   static String get _baseUrl {
     if (kIsWeb) {
-      return 'https://api.alphabet.lk'; // Production Web
+      return 'http://3.92.216.149:3001'; // Production Web
     } else if (Platform.isAndroid) {
       // For production release
-      return 'https://api.alphabet.lk';
+      return 'http://3.92.216.149:3001';
     } else if (Platform.isIOS) {
-      return 'https://api.alphabet.lk'; // Production iOS
+      return 'http://3.92.216.149:3001'; // Production iOS
     } else {
-      return 'https://api.alphabet.lk'; // Production Desktop/other
+      return 'http://3.92.216.149:3001'; // Production Desktop/other
     }
   }
 

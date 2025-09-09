@@ -449,13 +449,13 @@ class CountryFilteredDataService {
       // Get base URL from platform configuration
       String baseUrl;
       if (kIsWeb) {
-        baseUrl = 'https://api.alphabet.lk';
+        baseUrl = 'http://3.92.216.149:3001';
       } else if (Platform.isAndroid) {
-        baseUrl = 'https://api.alphabet.lk';
+        baseUrl = 'http://3.92.216.149:3001';
       } else if (Platform.isIOS) {
-        baseUrl = 'https://api.alphabet.lk';
+        baseUrl = 'http://3.92.216.149:3001';
       } else {
-        baseUrl = 'https://api.alphabet.lk';
+        baseUrl = 'http://3.92.216.149:3001';
       }
 
       final url = Uri.parse(
