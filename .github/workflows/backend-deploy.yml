@@ -33,14 +33,14 @@ jobs:
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: 44.211.63.136
-        username: ubuntu
+        username: ec2-user
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Install Docker if not present
           if ! command -v docker &> /dev/null; then
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
-            sudo usermod -aG docker ubuntu
+            sudo usermod -aG docker ec2-user
           fi
           
           # Login to GitHub Container Registry
@@ -54,9 +54,9 @@ jobs:
           docker rm request-backend || true
           
           # Create production.env if missing
-          if [ ! -f /home/ubuntu/production.env ]; then
+          if [ ! -f /home/ec2-user/production.env ]; then
             echo "Creating production.env..."
-            cat > /home/ubuntu/production.env << 'EOF'
+            cat > /home/ec2-user/production.env << 'EOF'
           DB_HOST=requestdb.cq70gkkamvcs.us-east-1.rds.amazonaws.com
           DB_PORT=5432
           DB_NAME=requestdb
@@ -75,7 +75,7 @@ jobs:
           docker run -d \
             --name request-backend \
             --restart unless-stopped \
-            --env-file /home/ubuntu/production.env \
+            --env-file /home/ec2-user/production.env \
             -p 0.0.0.0:3001:3001 \
             ghcr.io/cybersec-git-expert/request-backend:latest
           
