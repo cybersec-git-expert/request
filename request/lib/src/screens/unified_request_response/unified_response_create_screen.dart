@@ -11,6 +11,8 @@ import '../../utils/currency_helper.dart';
 import '../../widgets/accurate_location_picker_widget.dart';
 import '../../services/country_service.dart';
 import '../../utils/module_field_localizer.dart';
+import '../../utils/entitlements_mixin.dart';
+import '../../../services/entitlements_service.dart';
 
 class UnifiedResponseCreateScreen extends StatefulWidget {
   final RequestModel request;
@@ -23,7 +25,7 @@ class UnifiedResponseCreateScreen extends StatefulWidget {
 }
 
 class _UnifiedResponseCreateScreenState
-    extends State<UnifiedResponseCreateScreen> {
+    extends State<UnifiedResponseCreateScreen> with EntitlementsCheckMixin {
   final _formKey = GlobalKey<FormState>();
   final CentralizedRequestService _requestService = CentralizedRequestService();
   final EnhancedUserService _userService = EnhancedUserService();
@@ -80,6 +82,23 @@ class _UnifiedResponseCreateScreenState
   final _locationAddressController = TextEditingController();
   double? _locationLat;
   double? _locationLon;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserEntitlements();
+  }
+
+  Future<void> _loadUserEntitlements() async {
+    try {
+      final currentUser = await _userService.getCurrentUserModel();
+      if (currentUser?.id != null) {
+        await loadEntitlements(userId: currentUser!.id);
+      }
+    } catch (e) {
+      debugPrint('Error loading user entitlements: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -216,7 +235,10 @@ class _UnifiedResponseCreateScreenState
                   GlassTheme.glassCard(child: _buildRequestSummary()),
                   const SizedBox(height: 16),
                   _buildResponseFields(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  // Show remaining responses counter
+                  Center(child: buildResponsesRemaining()),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1754,6 +1776,20 @@ class _UnifiedResponseCreateScreenState
   Future<void> _submitResponse() async {
     if (!_formKey.currentState!.validate()) {
       return;
+    }
+
+    // Check entitlements before proceeding
+    final currentUser = await _userService.getCurrentUserModel();
+    if (currentUser?.id != null) {
+      final canRespond = await checkCanRespond(
+        userId: currentUser!.id,
+        showDialog: true,
+      );
+
+      if (!canRespond) {
+        // User hit limit or cancelled subscription dialog
+        return;
+      }
     }
 
     setState(() {
