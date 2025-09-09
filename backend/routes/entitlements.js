@@ -3,12 +3,12 @@
 const express = require('express');
 const router = express.Router();
 const entitlementsService = require('../services/entitlements');
-const authMiddleware = require('../middleware/auth');
+const auth = require('../services/auth');
 
 /**
  * Get user's current entitlements
  */
-router.get('/me', authMiddleware, async (req, res) => {
+router.get('/me', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
     const entitlements = await entitlementsService.getUserEntitlements(userId);
@@ -29,7 +29,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 /**
  * Check if user can see contact details
  */
-router.get('/contact-details', authMiddleware, async (req, res) => {
+router.get('/contact-details', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
     const canSee = await entitlementsService.canSeeContactDetails(userId);
@@ -50,7 +50,7 @@ router.get('/contact-details', authMiddleware, async (req, res) => {
 /**
  * Check if user can send messages
  */
-router.get('/messaging', authMiddleware, async (req, res) => {
+router.get('/messaging', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
     const canMessage = await entitlementsService.canSendMessages(userId);
@@ -71,7 +71,7 @@ router.get('/messaging', authMiddleware, async (req, res) => {
 /**
  * Check if user can respond to requests
  */
-router.get('/respond', authMiddleware, async (req, res) => {
+router.get('/respond', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
     const canRespond = await entitlementsService.canRespond(userId);
@@ -92,7 +92,7 @@ router.get('/respond', authMiddleware, async (req, res) => {
 /**
  * Check notification eligibility for request type
  */
-router.get('/notifications/:requestType', authMiddleware, async (req, res) => {
+router.get('/notifications/:requestType', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
     const { requestType } = req.params;
