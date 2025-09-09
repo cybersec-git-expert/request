@@ -24,8 +24,9 @@ async function getEntitlements(userId, role, now = new Date()) {
     );
     const responseCount = usageRes.rows[0]?.response_count || 0;
     const freeLimit = 3;
-    let canViewContact = responseCount < freeLimit;
-    let canMessage = canViewContact;
+  let canViewContact = responseCount < freeLimit;
+  // New logic: allow messaging/responding by default; only block after limit
+  let canMessage = true;
 
     return {
       isSubscribed: false,
@@ -40,17 +41,17 @@ async function getEntitlements(userId, role, now = new Date()) {
   }
 }
 
-function requireResponseEntitlement() {
+function requireResponseEntitlement({ enforce = false } = {}) {
   return async (req, res, next) => {
     try {
       const userId = req.user?.id; // set by auth middleware
       const role = req.user?.role; // 'normal' | 'business'
       if (!userId) return res.status(401).json({ error: 'unauthorized' });
-  const ent = await getEntitlements(userId, role);
-  // attach to request for downstream handlers
-  req.entitlements = ent;
-  if (ent.audience === 'normal' && !ent.isSubscribed && ent.canMessage !== true) {
-        return res.status(402).json({ error: 'limit_reached', message: 'Monthly response limit reached' });
+      const ent = await getEntitlements(userId, role);
+      req.entitlements = ent;
+      // Only enforce limit if explicitly enabled (future subscription feature)
+      if (enforce && ent.responseCountThisMonth >= 3 && !ent.isSubscribed) {
+        return res.status(403).json({ error: 'limit_reached', message: 'Monthly response limit reached', remaining: 0 });
       }
       return next();
     } catch (e) {
