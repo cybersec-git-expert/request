@@ -18,7 +18,7 @@ import '../account/public_profile_screen.dart';
 import '../../services/rest_user_service.dart';
 import '../membership/quick_upgrade_sheet.dart';
 import '../membership/public_plans_screen.dart';
-import '../../services/entitlements_service.dart';
+import '../../../services/entitlements_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// UnifiedRequestViewScreen (Minimal REST Migration)
@@ -46,7 +46,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   bool _alreadyReviewed = false;
   String? _requesterPhotoUrl;
   // Entitlements and membership gating
-  EntitlementsSummary? _entitlements;
+  final EntitlementsService _entitlementsService = EntitlementsService();
+  UserEntitlements? _entitlements;
   bool _membershipCompleted = false;
 
   @override
@@ -59,15 +60,31 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _loadEntitlementsAndPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final completed = prefs.getBool('membership_completed') ?? false;
-      final ent = await EntitlementsService.getEntitlementsSummary();
+      final completed = prefs.getBool('membership_completed') ??
+          true; // Default to true for new users
+
+      // Get current user ID
+      final userId = RestAuthService.instance.currentUser?.uid;
+      UserEntitlements? ent;
+
+      if (userId != null) {
+        ent = await _entitlementsService.getUserEntitlementsSimple(userId);
+        print('Loaded entitlements for user $userId: ${ent?.canRespond}');
+      }
+
       if (!mounted) return;
       setState(() {
         _membershipCompleted = completed;
         _entitlements = ent;
       });
-    } catch (_) {
-      // Non-fatal
+    } catch (e) {
+      print('Error loading entitlements: $e');
+      // For new users, default to allowing responses
+      if (!mounted) return;
+      setState(() {
+        _membershipCompleted = true;
+        _entitlements = null; // null means no restrictions
+      });
     }
   }
 
@@ -186,10 +203,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     if (!(status == 'active' || status == 'open')) return false;
     // Respect backend gating flag
     if (_request?.canMessage == false) return false;
-    // Require membership completion before permitting responses
-    if (!_membershipCompleted) return false;
-    // If entitlements loaded, enforce canRespond as well
-    if (_entitlements != null && !_entitlements!.canRespond) return false;
+    // If entitlements loaded and specifically deny, block response
+    // Otherwise allow response (default to true for new users)
+    if (_entitlements != null && _entitlements!.canRespond == false)
+      return false;
     // Only allow one response per user on this screen
     return !_responses.any((r) => r.userId == userId);
   }
@@ -1206,10 +1223,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Show only one subscribe prompt if user cannot message or view details
+                        // Show only one subscribe prompt if user has reached their limit
                         if (!_isOwner &&
-                            (!(_entitlements?.canSendMessages ?? false) ||
-                                !_membershipCompleted))
+                            _entitlements != null &&
+                            (!_entitlements!.canSendMessages ||
+                                !_entitlements!.canRespond))
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
