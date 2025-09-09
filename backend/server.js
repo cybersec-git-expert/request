@@ -402,6 +402,8 @@ app.use('/api/upload', uploadRoutes); // Image upload endpoint
 app.use('/api/s3', uploadS3Routes); // S3 upload endpoints
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
 app.use('/api/public/subscriptions', publicSubscriptionsRoutes); // Public subscriptions endpoints
+app.use('/api/entitlements', entitlementsRoutes); // NEW - Entitlements API routes
+app.use('/api/entitlements-simple', entitlementsSimpleRoutes); // NEW - Simple Entitlements API routes
 
 // Removed: subscription management routes
 // const subscriptionManagementRoutes = require('./routes/subscription-management');
