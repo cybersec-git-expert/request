@@ -213,11 +213,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       print('DEBUG: _canRespond = false (status not active/open: $status)');
       return false;
     }
-    // Respect backend gating flag
-    if (_request?.canMessage == false) {
-      print('DEBUG: _canRespond = false (canMessage = false)');
-      return false;
-    }
+    // Skip old canMessage check - now using entitlements system
+    // if (_request?.canMessage == false) {
+    //   print('DEBUG: _canRespond = false (canMessage = false)');
+    //   return false;
+    // }
     // If entitlements loaded and specifically deny, block response
     // Otherwise allow response (default to true for new users)
     if (_entitlements != null && _entitlements!.canRespond == false) {
@@ -240,14 +240,20 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   void _openCreateResponseSheet() {
     if (_request == null) return;
     () async {
-      // Prefer backend gating flag on the loaded request
-      final canMessage = _request?.canMessage ?? true;
-      if (!canMessage) {
+      // Check entitlements instead of old canMessage flag
+      final userId = RestAuthService.instance.currentUser?.uid;
+      bool canRespond = true;
+
+      if (userId != null && _entitlements != null) {
+        canRespond = _entitlements!.canRespond;
+      }
+
+      if (!canRespond) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                const Text('Monthly response limit reached for this month.'),
+            content: const Text(
+                'You have reached your response limit for this month.'),
             action: SnackBarAction(
               label: 'OK',
               onPressed: () {},
@@ -312,41 +318,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
               Text('This is your own request. You cannot message yourself.')));
       return;
     }
-    // Gate messaging using backend-provided flag
-    final canMessage = _request?.canMessage ?? true;
-    if (!canMessage) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Monthly response limit reached for this month.'),
-          action: SnackBarAction(
-            label: 'OK',
-            onPressed: () {},
-          ),
-        ),
-      );
-      await Future.delayed(const Duration(milliseconds: 200));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Upgrade membership to message requesters'),
-          action: SnackBarAction(
-            label: 'View Plans',
-            onPressed: () {
-              final reqType =
-                  (_request?.requestType ?? _request?.categoryType ?? '')
-                      .toString()
-                      .toLowerCase();
-              final isRide = reqType.contains('ride');
-              Navigator.pushNamed(context, '/membership', arguments: {
-                'requiredSubscriptionType': isRide ? 'driver' : 'business'
-              });
-            },
-          ),
-        ),
-      );
-      return;
-    }
+    // Skip old canMessage check for messaging - now using entitlements
+    // New entitlements system will handle this via checkCanSendMessages
     try {
       final (convo, messages) = await ChatService.instance.openConversation(
           requestId: r.id, currentUserId: currentUserId, otherUserId: r.userId);
