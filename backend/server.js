@@ -87,6 +87,8 @@ const reviewsRoutes = require('./routes/reviews'); // NEW - User reviews API
 const promoCodesRoutes = require('./routes/promo-codes'); // NEW - Promo codes admin
 // Removed: subscriptions and subscription-country-pricing routes
 const entitlementSvc = require('./entitlements'); // Entitlements service
+const entitlementsRoutes = require('./routes/entitlements'); // Entitlements API routes
+const entitlementsSimpleRoutes = require('./routes/entitlements-simple'); // Simple Entitlements API routes
 const authService = require('./services/auth'); // Auth middleware for protected routes
 
 
