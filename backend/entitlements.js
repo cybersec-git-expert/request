@@ -18,11 +18,22 @@ async function getEntitlements(userId, role, now = new Date()) {
 
     // Subscriptions removed: always assume no active subscription
     const subscription = null;
-    const usageRes = await client.query(
-      'SELECT response_count FROM usage_monthly WHERE user_id = $1 AND year_month = $2',
-      [userId, yearMonth]
-    );
-    const responseCount = usageRes.rows[0]?.response_count || 0;
+    let responseCount = 0;
+    try {
+      const usageRes = await client.query(
+        'SELECT response_count FROM usage_monthly WHERE user_id = $1 AND year_month = $2',
+        [userId, yearMonth]
+      );
+      responseCount = usageRes.rows[0]?.response_count || 0;
+    } catch (e) {
+      // Table might not exist yet; treat as zero usage.
+      if (e.code === '42P01') { // undefined table
+        console.warn('[entitlements] usage_monthly missing, treating count=0');
+      } else {
+        console.warn('[entitlements] usage query failed, treating count=0', e.message || e);
+      }
+      responseCount = 0;
+    }
     const freeLimit = 3;
   let canViewContact = responseCount < freeLimit;
   // New logic: allow messaging/responding by default; only block after limit
@@ -55,8 +66,10 @@ function requireResponseEntitlement({ enforce = false } = {}) {
       }
       return next();
     } catch (e) {
-      console.error('entitlement error', e);
-      return res.status(500).json({ error: 'entitlement_failed' });
+  console.error('entitlement error (downgrading)', e.message || e);
+  // Allow request to continue rather than failing creation.
+  req.entitlements = { audience: 'normal', isSubscribed: false, responseCountThisMonth: 0, canViewContact: true, canMessage: true };
+  return next();
     }
   };
 }
