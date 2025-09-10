@@ -37,27 +37,26 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      // API failed - return permissive defaults for new users
-      print(
-          'API failed for main entitlements, returning permissive defaults for new users');
+      // API failed - return restrictive defaults for security
+      print('API failed for main entitlements, returning restrictive defaults');
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': true,
-        'canSendMessages': true,
-        'canRespond': true,
-        'responseCount': 0,
-        'remainingResponses': 3,
+        'canSeeContactDetails': false,
+        'canSendMessages': false,
+        'canRespond': false,
+        'responseCount': 3,
+        'remainingResponses': 0,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
     } catch (e) {
       print('Error fetching user entitlements: $e');
-      // Return permissive defaults for new users when API fails
+      // Return restrictive defaults for security when API fails
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': true,
-        'canSendMessages': true,
-        'canRespond': true,
-        'responseCount': 0,
-        'remainingResponses': 3,
+        'canSeeContactDetails': false,
+        'canSendMessages': false,
+        'canRespond': false,
+        'responseCount': 3,
+        'remainingResponses': 0,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
@@ -96,27 +95,26 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      // API failed - return permissive defaults for new users
-      print(
-          'API failed for entitlements, returning permissive defaults for new users');
+      // API failed - return restrictive defaults for security
+      print('API failed for entitlements, returning restrictive defaults');
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': true,
-        'canSendMessages': true,
-        'canRespond': true,
-        'responseCount': 0,
-        'remainingResponses': 3,
+        'canSeeContactDetails': false,
+        'canSendMessages': false,
+        'canRespond': false,
+        'responseCount': 3,
+        'remainingResponses': 0,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
     } catch (e) {
       print('Error fetching user entitlements (simple): $e');
-      // Return permissive defaults for new users when API fails
+      // Return restrictive defaults for security when API fails
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': true,
-        'canSendMessages': true,
-        'canRespond': true,
-        'responseCount': 0,
-        'remainingResponses': 3,
+        'canSeeContactDetails': false,
+        'canSendMessages': false,
+        'canRespond': false,
+        'responseCount': 3,
+        'remainingResponses': 0,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
@@ -159,66 +157,44 @@ class EntitlementsService {
   /// Check if user can respond to requests
   Future<bool> canRespond([String? userId]) async {
     try {
-      if (userId != null) {
-        // Use simple endpoint
-        final response = await _apiClient.get<Map<String, dynamic>>(
-          '/api/entitlements-simple/respond',
-          queryParameters: {'user_id': userId},
-          fromJson: (json) => json,
-        );
+      // Always use the main authenticated endpoint
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/api/me/entitlements',
+        fromJson: (json) => json,
+      );
 
-        if (response.isSuccess && response.data != null) {
-          final data = response.data!['data'] as Map<String, dynamic>;
-          return data['canRespond'] as bool? ?? false;
-        }
-      } else {
-        // Use authenticated endpoint
-        final response = await _apiClient.get<Map<String, dynamic>>(
-          '/api/entitlements/respond',
-          fromJson: (json) => json,
-        );
-
-        if (response.isSuccess && response.data != null) {
-          final data = response.data!['data'] as Map<String, dynamic>;
-          return data['canRespond'] as bool? ?? false;
-        }
+      if (response.isSuccess && response.data != null) {
+        final responseData = response.data!;
+        final data =
+            responseData['data'] as Map<String, dynamic>? ?? responseData;
+        return data['canRespond'] as bool? ?? false;
       }
     } catch (e) {
       print('Error checking respond permission: $e');
     }
+    // Always return false when API fails for security
     return false;
   }
 
   /// Check if user can send messages
   Future<bool> canSendMessages([String? userId]) async {
     try {
-      if (userId != null) {
-        // Use simple endpoint
-        final response = await _apiClient.get<Map<String, dynamic>>(
-          '/api/entitlements-simple/messaging',
-          queryParameters: {'user_id': userId},
-          fromJson: (json) => json,
-        );
+      // Always use the main authenticated endpoint
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/api/me/entitlements',
+        fromJson: (json) => json,
+      );
 
-        if (response.isSuccess && response.data != null) {
-          final data = response.data!['data'] as Map<String, dynamic>;
-          return data['canSendMessages'] as bool? ?? false;
-        }
-      } else {
-        // Use authenticated endpoint
-        final response = await _apiClient.get<Map<String, dynamic>>(
-          '/api/entitlements/messaging',
-          fromJson: (json) => json,
-        );
-
-        if (response.isSuccess && response.data != null) {
-          final data = response.data!['data'] as Map<String, dynamic>;
-          return data['canSendMessages'] as bool? ?? false;
-        }
+      if (response.isSuccess && response.data != null) {
+        final responseData = response.data!;
+        final data =
+            responseData['data'] as Map<String, dynamic>? ?? responseData;
+        return data['canMessage'] as bool? ?? false;
       }
     } catch (e) {
       print('Error checking messaging permission: $e');
     }
+    // Always return false when API fails for security
     return false;
   }
 
