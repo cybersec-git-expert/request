@@ -1,20 +1,14 @@
 import 'dart:async';
 import '../src/services/api_client.dart';
-import 'auth_service.dart';
 
 /// Entitlements service for managing user subscription and response limits
 class EntitlementsService {
   final ApiClient _apiClient = ApiClient.instance;
-  final AuthService _authService = AuthService();
 
   /// Get user's current entitlements (authenticated version)
   Future<UserEntitlements?> getUserEntitlements() async {
     try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
+      // Let the API client handle authentication automatically
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/api/me/entitlements',
         fromJson: (json) => json,

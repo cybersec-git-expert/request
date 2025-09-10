@@ -68,9 +68,21 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       UserEntitlements? ent;
 
       if (userId != null) {
-        ent = await _entitlementsService.getUserEntitlementsSimple(userId);
+        print('DEBUG: Loading entitlements for user $userId...');
+
+        // Try both methods to ensure we get fresh data
+        ent = await _entitlementsService.getUserEntitlements();
+        if (ent == null) {
+          print(
+              'DEBUG: Main entitlements method failed, trying simple method...');
+          ent = await _entitlementsService.getUserEntitlementsSimple(userId);
+        }
+
         print(
-            'Loaded entitlements for user $userId: canRespond=${ent?.canRespond}, responseCount=${ent?.responseCount}, remaining=${ent?.remainingResponses}');
+            'DEBUG: Loaded entitlements for user $userId: canRespond=${ent?.canRespond}, responseCount=${ent?.responseCount}, remaining=${ent?.remainingResponses}');
+        print('DEBUG: Full entitlements object: $ent');
+      } else {
+        print('DEBUG: No user ID found, skipping entitlements load');
       }
 
       if (!mounted) return;
@@ -80,16 +92,16 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       });
     } catch (e) {
       print('Error loading entitlements: $e');
-      // Use restrictive defaults when API fails to enforce limits
+      // Use permissive defaults for new users when API fails
       if (!mounted) return;
       setState(() {
         _membershipCompleted = true;
         _entitlements = UserEntitlements.fromJson({
-          'canSeeContactDetails': false,
-          'canSendMessages': false,
-          'canRespond': false,
-          'responseCount': 3,
-          'remainingResponses': 0,
+          'canSeeContactDetails': true,
+          'canSendMessages': true,
+          'canRespond': true,
+          'responseCount': 0,
+          'remainingResponses': 3,
           'subscriptionType': 'free',
           'planName': 'Free Plan',
         });
@@ -245,6 +257,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     if (_entitlements != null && _entitlements!.canRespond == false) {
       print(
           'DEBUG: _canRespond = false (entitlements deny: ${_entitlements!.canRespond})');
+      print(
+          'DEBUG: _entitlements responseCount: ${_entitlements!.responseCount}, remainingResponses: ${_entitlements!.remainingResponses}');
       return false;
     }
     // Only allow one response per user on this screen
@@ -256,6 +270,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
     print(
         'DEBUG: _canRespond = true (all checks passed, entitlements: ${_entitlements?.canRespond})');
+    print(
+        'DEBUG: Current entitlements: responseCount=${_entitlements?.responseCount}, remaining=${_entitlements?.remainingResponses}');
     return true;
   }
 
