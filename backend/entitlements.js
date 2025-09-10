@@ -1,5 +1,5 @@
-// Minimal entitlement resolver and middleware
-// Assumes Express app and Postgres via a db client (pg)
+// Unified Entitlements System
+// Handles all subscription, response limits, and permissions logic
 
 const { Pool } = require('pg');
 const pool = new Pool();
@@ -10,15 +10,17 @@ function ym(date = new Date()) {
   return `${y}${m}`; // 202508
 }
 
+// Core entitlements logic
 async function getEntitlements(userId, role, now = new Date()) {
   const client = await pool.connect();
   try {
     const yearMonth = ym(now);
     const audience = role === 'business' ? 'business' : 'normal';
 
-    // Subscriptions removed: always assume no active subscription
+    // For now, assume no subscriptions - all users are free
     const subscription = null;
     let responseCount = 0;
+    
     try {
       const usageRes = await client.query(
         'SELECT response_count FROM usage_monthly WHERE user_id = $1 AND year_month = $2',
@@ -26,7 +28,7 @@ async function getEntitlements(userId, role, now = new Date()) {
       );
       responseCount = usageRes.rows[0]?.response_count || 0;
     } catch (e) {
-      // Table might not exist yet; treat as zero usage.
+      // Table might not exist yet; treat as zero usage
       if (e.code === '42P01') { // undefined table
         console.warn('[entitlements] usage_monthly missing, treating count=0');
       } else {
@@ -34,10 +36,11 @@ async function getEntitlements(userId, role, now = new Date()) {
       }
       responseCount = 0;
     }
+    
     const freeLimit = 3;
-  let canViewContact = responseCount < freeLimit;
-  // New logic: allow messaging/responding by default; only block after limit
-  let canMessage = true;
+    const canViewContact = responseCount < freeLimit;
+    const canMessage = responseCount < freeLimit;
+    const canRespond = responseCount < freeLimit;
 
     return {
       isSubscribed: false,
@@ -45,6 +48,10 @@ async function getEntitlements(userId, role, now = new Date()) {
       responseCountThisMonth: responseCount,
       canViewContact,
       canMessage,
+      canRespond,
+      remainingResponses: Math.max(0, freeLimit - responseCount),
+      subscriptionType: 'free',
+      planName: 'Free Plan',
       subscription
     };
   } finally {
@@ -52,28 +59,103 @@ async function getEntitlements(userId, role, now = new Date()) {
   }
 }
 
+// User entitlements API format
+async function getUserEntitlements(userId) {
+  try {
+    const ent = await getEntitlements(userId, 'normal');
+    return {
+      canSeeContactDetails: ent.canViewContact,
+      canSendMessages: ent.canMessage,
+      canRespond: ent.canRespond,
+      responseCount: ent.responseCountThisMonth,
+      remainingResponses: ent.remainingResponses,
+      subscriptionType: ent.subscriptionType,
+      planName: ent.planName
+    };
+  } catch (error) {
+    console.error('Error getting user entitlements:', error);
+    // Return safe defaults for free user
+    return {
+      canSeeContactDetails: true,
+      canSendMessages: true,
+      canRespond: true,
+      responseCount: 0,
+      remainingResponses: 3,
+      subscriptionType: 'free',
+      planName: 'Free Plan'
+    };
+  }
+}
+
+// Check specific permissions
+async function canSeeContactDetails(userId) {
+  try {
+    const ent = await getEntitlements(userId, 'normal');
+    return ent.canViewContact;
+  } catch (error) {
+    console.error('Error checking contact details permission:', error);
+    return false;
+  }
+}
+
+async function canSendMessages(userId) {
+  try {
+    const ent = await getEntitlements(userId, 'normal');
+    return ent.canMessage;
+  } catch (error) {
+    console.error('Error checking messaging permission:', error);
+    return false;
+  }
+}
+
+async function canRespond(userId) {
+  try {
+    const ent = await getEntitlements(userId, 'normal');
+    return ent.canRespond;
+  } catch (error) {
+    console.error('Error checking response permission:', error);
+    return false;
+  }
+}
+
+// Express middleware for response entitlement checking
 function requireResponseEntitlement({ enforce = false } = {}) {
   return async (req, res, next) => {
     try {
       const userId = req.user?.id; // set by auth middleware
       const role = req.user?.role; // 'normal' | 'business'
       if (!userId) return res.status(401).json({ error: 'unauthorized' });
+      
       const ent = await getEntitlements(userId, role);
       req.entitlements = ent;
-      // Only enforce limit if explicitly enabled (future subscription feature)
-      if (enforce && ent.responseCountThisMonth >= 3 && !ent.isSubscribed) {
-        return res.status(403).json({ error: 'limit_reached', message: 'Monthly response limit reached', remaining: 0 });
+      
+      // Only enforce limit if explicitly enabled
+      if (enforce && !ent.canRespond) {
+        return res.status(403).json({ 
+          error: 'limit_reached', 
+          message: 'Monthly response limit reached', 
+          remaining: ent.remainingResponses 
+        });
       }
       return next();
     } catch (e) {
-  console.error('entitlement error (downgrading)', e.message || e);
-  // Allow request to continue rather than failing creation.
-  req.entitlements = { audience: 'normal', isSubscribed: false, responseCountThisMonth: 0, canViewContact: true, canMessage: true };
-  return next();
+      console.error('entitlement error (downgrading)', e.message || e);
+      // Allow request to continue rather than failing creation
+      req.entitlements = { 
+        audience: 'normal', 
+        isSubscribed: false, 
+        responseCountThisMonth: 0, 
+        canViewContact: true, 
+        canMessage: true,
+        canRespond: true,
+        remainingResponses: 3
+      };
+      return next();
     }
   };
 }
 
+// Increment user's response count
 async function incrementResponseCount(userId, now = new Date()) {
   const client = await pool.connect();
   try {
@@ -87,12 +169,109 @@ async function incrementResponseCount(userId, now = new Date()) {
       [userId, yearMonth]
     );
     await client.query('COMMIT');
+    console.log(`[entitlements] Incremented response count for user ${userId} in ${yearMonth}`);
   } catch (e) {
     await client.query('ROLLBACK');
+    console.error(`[entitlements] Failed to increment response count:`, e);
     throw e;
   } finally {
     client.release();
   }
 }
 
-module.exports = { getEntitlements, requireResponseEntitlement, incrementResponseCount };
+// Express routes for entitlements API
+function createRoutes() {
+  const express = require('express');
+  const router = express.Router();
+
+  // Get user's current entitlements (simple version with user_id param)
+  router.get('/me', async (req, res) => {
+    try {
+      const userId = req.query.user_id || req.user?.id;
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'user_id parameter required'
+        });
+      }
+      
+      const entitlements = await getUserEntitlements(userId);
+      
+      res.json({
+        success: true,
+        data: entitlements
+      });
+    } catch (error) {
+      console.error('Error getting user entitlements:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get entitlements'
+      });
+    }
+  });
+
+  // Check if user can see contact details
+  router.get('/contact-details', async (req, res) => {
+    try {
+      const userId = req.query.user_id || req.user?.id;
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'user_id parameter required'
+        });
+      }
+      
+      const canSee = await canSeeContactDetails(userId);
+      
+      res.json({
+        success: true,
+        data: { canSeeContactDetails: canSee }
+      });
+    } catch (error) {
+      console.error('Error checking contact details permission:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to check contact details permission'
+      });
+    }
+  });
+
+  // Check if user can respond to requests
+  router.get('/respond', async (req, res) => {
+    try {
+      const userId = req.query.user_id || req.user?.id;
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'user_id parameter required'
+        });
+      }
+      
+      const can = await canRespond(userId);
+      
+      res.json({
+        success: true,
+        data: { canRespond: can }
+      });
+    } catch (error) {
+      console.error('Error checking response permission:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to check response permission'
+      });
+    }
+  });
+
+  return router;
+}
+
+module.exports = { 
+  getEntitlements, 
+  requireResponseEntitlement, 
+  incrementResponseCount,
+  getUserEntitlements,
+  canSeeContactDetails,
+  canSendMessages,
+  canRespond,
+  createRoutes
+};
