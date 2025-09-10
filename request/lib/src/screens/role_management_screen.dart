@@ -249,17 +249,20 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // Driver role card with module gating
+                        // Single role selection card
+                        _buildRoleSelectionCard(),
+                        const SizedBox(height: 16),
+                        // Driver role card with module gating (display only)
                         FeatureGateService.instance.gateWidget(
                           requiredModule: BusinessModule.rideSharing,
-                          enabledWidget: _buildRoleCard(UserRole.driver),
+                          enabledWidget: _buildDisplayRoleCard(UserRole.driver),
                           disabledWidget: _buildDisabledRoleCard(
                             UserRole.driver,
                             'Driver registration is not available in your country yet.',
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildRoleCard(UserRole.business),
+                        _buildDisplayRoleCard(UserRole.business),
                         const SizedBox(height: 32),
                         _buildRoleBenefitsSection(),
                       ],
@@ -271,80 +274,147 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     );
   }
 
-  Widget _buildRoleCard(UserRole role) {
-    final submittedStatus = _verificationStatuses[role];
-    final hasVerificationRequest = submittedStatus != null;
-    final hasRole = _currentUser?.hasRole(role) ?? false;
-    final verificationStatus = submittedStatus;
-    final roleTitle = _getRoleDisplayName(role);
-    final statusText = hasVerificationRequest || hasRole
-        ? _getVerificationStatusText(verificationStatus)
-        : 'Not Registered';
-    final statusColor = hasVerificationRequest || hasRole
-        ? _getVerificationStatusColor(verificationStatus)
-        : Colors.grey;
-    final roleIcon = _getRoleIcon(role);
-    final subtitle = _getRoleSubtitle(role, hasVerificationRequest || hasRole);
+  void _registerRole(UserRole role) {
+    // Navigate to role selection screen for better user experience
+    Navigator.pushNamed(context, '/role-selection');
+  }
 
+  Widget _buildRoleSelectionCard() {
     return Container(
       width: double.infinity,
-      decoration: GlassTheme.glassContainer,
       padding: const EdgeInsets.all(20),
+      decoration: GlassTheme.glassContainer,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Icon(roleIcon, size: 32, color: statusColor),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      roleTitle,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: statusColor.withOpacity(0.25)),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+          Icon(
+            Icons.person_add,
+            size: 32,
+            color: AppTheme.primaryColor,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Choose Your Role',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Select whether you want to register as a Driver or Business Owner',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/role-selection'),
+              icon: const Icon(Icons.arrow_forward, size: 18),
+              label: const Text('Select Role'),
+              style: AppTheme.primaryButtonStyle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisplayRoleCard(UserRole role) {
+    final roleTitle = _getRoleDisplayName(role);
+    final roleIcon = _getRoleIcon(role);
+    final verificationStatus = _verificationStatuses[role];
+    final hasVerificationRequest = verificationStatus != null;
+
+    return GestureDetector(
+      onTap: hasVerificationRequest ? () => _navigateToRoleScreen(role) : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: GlassTheme.glassContainer.copyWith(
+          border: hasVerificationRequest
+              ? Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.3), width: 1)
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    roleIcon,
+                    size: 24,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (hasVerificationRequest || hasRole) ...[
-            const SizedBox(height: 20),
-            _buildRoleDetails(role, verificationStatus),
-            const SizedBox(height: 20),
-            _buildRoleActions(role, hasVerificationRequest, verificationStatus),
-          ] else ...[
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        roleTitle,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _getRoleSubtitle(role, hasVerificationRequest),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (verificationStatus != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: verificationStatus == VerificationStatus.approved
+                          ? Colors.green.withOpacity(0.1)
+                          : verificationStatus == VerificationStatus.pending
+                              ? Colors.orange.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      verificationStatus == VerificationStatus.approved
+                          ? 'Approved'
+                          : verificationStatus == VerificationStatus.pending
+                              ? 'Pending'
+                              : 'Rejected',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: verificationStatus == VerificationStatus.approved
+                            ? Colors.green[700]
+                            : verificationStatus == VerificationStatus.pending
+                                ? Colors.orange[700]
+                                : Colors.red[700],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 16),
             Text(
               _getRoleDescription(role),
@@ -354,20 +424,30 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _registerRole(role),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text('Register as $roleTitle'),
-                style: AppTheme.primaryButtonStyle,
-              ),
-            ),
-          ]
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  void _navigateToRoleScreen(UserRole role) {
+    switch (role) {
+      case UserRole.driver:
+        Navigator.pushNamed(context, '/driver-membership');
+        break;
+      case UserRole.business:
+        Navigator.pushNamed(context, '/business-membership');
+        break;
+      default:
+        // For other roles, show a message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '${_getRoleDisplayName(role)} management is not available yet'),
+          ),
+        );
+        break;
+    }
   }
 
   Widget _buildDisabledRoleCard(UserRole role, String disabledMessage) {
@@ -624,32 +704,6 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary))
       ]))
     ]);
-  }
-
-  void _registerRole(UserRole role) async {
-    if (role == UserRole.driver) {
-      // Check if driver registration is enabled via module management
-      final isDriverRegistrationEnabled =
-          await FeatureGateService.instance.isDriverRegistrationEnabled();
-
-      if (!isDriverRegistrationEnabled) {
-        // Show coming soon for driver registration
-        FeatureGateService.instance.showComingSoonModal(
-          context: context,
-          featureName: 'Driver Registration',
-          description:
-              'Driver registration is not available in your country yet. We\'re working to bring ride sharing services to your region soon!',
-          icon: Icons.directions_car,
-        );
-        return;
-      }
-
-      Navigator.pushNamed(context, '/driver-registration')
-          .then((_) => _loadUserData());
-    } else if (role == UserRole.business) {
-      Navigator.pushNamed(context, '/business-registration')
-          .then((_) => _loadUserData());
-    }
   }
 
   void _viewRoleDetails(UserRole role) {

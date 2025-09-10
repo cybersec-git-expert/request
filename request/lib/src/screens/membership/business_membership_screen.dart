@@ -34,11 +34,8 @@ class _BusinessMembershipScreenState extends State<BusinessMembershipScreen> {
       final user = await _userService.getCurrentUser();
       if (user == null) return;
 
-      // Check if user has business role
-      bool hasBusinessRole = user.roles.contains(UserRole.business);
-
-      if (hasBusinessRole) {
-        // Check business verification status
+      // Always check business verification status first, regardless of role
+      try {
         final resp = await ApiClient.instance
             .get('/api/business-verifications/user/${user.uid}');
         if (resp.isSuccess && resp.data != null) {
@@ -56,8 +53,12 @@ class _BusinessMembershipScreenState extends State<BusinessMembershipScreen> {
             return;
           }
         }
+      } catch (e) {
+        print('Business verification check error: $e');
       }
 
+      // Fallback: Check if user has business role
+      bool hasBusinessRole = user.roles.contains(UserRole.business);
       setState(() {
         _isRegistered = hasBusinessRole;
         _verificationStatus = hasBusinessRole ? 'pending' : 'not_registered';
