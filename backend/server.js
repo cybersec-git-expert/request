@@ -87,7 +87,7 @@ const reviewsRoutes = require('./routes/reviews'); // NEW - User reviews API
 const promoCodesRoutes = require('./routes/promo-codes'); // NEW - Promo codes admin
 // Removed: subscriptions and subscription-country-pricing routes
 const entitlementSvc = require('./entitlements'); // Entitlements service
-const entitlementsRoutes = entitlementSvc.createRoutes(); // Unified entitlements routes
+// Entitlements routes will be added separately
 const authService = require('./services/auth'); // Auth middleware for protected routes
 
 
@@ -401,8 +401,7 @@ app.use('/api/upload', uploadRoutes); // Image upload endpoint
 app.use('/api/s3', uploadS3Routes); // S3 upload endpoints
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
 app.use('/api/public/subscriptions', publicSubscriptionsRoutes); // Public subscriptions endpoints
-app.use('/api/entitlements', entitlementsRoutes); // Unified entitlements API routes
-app.use('/api/entitlements-simple', entitlementsRoutes); // Same routes for compatibility
+// Entitlements API endpoints will be added at the end of the file
 
 // Removed: subscription management routes
 // const subscriptionManagementRoutes = require('./routes/subscription-management');
@@ -617,6 +616,55 @@ app.listen(PORT, HOST, () => {
 
 });
 
+// Entitlements API endpoints
+app.get('/api/entitlements-simple/me', async (req, res) => {
+  try {
+    const userId = req.query.user_id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'user_id parameter required'
+      });
+    }
+    
+    const entitlements = await entitlementSvc.getUserEntitlements(userId);
+    
+    res.json({
+      success: true,
+      data: entitlements
+    });
+  } catch (error) {
+    console.error('Error getting user entitlements:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get entitlements'
+    });
+  }
+});
 
+app.get('/api/entitlements/me', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+    
+    const entitlements = await entitlementSvc.getUserEntitlements(userId);
+    
+    res.json({
+      success: true,
+      data: entitlements
+    });
+  } catch (error) {
+    console.error('Error getting user entitlements:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get entitlements'
+    });
+  }
+});
 
 module.exports = app;
