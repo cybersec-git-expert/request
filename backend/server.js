@@ -412,11 +412,14 @@ app.use('/api/public/subscriptions', publicSubscriptionsRoutes); // Public subsc
 // Current user entitlements (for gating in app)
 app.get('/api/me/entitlements', authService.authMiddleware(), async (req, res) => {
   try {
+    console.log('[entitlements] Getting entitlements for user:', req.user.id, 'role:', req.user.role);
     const data = await entitlementSvc.getEntitlements(req.user.id, req.user.role);
+    console.log('[entitlements] Successfully retrieved entitlements:', JSON.stringify(data, null, 2));
     res.json({ success: true, data });
   } catch (e) {
-    console.error('entitlements route error', e);
-    res.status(500).json({ success: false, error: 'failed' });
+    console.error('[entitlements] Route error for user', req.user.id, ':', e);
+    console.error('[entitlements] Stack trace:', e.stack);
+    res.status(500).json({ success: false, error: 'failed', details: e.message });
   }
 });
 
