@@ -1392,7 +1392,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                         ],
                         const SizedBox(height: 8),
                         if (r.contactVisible &&
-                            (r.userPhone?.isNotEmpty == true))
+                            (r.userPhone?.isNotEmpty == true) &&
+                            (_entitlements?.canSeeContactDetails == true))
                           Row(children: [
                             Icon(Icons.phone,
                                 size: 16, color: Colors.grey[600]),
@@ -1402,6 +1403,52 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                   style: TextStyle(color: Colors.grey[700])),
                             ),
                           ]),
+                        // Show subscription prompt if contact details are hidden due to limits
+                        if (r.contactVisible &&
+                            (r.userPhone?.isNotEmpty == true) &&
+                            (_entitlements?.canSeeContactDetails == false))
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(top: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange[200]!),
+                            ),
+                            child: Row(children: [
+                              Icon(Icons.visibility_off,
+                                  size: 16, color: Colors.orange[600]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Contact details hidden. Subscribe to view.',
+                                  style: TextStyle(
+                                    color: Colors.orange[700],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final reqType = (_request?.requestType ??
+                                          _request?.categoryType ??
+                                          '')
+                                      .toString()
+                                      .toLowerCase();
+                                  final isRide = reqType.contains('ride');
+                                  await QuickUpgradeSheet.show(
+                                      context, isRide ? 'driver' : 'business');
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.orange[700],
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                                child: const Text('Subscribe',
+                                    style: TextStyle(fontSize: 12)),
+                              ),
+                            ]),
+                          ),
                       ],
                     ),
                   ),
