@@ -311,16 +311,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _navigateToSubscriptionPlans() async {
     final verificationStatus = await _checkBusinessVerificationStatus();
 
-    // Debug: Show what status we're getting
-    print('Business verification status: $verificationStatus');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Debug: Status is $verificationStatus')),
-    );
-
     switch (verificationStatus) {
       case 'approved':
-        // User is verified business, go directly to business pricing dashboard
-        Navigator.pushNamed(context, '/business-pricing');
+        // User is verified business, go to role management to manage subscription
+        Navigator.pushNamed(context, '/role-management');
         break;
       case 'pending':
         // User has pending verification, go to role management
@@ -339,10 +333,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       case 'no_verification':
       case 'error':
       default:
-        // New user or no existing business role, go to business registration via membership
-        Navigator.pushNamed(context, '/membership', arguments: {
-          'promptOnboarding': true,
-        });
+        // New user or no existing business role, go to role management to see options
+        Navigator.pushNamed(context, '/role-management');
         break;
     }
   }
