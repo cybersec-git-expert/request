@@ -190,10 +190,17 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     if (_request == null) return;
     setState(() => _responsesLoading = true);
     try {
+      print('DEBUG: Reloading responses for request ${_request!.id}');
       final page =
           await _service.getResponses(_request!.id, page: 1, limit: 50);
+      print('DEBUG: Loaded ${page.responses.length} responses');
+      if (page.responses.isNotEmpty) {
+        print(
+            'DEBUG: First response message: "${page.responses.first.message}"');
+      }
       if (mounted) setState(() => _responses = page.responses);
     } catch (e) {
+      print('DEBUG: Error reloading responses: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to reload responses: $e')));
@@ -391,10 +398,29 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         ),
       ),
     ).then((_) async {
-      // Add small delay to ensure backend is updated
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Add longer delay to ensure backend is fully updated
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      print('DEBUG: Refreshing data after response edit...');
+
+      // Reload responses with fresh data
       await _reloadResponses();
       _loadEntitlementsAndPrefs(); // Refresh entitlements after response edit
+
+      // Also reload the entire request data to ensure consistency
+      if (_request != null) {
+        try {
+          final refreshedRequest = await _service.getRequestById(_request!.id);
+          if (mounted && refreshedRequest != null) {
+            setState(() {
+              _request = refreshedRequest;
+            });
+          }
+          print('DEBUG: Request data refreshed successfully');
+        } catch (e) {
+          print('Error refreshing request: $e');
+        }
+      }
     });
   }
 
@@ -1429,14 +1455,12 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                             // Debug message icon visibility
                             ...() {
                               final canMessage =
-                                  _entitlements?.canSendMessages ?? false;
+                                  _entitlements?.canSendMessages ?? true;
                               print(
                                   'DEBUG Message Icon: isOwner=$_isOwner, canSendMessages=$canMessage, membershipCompleted=$_membershipCompleted');
                               return <Widget>[];
                             }(),
-                            if (!_isOwner &&
-                                (_entitlements?.canSendMessages ?? true) &&
-                                _membershipCompleted)
+                            if (!_isOwner)
                               IconButton(
                                 onPressed: () => _messageRequester(r),
                                 icon: Icon(
