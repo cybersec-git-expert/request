@@ -18,6 +18,8 @@ import '../account/public_profile_screen.dart';
 import '../../services/rest_user_service.dart';
 import '../membership/quick_upgrade_sheet.dart';
 import '../../../services/entitlements_service.dart';
+import '../../services/enhanced_user_service.dart';
+import '../../services/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// UnifiedRequestViewScreen (Minimal REST Migration)
@@ -272,6 +274,77 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     print(
         'DEBUG: Current entitlements: responseCount=${_entitlements?.responseCount}, remaining=${_entitlements?.remainingResponses}');
     return true;
+  }
+
+  /// Check business verification status for smart routing
+  Future<String> _checkBusinessVerificationStatus() async {
+    try {
+      final userService = EnhancedUserService();
+      final user = await userService.getCurrentUser();
+      if (user == null) return 'no_auth';
+
+      // Check if user has business role
+      if (!user.roles.contains(UserRole.business)) {
+        return 'no_business_role';
+      }
+
+      // Check business verification status
+      final resp = await ApiClient.instance
+          .get('/api/business-verifications/user/${user.uid}');
+      if (resp.isSuccess && resp.data != null) {
+        final responseWrapper = resp.data as Map<String, dynamic>;
+        final data = responseWrapper['data'] as Map<String, dynamic>?;
+        if (data != null) {
+          final status =
+              (data['status'] ?? 'pending').toString().trim().toLowerCase();
+          return status; // 'approved', 'pending', 'rejected'
+        }
+      }
+      return 'no_verification';
+    } catch (e) {
+      print('Error checking business verification: $e');
+      return 'error';
+    }
+  }
+
+  /// Smart navigation to subscription plans based on business verification status
+  Future<void> _navigateToSubscriptionPlans() async {
+    final verificationStatus = await _checkBusinessVerificationStatus();
+
+    // Debug: Show what status we're getting
+    print('Business verification status: $verificationStatus');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Debug: Status is $verificationStatus')),
+    );
+
+    switch (verificationStatus) {
+      case 'approved':
+        // User is verified business, go directly to business pricing dashboard
+        Navigator.pushNamed(context, '/business-pricing');
+        break;
+      case 'pending':
+        // User has pending verification, go to role management
+        Navigator.pushNamed(context, '/role-management');
+        break;
+      case 'rejected':
+        // User was rejected, show message and go to role management
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Your business verification was rejected. Please check your role management for details.')),
+        );
+        Navigator.pushNamed(context, '/role-management');
+        break;
+      case 'no_business_role':
+      case 'no_verification':
+      case 'error':
+      default:
+        // New user or no existing business role, go to business registration via membership
+        Navigator.pushNamed(context, '/membership', arguments: {
+          'promptOnboarding': true,
+        });
+        break;
+    }
   }
 
   void _openCreateResponseSheet() {
@@ -1196,13 +1269,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                           const SizedBox(height: 12),
                           ElevatedButton.icon(
                             onPressed: () async {
-                              final reqType =
-                                  (r.requestType ?? r.categoryType ?? '')
-                                      .toString()
-                                      .toLowerCase();
-                              final isRide = reqType.contains('ride');
-                              await QuickUpgradeSheet.show(
-                                  context, isRide ? 'driver' : 'business');
+                              await _navigateToSubscriptionPlans();
                             },
                             icon: const Icon(Icons.star),
                             label: const Text('View Subscription Plans'),
