@@ -34,6 +34,9 @@ import 'src/services/notification_service.dart';
 import 'src/services/notification_center.dart';
 // Removed: subscription screen
 import 'src/screens/membership/membership_screen.dart';
+import 'src/screens/membership/driver_membership_screen.dart';
+import 'src/screens/membership/business_membership_screen.dart';
+import 'src/screens/membership/role_selection_screen.dart';
 // Removed: Enhanced Business Benefits screen
 import 'src/screens/role_management_screen.dart';
 import 'src/screens/role_registration_screen.dart';
@@ -246,6 +249,18 @@ class MyApp extends StatelessWidget {
               builder: (context) => MembershipScreen(
                 promptOnboarding: args?['promptOnboarding'] == true,
               ),
+            );
+          case '/driver-membership':
+            return MaterialPageRoute(
+              builder: (context) => const DriverMembershipScreen(),
+            );
+          case '/business-membership':
+            return MaterialPageRoute(
+              builder: (context) => const BusinessMembershipScreen(),
+            );
+          case '/role-selection':
+            return MaterialPageRoute(
+              builder: (context) => const RoleSelectionScreen(),
             );
           // Removed: /enhanced-business-benefits route
           case '/role-registration':

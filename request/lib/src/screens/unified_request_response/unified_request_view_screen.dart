@@ -333,8 +333,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       case 'no_verification':
       case 'error':
       default:
-        // New user or no existing business role, go to role management to see options
-        Navigator.pushNamed(context, '/role-management');
+        // New user or no existing business role, go to role selection
+        Navigator.pushNamed(context, '/role-selection');
         break;
     }
   }
