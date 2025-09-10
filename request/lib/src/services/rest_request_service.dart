@@ -604,7 +604,9 @@ class RestRequestService {
           '/api/requests/$requestId/responses',
           queryParameters: {
             'page': page.toString(),
-            'limit': limit.toString()
+            'limit': limit.toString(),
+            '_t':
+                DateTime.now().millisecondsSinceEpoch.toString(), // Cache bust
           });
       if (res.isSuccess && res.data != null) {
         final data = res.data!['data'] as Map<String, dynamic>?;

@@ -192,6 +192,9 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     try {
       print('DEBUG: Reloading responses for request ${_request!.id}');
 
+      // Add a small delay to ensure backend has processed the update
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final page =
           await _service.getResponses(_request!.id, page: 1, limit: 50);
 
@@ -410,47 +413,14 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     ).then((updatedResponse) async {
       print('DEBUG: Response edit completed');
 
-      if (updatedResponse != null) {
-        print('DEBUG: Got updated response from edit screen:');
-        print('  Response ID: ${updatedResponse.id}');
-        print('  Message: "${updatedResponse.message}"');
-        print('  Price: ${updatedResponse.price}');
-        print('  Updated At: ${updatedResponse.updatedAt}');
+      // Always reload responses to ensure we have the latest data
+      // This is more reliable than trying to map between different model types
+      print('DEBUG: Reloading responses after edit');
+      await _reloadResponses();
 
-        // Update the response in our local list directly
-        setState(() {
-          final index =
-              _responses.indexWhere((r) => r.id == updatedResponse.id);
-          if (index >= 0) {
-            // Convert the enhanced model back to REST model
-            final updatedRestResponse = rest.ResponseModel(
-              id: updatedResponse.id,
-              requestId: updatedResponse.requestId,
-              userId: updatedResponse.userId,
-              userName: updatedResponse.userName,
-              userEmail: updatedResponse.userEmail,
-              userPhone: updatedResponse.userPhone,
-              message: updatedResponse.message,
-              price: updatedResponse.price,
-              currency: updatedResponse.currency,
-              createdAt: updatedResponse.createdAt,
-              updatedAt: updatedResponse.updatedAt,
-              metadata: updatedResponse.metadata,
-              imageUrls: updatedResponse.images,
-              locationAddress: updatedResponse.locationAddress,
-              locationLatitude: updatedResponse.locationLatitude,
-              locationLongitude: updatedResponse.locationLongitude,
-              countryCode: updatedResponse.countryCode,
-            );
-            _responses[index] = updatedRestResponse;
-            print('DEBUG: Updated response in local list at index $index');
-          } else {
-            print('DEBUG: Could not find response to update in local list');
-          }
-        });
-      } else {
-        print('DEBUG: No updated response returned, doing full reload');
-        await _reloadResponses();
+      if (updatedResponse != null) {
+        print(
+            'DEBUG: Response was updated successfully: ${updatedResponse.id}');
       }
     });
   }
