@@ -191,13 +191,17 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     setState(() => _responsesLoading = true);
     try {
       print('DEBUG: Reloading responses for request ${_request!.id}');
+
       final page =
           await _service.getResponses(_request!.id, page: 1, limit: 50);
+
       print('DEBUG: Loaded ${page.responses.length} responses');
       if (page.responses.isNotEmpty) {
-        print(
-            'DEBUG: First response message: "${page.responses.first.message}"');
+        final firstResponse = page.responses.first;
+        print('DEBUG: First response message: "${firstResponse.message}"');
+        print('DEBUG: First response updated_at: ${firstResponse.updatedAt}');
       }
+
       if (mounted) setState(() => _responses = page.responses);
     } catch (e) {
       print('DEBUG: Error reloading responses: $e');
@@ -389,6 +393,12 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     if (_request == null) return;
     final requestModel = _convertToRequestModel(_request!);
     final responseModel = _convertToResponseModel(response);
+
+    print('DEBUG: Navigating to edit screen with response:');
+    print('  Response ID: ${response.id}');
+    print('  Message: "${response.message}"');
+    print('  Price: ${response.price}');
+    print('  Updated At: ${response.updatedAt}');
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -397,29 +407,50 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           response: responseModel,
         ),
       ),
-    ).then((_) async {
-      // Add longer delay to ensure backend is fully updated
-      await Future.delayed(const Duration(milliseconds: 1500));
+    ).then((updatedResponse) async {
+      print('DEBUG: Response edit completed');
 
-      print('DEBUG: Refreshing data after response edit...');
+      if (updatedResponse != null) {
+        print('DEBUG: Got updated response from edit screen:');
+        print('  Response ID: ${updatedResponse.id}');
+        print('  Message: "${updatedResponse.message}"');
+        print('  Price: ${updatedResponse.price}');
+        print('  Updated At: ${updatedResponse.updatedAt}');
 
-      // Reload responses with fresh data
-      await _reloadResponses();
-      _loadEntitlementsAndPrefs(); // Refresh entitlements after response edit
-
-      // Also reload the entire request data to ensure consistency
-      if (_request != null) {
-        try {
-          final refreshedRequest = await _service.getRequestById(_request!.id);
-          if (mounted && refreshedRequest != null) {
-            setState(() {
-              _request = refreshedRequest;
-            });
+        // Update the response in our local list directly
+        setState(() {
+          final index =
+              _responses.indexWhere((r) => r.id == updatedResponse.id);
+          if (index >= 0) {
+            // Convert the enhanced model back to REST model
+            final updatedRestResponse = rest.ResponseModel(
+              id: updatedResponse.id,
+              requestId: updatedResponse.requestId,
+              userId: updatedResponse.userId,
+              userName: updatedResponse.userName,
+              userEmail: updatedResponse.userEmail,
+              userPhone: updatedResponse.userPhone,
+              message: updatedResponse.message,
+              price: updatedResponse.price,
+              currency: updatedResponse.currency,
+              createdAt: updatedResponse.createdAt,
+              updatedAt: updatedResponse.updatedAt,
+              metadata: updatedResponse.metadata,
+              imageUrls: updatedResponse.images,
+              locationAddress: updatedResponse.locationAddress,
+              locationLatitude: updatedResponse.locationLatitude,
+              locationLongitude: updatedResponse.locationLongitude,
+              countryCode: updatedResponse.countryCode,
+            );
+            _responses[index] = updatedRestResponse;
+            print('DEBUG: Updated response in local list at index $index');
+          } else {
+            print('DEBUG: Could not find response to update in local list');
           }
-          print('DEBUG: Request data refreshed successfully');
-        } catch (e) {
-          print('Error refreshing request: $e');
-        }
+        });
+      } else {
+        print('DEBUG: No updated response returned, doing full reload');
+        await _reloadResponses();
       }
     });
   }
