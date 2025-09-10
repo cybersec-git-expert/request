@@ -94,9 +94,9 @@ router.get('/', optionalAuth(async (req, res) => {
   }
 }));
 
-// Create a response (one per user per request enforced by unique index)
-// Entitlement check now non-enforcing; enforcement flag can be toggled later
-router.post('/', auth.authMiddleware(), entitlements.requireResponseEntitlement({ enforce: false }), async (req, res) => {
+// Create a response (one per user per request enforced by unique index)  
+// Entitlement check with enforcement enabled after 3 responses
+router.post('/', auth.authMiddleware(), entitlements.requireResponseEntitlement({ enforce: true }), async (req, res) => {
   try {
     const requestId = req.params.requestId;
     const userId = req.user?.id || req.user?.userId; // auth middleware sets id

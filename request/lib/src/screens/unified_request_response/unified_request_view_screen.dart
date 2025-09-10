@@ -301,7 +301,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           builder: (context) =>
               UnifiedResponseCreateScreen(request: requestModel),
         ),
-      ).then((_) => _reloadResponses());
+      ).then((_) {
+        _reloadResponses();
+        _loadEntitlementsAndPrefs(); // Refresh entitlements after response creation
+      });
     }();
   }
 
@@ -996,6 +999,30 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         );
       }
 
+      // If user can't respond due to entitlements (limit reached), show subscription prompt
+      final userId = RestAuthService.instance.currentUser?.uid;
+      if (_request != null &&
+          userId != null &&
+          userId != _request!.userId &&
+          _entitlements != null &&
+          !_entitlements!.canRespond) {
+        return FloatingActionButton.extended(
+          onPressed: () async {
+            final reqType =
+                (_request?.requestType ?? _request?.categoryType ?? '')
+                    .toString()
+                    .toLowerCase();
+            final isRide = reqType.contains('ride');
+            await QuickUpgradeSheet.show(
+                context, isRide ? 'driver' : 'business');
+          },
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.star),
+          label: const Text('Subscribe to Respond'),
+        );
+      }
+
       // No floating action button
       return null;
     }();
@@ -1059,6 +1086,69 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                   const SizedBox(height: 12),
                   Text(r.description,
                       style: TextStyle(color: Colors.grey[700], height: 1.4)),
+
+                  // Subscription limit banner
+                  if (_entitlements != null &&
+                      !_entitlements!.canRespond &&
+                      RestAuthService.instance.currentUser?.uid !=
+                          r.userId) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        border:
+                            Border.all(color: Colors.orange.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.star, color: Colors.orange, size: 20),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Response Limit Reached',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'You\'ve reached your monthly limit of 3 responses. Subscribe to continue responding to requests and view contact details.',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final reqType =
+                                  (r.requestType ?? r.categoryType ?? '')
+                                      .toString()
+                                      .toLowerCase();
+                              final isRide = reqType.contains('ride');
+                              await QuickUpgradeSheet.show(
+                                  context, isRide ? 'driver' : 'business');
+                            },
+                            icon: const Icon(Icons.star),
+                            label: const Text('View Subscription Plans'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   // Images Section
                   if (r.imageUrls != null && r.imageUrls!.isNotEmpty) ...[
