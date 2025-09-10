@@ -17,7 +17,6 @@ import '../../services/rest_request_service.dart' show ReviewsService;
 import '../account/public_profile_screen.dart';
 import '../../services/rest_user_service.dart';
 import '../membership/quick_upgrade_sheet.dart';
-import '../membership/public_plans_screen.dart';
 import '../../../services/entitlements_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1055,31 +1054,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         );
       }
 
-      // If user can't respond due to entitlements (limit reached), show subscription prompt
-      final userId = RestAuthService.instance.currentUser?.uid;
-      if (_request != null &&
-          userId != null &&
-          userId != _request!.userId &&
-          _entitlements != null &&
-          !_entitlements!.canRespond) {
-        return FloatingActionButton.extended(
-          onPressed: () async {
-            final reqType =
-                (_request?.requestType ?? _request?.categoryType ?? '')
-                    .toString()
-                    .toLowerCase();
-            final isRide = reqType.contains('ride');
-            await QuickUpgradeSheet.show(
-                context, isRide ? 'driver' : 'business');
-          },
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.star),
-          label: const Text('Subscribe to Respond'),
-        );
-      }
-
-      // No floating action button
+      // No floating action button when user can't respond
       return null;
     }();
 
@@ -1432,17 +1407,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                       fontSize: 15,
                                     ),
                                   ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const PublicPlansScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: const Text('View Plans'),
                                 ),
                               ],
                             ),
