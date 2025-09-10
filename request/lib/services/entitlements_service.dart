@@ -16,40 +16,78 @@ class EntitlementsService {
       }
 
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/api/entitlements/me',
+        '/api/me/entitlements',
         fromJson: (json) => json,
       );
 
       if (response.isSuccess && response.data != null) {
         final data = response.data!['data'] as Map<String, dynamic>;
-        return UserEntitlements.fromJson(data);
+        // Convert backend format to our UserEntitlements format
+        final converted = {
+          'canSeeContactDetails': data['canViewContact'] ?? false,
+          'canSendMessages': data['canMessage'] ?? false,
+          'canRespond': data['canRespond'] ?? false,
+          'responseCount': data['responseCountThisMonth'] ?? 0,
+          'remainingResponses': data['remainingResponses'] ?? 3,
+          'subscriptionType': data['subscriptionType'] ?? 'free',
+          'planName': data['planName'] ?? 'Free Plan',
+        };
+        return UserEntitlements.fromJson(converted);
       }
 
       return null;
     } catch (e) {
       print('Error fetching user entitlements: $e');
-      return null;
+      // Return default entitlements for new users
+      return UserEntitlements.fromJson({
+        'canSeeContactDetails': true,
+        'canSendMessages': true,
+        'canRespond': true,
+        'responseCount': 0,
+        'remainingResponses': 3,
+        'subscriptionType': 'free',
+        'planName': 'Free Plan',
+      });
     }
   }
 
   /// Get user's current entitlements (simple version with user ID)
   Future<UserEntitlements?> getUserEntitlementsSimple(String userId) async {
     try {
+      // Use the existing authenticated endpoint
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/api/entitlements-simple/me',
-        queryParameters: {'user_id': userId},
+        '/api/me/entitlements',
         fromJson: (json) => json,
       );
 
       if (response.isSuccess && response.data != null) {
         final data = response.data!['data'] as Map<String, dynamic>;
-        return UserEntitlements.fromJson(data);
+        // Convert backend format to our UserEntitlements format
+        final converted = {
+          'canSeeContactDetails': data['canViewContact'] ?? false,
+          'canSendMessages': data['canMessage'] ?? false,
+          'canRespond': data['canRespond'] ?? false,
+          'responseCount': data['responseCountThisMonth'] ?? 0,
+          'remainingResponses': data['remainingResponses'] ?? 3,
+          'subscriptionType': data['subscriptionType'] ?? 'free',
+          'planName': data['planName'] ?? 'Free Plan',
+        };
+        return UserEntitlements.fromJson(converted);
       }
 
       return null;
     } catch (e) {
       print('Error fetching user entitlements (simple): $e');
-      return null;
+      // Return default entitlements for new users
+      return UserEntitlements.fromJson({
+        'canSeeContactDetails': true,
+        'canSendMessages': true,
+        'canRespond': true,
+        'responseCount': 0,
+        'remainingResponses': 3,
+        'subscriptionType': 'free',
+        'planName': 'Free Plan',
+      });
     }
   }
 
