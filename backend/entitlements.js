@@ -11,10 +11,12 @@ function ym(date = new Date()) {
 
 // Core entitlements logic
 async function getEntitlements(userId, role, now = new Date()) {
+  console.log('[entitlements] Getting entitlements for user:', userId, 'role:', role);
   const client = await dbService.pool.connect();
   try {
     const yearMonth = ym(now);
     const audience = role === 'business' ? 'business' : 'normal';
+    console.log('[entitlements] Year month:', yearMonth, 'audience:', audience);
 
     // For now, assume no subscriptions - all users are free
     const subscription = null;
@@ -26,6 +28,7 @@ async function getEntitlements(userId, role, now = new Date()) {
         [userId, yearMonth]
       );
       responseCount = usageRes.rows[0]?.response_count || 0;
+      console.log('[entitlements] Found usage count:', responseCount, 'for user:', userId);
     } catch (e) {
       // Table might not exist yet; treat as zero usage
       if (e.code === '42P01') { // undefined table
@@ -34,6 +37,7 @@ async function getEntitlements(userId, role, now = new Date()) {
         console.warn('[entitlements] usage query failed, treating count=0', e.message || e);
       }
       responseCount = 0;
+      console.log('[entitlements] Defaulting to response count 0 due to error');
     }
     
     const freeLimit = 3;
@@ -41,7 +45,7 @@ async function getEntitlements(userId, role, now = new Date()) {
     const canMessage = responseCount < freeLimit;
     const canRespond = responseCount < freeLimit;
 
-    return {
+    const result = {
       isSubscribed: false,
       audience,
       responseCountThisMonth: responseCount,
@@ -53,6 +57,9 @@ async function getEntitlements(userId, role, now = new Date()) {
       planName: 'Free Plan',
       subscription
     };
+    
+    console.log('[entitlements] Returning entitlements:', JSON.stringify(result, null, 2));
+    return result;
   } finally {
     client.release();
   }
@@ -156,11 +163,13 @@ function requireResponseEntitlement({ enforce = false } = {}) {
 
 // Increment user's response count
 async function incrementResponseCount(userId, now = new Date()) {
+  console.log('[entitlements] Incrementing response count for user:', userId);
   const client = await dbService.pool.connect();
   try {
     const yearMonth = ym(now);
+    console.log('[entitlements] Incrementing for year_month:', yearMonth);
     await client.query('BEGIN');
-    await client.query(
+    const result = await client.query(
       `INSERT INTO usage_monthly (user_id, year_month, response_count)
        VALUES ($1, $2, 1)
        ON CONFLICT (user_id, year_month)
@@ -168,6 +177,7 @@ async function incrementResponseCount(userId, now = new Date()) {
       [userId, yearMonth]
     );
     await client.query('COMMIT');
+    console.log('[entitlements] Successfully incremented response count for user:', userId);
     console.log(`[entitlements] Incremented response count for user ${userId} in ${yearMonth}`);
   } catch (e) {
     await client.query('ROLLBACK');
