@@ -35,26 +35,27 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      // API failed - return restrictive defaults to enforce limits
-      print('API failed for main entitlements, returning restrictive defaults');
+      // API failed - return permissive defaults for new users
+      print(
+          'API failed for main entitlements, returning permissive defaults for new users');
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
+        'canSeeContactDetails': true,
+        'canSendMessages': true,
+        'canRespond': true,
+        'responseCount': 0,
+        'remainingResponses': 3,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
     } catch (e) {
       print('Error fetching user entitlements: $e');
-      // Return restrictive defaults when API fails to enforce limits
+      // Return permissive defaults for new users when API fails
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
+        'canSeeContactDetails': true,
+        'canSendMessages': true,
+        'canRespond': true,
+        'responseCount': 0,
+        'remainingResponses': 3,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
@@ -85,26 +86,27 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      // API failed - return restrictive defaults to enforce limits
-      print('API failed for entitlements, returning restrictive defaults');
+      // API failed - return permissive defaults for new users
+      print(
+          'API failed for entitlements, returning permissive defaults for new users');
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
+        'canSeeContactDetails': true,
+        'canSendMessages': true,
+        'canRespond': true,
+        'responseCount': 0,
+        'remainingResponses': 3,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
     } catch (e) {
       print('Error fetching user entitlements (simple): $e');
-      // Return restrictive defaults when API fails to enforce limits
+      // Return permissive defaults for new users when API fails
       return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
+        'canSeeContactDetails': true,
+        'canSendMessages': true,
+        'canRespond': true,
+        'responseCount': 0,
+        'remainingResponses': 3,
         'subscriptionType': 'free',
         'planName': 'Free Plan',
       });
