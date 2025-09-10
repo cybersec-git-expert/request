@@ -1102,25 +1102,44 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                     const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        border:
-                            Border.all(color: Colors.orange.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange.withOpacity(0.1),
+                            Colors.orange.withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.star, color: Colors.orange, size: 20),
-                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.star, color: Colors.orange, size: 20),
+                              ),
+                              const SizedBox(width: 12),
                               const Text(
                                 'Response Limit Reached',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
                                   color: Colors.orange,
                                 ),
                               ),
@@ -1415,44 +1434,72 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                             (r.userPhone?.isNotEmpty == true) &&
                             (_entitlements?.canSeeContactDetails == false))
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             margin: const EdgeInsets.only(top: 8),
                             decoration: BoxDecoration(
-                              color: Colors.orange[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.orange[200]!),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.orange.withOpacity(0.08),
+                                  Colors.orange.withOpacity(0.04),
+                                ],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.orange.withOpacity(0.08),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
                             ),
                             child: Row(children: [
-                              Icon(Icons.visibility_off,
-                                  size: 16, color: Colors.orange[600]),
-                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(Icons.visibility_off,
+                                    size: 16, color: Colors.orange[600]),
+                              ),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   'Contact details hidden. Subscribe to view.',
                                   style: TextStyle(
                                     color: Colors.orange[700],
-                                    fontSize: 13,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
-                              TextButton(
-                                onPressed: () async {
-                                  final reqType = (_request?.requestType ??
-                                          _request?.categoryType ??
-                                          '')
-                                      .toString()
-                                      .toLowerCase();
-                                  final isRide = reqType.contains('ride');
-                                  await QuickUpgradeSheet.show(
-                                      context, isRide ? 'driver' : 'business');
-                                },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.orange[700],
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text('Subscribe',
-                                    style: TextStyle(fontSize: 12)),
+                                child: TextButton(
+                                  onPressed: () async {
+                                    final reqType = (_request?.requestType ??
+                                            _request?.categoryType ??
+                                            '')
+                                        .toString()
+                                        .toLowerCase();
+                                    final isRide = reqType.contains('ride');
+                                    await QuickUpgradeSheet.show(
+                                        context, isRide ? 'driver' : 'business');
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 4),
+                                  ),
+                                  child: const Text('Subscribe',
+                                      style: TextStyle(
+                                          fontSize: 12, fontWeight: FontWeight.w600)),
+                                ),
                               ),
                             ]),
                           ),
