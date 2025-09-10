@@ -96,13 +96,13 @@ async function getUserEntitlements(userId) {
     };
   } catch (error) {
     console.error('Error getting user entitlements:', error);
-    // Return safe defaults for free user
+    // Return restrictive defaults when entitlements check fails
     return {
-      canSeeContactDetails: true,
-      canSendMessages: true,
-      canRespond: true,
-      responseCount: 0,
-      remainingResponses: 3,
+      canSeeContactDetails: false,
+      canSendMessages: false,
+      canRespond: false,
+      responseCount: 999,
+      remainingResponses: 0,
       subscriptionType: 'free',
       planName: 'Free Plan'
     };
