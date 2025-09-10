@@ -87,8 +87,7 @@ const reviewsRoutes = require('./routes/reviews'); // NEW - User reviews API
 const promoCodesRoutes = require('./routes/promo-codes'); // NEW - Promo codes admin
 // Removed: subscriptions and subscription-country-pricing routes
 const entitlementSvc = require('./entitlements'); // Entitlements service
-const entitlementsRoutes = require('./routes/entitlements'); // Entitlements API routes
-const entitlementsSimpleRoutes = require('./routes/entitlements-simple'); // Simple Entitlements API routes
+const entitlementsRoutes = entitlementSvc.createRoutes(); // Unified entitlements routes
 const authService = require('./services/auth'); // Auth middleware for protected routes
 
 
@@ -402,8 +401,8 @@ app.use('/api/upload', uploadRoutes); // Image upload endpoint
 app.use('/api/s3', uploadS3Routes); // S3 upload endpoints
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
 app.use('/api/public/subscriptions', publicSubscriptionsRoutes); // Public subscriptions endpoints
-app.use('/api/entitlements', entitlementsRoutes); // NEW - Entitlements API routes
-app.use('/api/entitlements-simple', entitlementsSimpleRoutes); // NEW - Simple Entitlements API routes
+app.use('/api/entitlements', entitlementsRoutes); // Unified entitlements API routes
+app.use('/api/entitlements-simple', entitlementsRoutes); // Same routes for compatibility
 
 // Removed: subscription management routes
 // const subscriptionManagementRoutes = require('./routes/subscription-management');
