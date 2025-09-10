@@ -15,17 +15,25 @@ class EntitlementsService {
       );
 
       if (response.isSuccess && response.data != null) {
-        final data = response.data!['data'] as Map<String, dynamic>;
-        // Convert backend format to our UserEntitlements format
+        final responseData = response.data!;
+        print('DEBUG: Full entitlements response: $responseData');
+
+        // Handle both nested and flat data structures
+        final data =
+            responseData['data'] as Map<String, dynamic>? ?? responseData;
+        print('DEBUG: Entitlements data to parse: $data');
+
+        // Convert backend format to our UserEntitlements format with null safety
         final converted = {
-          'canSeeContactDetails': data['canViewContact'] ?? false,
-          'canSendMessages': data['canMessage'] ?? false,
-          'canRespond': data['canRespond'] ?? false,
-          'responseCount': data['responseCountThisMonth'] ?? 0,
-          'remainingResponses': data['remainingResponses'] ?? 3,
-          'subscriptionType': data['subscriptionType'] ?? 'free',
-          'planName': data['planName'] ?? 'Free Plan',
+          'canSeeContactDetails': data['canViewContact'] as bool? ?? false,
+          'canSendMessages': data['canMessage'] as bool? ?? false,
+          'canRespond': data['canRespond'] as bool? ?? false,
+          'responseCount': data['responseCountThisMonth'] as int? ?? 0,
+          'remainingResponses': data['remainingResponses'] as int? ?? 3,
+          'subscriptionType': data['subscriptionType'] as String? ?? 'free',
+          'planName': data['planName'] as String? ?? 'Free Plan',
         };
+        print('DEBUG: Converted entitlements: $converted');
         return UserEntitlements.fromJson(converted);
       }
 
@@ -66,17 +74,25 @@ class EntitlementsService {
       );
 
       if (response.isSuccess && response.data != null) {
-        final data = response.data!['data'] as Map<String, dynamic>;
-        // Convert backend format to our UserEntitlements format
+        final responseData = response.data!;
+        print('DEBUG: Full entitlements response (simple): $responseData');
+
+        // Handle both nested and flat data structures
+        final data =
+            responseData['data'] as Map<String, dynamic>? ?? responseData;
+        print('DEBUG: Entitlements data to parse (simple): $data');
+
+        // Convert backend format to our UserEntitlements format with null safety
         final converted = {
-          'canSeeContactDetails': data['canViewContact'] ?? false,
-          'canSendMessages': data['canMessage'] ?? false,
-          'canRespond': data['canRespond'] ?? false,
-          'responseCount': data['responseCountThisMonth'] ?? 0,
-          'remainingResponses': data['remainingResponses'] ?? 3,
-          'subscriptionType': data['subscriptionType'] ?? 'free',
-          'planName': data['planName'] ?? 'Free Plan',
+          'canSeeContactDetails': data['canViewContact'] as bool? ?? false,
+          'canSendMessages': data['canMessage'] as bool? ?? false,
+          'canRespond': data['canRespond'] as bool? ?? false,
+          'responseCount': data['responseCountThisMonth'] as int? ?? 0,
+          'remainingResponses': data['remainingResponses'] as int? ?? 3,
+          'subscriptionType': data['subscriptionType'] as String? ?? 'free',
+          'planName': data['planName'] as String? ?? 'Free Plan',
         };
+        print('DEBUG: Converted entitlements (simple): $converted');
         return UserEntitlements.fromJson(converted);
       }
 
