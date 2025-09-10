@@ -99,7 +99,6 @@ const reviewsRoutes = require('./routes/reviews'); // NEW - user reviews API
 const authService = require('./services/auth');
 const entitlementSvc = require('./entitlements');
 const entitlementsRoutes = require('./routes/entitlements'); // NEW - Entitlements API
-const entitlementsSimpleRoutes = require('./routes/entitlements-simple'); // NEW - Simple Entitlements API
 const subscriptionsRoutes = require('./routes/subscriptions'); // NEW - Subscription management
 const flutterSubscriptionsRoutes = require('./routes/flutter-subscriptions'); // NEW - Flutter subscription API
 
@@ -216,7 +215,6 @@ safeUse('/api/reviews', reviewsRoutes, 'reviewsRoutes'); // NEW - user reviews
 safeUse('/api/subscriptions', subscriptionsRoutes, 'subscriptionsRoutes'); // NEW - Subscription management  
 safeUse('/api/flutter/subscriptions', flutterSubscriptionsRoutes, 'flutterSubscriptionsRoutes'); // NEW - Flutter subscription API
 safeUse('/api/entitlements', entitlementsRoutes, 'entitlementsRoutes'); // NEW - Entitlements API  
-safeUse('/api/entitlements-simple', entitlementsSimpleRoutes, 'entitlementsSimpleRoutes'); // NEW - Simple Entitlements API
 // Removed: business-type-benefits routes (no longer used)
 // Removed: subscriptions routes mount
 // Current user entitlements (for gating in app)
