@@ -390,8 +390,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           response: responseModel,
         ),
       ),
-    ).then((_) {
-      _reloadResponses();
+    ).then((_) async {
+      // Add small delay to ensure backend is updated
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _reloadResponses();
       _loadEntitlementsAndPrefs(); // Refresh entitlements after response edit
     });
   }
@@ -1424,8 +1426,16 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                     )),
                               ),
                             ),
+                            // Debug message icon visibility
+                            ...() {
+                              final canMessage =
+                                  _entitlements?.canSendMessages ?? false;
+                              print(
+                                  'DEBUG Message Icon: isOwner=$_isOwner, canSendMessages=$canMessage, membershipCompleted=$_membershipCompleted');
+                              return <Widget>[];
+                            }(),
                             if (!_isOwner &&
-                                (_entitlements?.canSendMessages ?? false) &&
+                                (_entitlements?.canSendMessages ?? true) &&
                                 _membershipCompleted)
                               IconButton(
                                 onPressed: () => _messageRequester(r),

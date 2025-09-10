@@ -1,8 +1,7 @@
 // Unified Entitlements System
 // Handles all subscription, response limits, and permissions logic
 
-const { Pool } = require('pg');
-const pool = new Pool();
+const dbService = require('./services/database');
 
 function ym(date = new Date()) {
   const y = date.getUTCFullYear();
@@ -12,7 +11,7 @@ function ym(date = new Date()) {
 
 // Core entitlements logic
 async function getEntitlements(userId, role, now = new Date()) {
-  const client = await pool.connect();
+  const client = await dbService.pool.connect();
   try {
     const yearMonth = ym(now);
     const audience = role === 'business' ? 'business' : 'normal';
@@ -157,7 +156,7 @@ function requireResponseEntitlement({ enforce = false } = {}) {
 
 // Increment user's response count
 async function incrementResponseCount(userId, now = new Date()) {
-  const client = await pool.connect();
+  const client = await dbService.pool.connect();
   try {
     const yearMonth = ym(now);
     await client.query('BEGIN');
