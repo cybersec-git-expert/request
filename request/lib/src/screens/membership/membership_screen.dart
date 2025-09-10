@@ -3,6 +3,9 @@ import '../../theme/glass_theme.dart';
 import '../../theme/app_theme.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription_models.dart';
+import '../../services/enhanced_user_service.dart';
+import '../../services/api_client.dart';
+import '../../models/enhanced_user_model.dart';
 
 class MembershipScreen extends StatefulWidget {
   final bool promptOnboarding;
@@ -22,6 +25,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
   MembershipInit? _data;
   String? _selectedRole;
   bool _updatingRole = false;
+  final EnhancedUserService _userService = EnhancedUserService();
 
   static const Set<String> _allowedRoles = {
     'general',
@@ -162,6 +166,36 @@ class _MembershipScreenState extends State<MembershipScreen> {
     }
   }
 
+  /// Check business verification status for current user
+  Future<String> _checkBusinessVerificationStatus() async {
+    try {
+      final user = await _userService.getCurrentUser();
+      if (user == null) return 'no_auth';
+
+      // Check if user has business role
+      if (!user.roles.contains(UserRole.business)) {
+        return 'no_business_role';
+      }
+
+      // Check business verification status
+      final resp = await ApiClient.instance
+          .get('/api/business-verifications/user/${user.uid}');
+      if (resp.isSuccess && resp.data != null) {
+        final responseWrapper = resp.data as Map<String, dynamic>;
+        final data = responseWrapper['data'] as Map<String, dynamic>?;
+        if (data != null) {
+          final status =
+              (data['status'] ?? 'pending').toString().trim().toLowerCase();
+          return status; // 'approved', 'pending', 'rejected'
+        }
+      }
+      return 'no_verification';
+    } catch (e) {
+      print('Error checking business verification: $e');
+      return 'error';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authed = _data != null && _data!.roles.isNotEmpty;
@@ -264,7 +298,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
         bottomNavigationBar: SafeArea(
           minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (!authed) {
                 Navigator.pushNamed(context, '/login').then((_) => _load());
                 return;
@@ -276,15 +310,45 @@ class _MembershipScreenState extends State<MembershipScreen> {
                 );
                 return;
               }
-              // Directly navigate to the relevant registration form
+
               final role = _selectedRole!;
               if (role == 'driver') {
                 Navigator.pushNamed(context, '/driver-registration',
                     arguments: {'selectedRole': role});
               } else {
-                // business and product_seller go to business registration
-                Navigator.pushNamed(context, '/business-registration',
-                    arguments: {'selectedRole': role});
+                // For business and product_seller, check verification status first
+                final verificationStatus =
+                    await _checkBusinessVerificationStatus();
+
+                switch (verificationStatus) {
+                  case 'approved':
+                    // User is verified business, go to subscription plans
+                    Navigator.pushNamed(context, '/membership', arguments: {
+                      'requiredSubscriptionType': 'business',
+                    });
+                    break;
+                  case 'pending':
+                    // User has pending verification, go to role management
+                    Navigator.pushNamed(context, '/role-management');
+                    break;
+                  case 'rejected':
+                    // User was rejected, show message and go to role management
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              'Your business verification was rejected. Please check your role management for details.')),
+                    );
+                    Navigator.pushNamed(context, '/role-management');
+                    break;
+                  case 'no_business_role':
+                  case 'no_verification':
+                  case 'error':
+                  default:
+                    // New user or no existing business role, go to business registration
+                    Navigator.pushNamed(context, '/business-registration',
+                        arguments: {'selectedRole': role});
+                    break;
+                }
               }
             },
             style: ElevatedButton.styleFrom(
