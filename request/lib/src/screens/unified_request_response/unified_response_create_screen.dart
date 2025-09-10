@@ -254,6 +254,56 @@ class _UnifiedResponseCreateScreenState
   }
 
   String _getTypeDisplayName(RequestType type) {
+    // Debug: Print the typeSpecificData to understand what we're working with
+    print('DEBUG: typeSpecificData = ${widget.request.typeSpecificData}');
+    print('DEBUG: request.type = ${widget.request.type}');
+
+    // Check for module/type information in multiple fields like the browse screen
+    final raw = (widget.request.typeSpecificData['module'] ??
+            widget.request.typeSpecificData['request_type'] ??
+            widget.request.typeSpecificData['type'])
+        ?.toString()
+        .toLowerCase()
+        .trim();
+
+    print('DEBUG: raw module/type = $raw');
+
+    if (raw != null && raw.isNotEmpty) {
+      switch (raw) {
+        case 'item':
+        case 'items':
+          return 'Item Request';
+        case 'service':
+        case 'services':
+          return 'Service Request';
+        case 'rental':
+        case 'rent':
+          return 'Rental Request';
+        case 'delivery':
+          return 'Delivery Request';
+        case 'ride':
+          return 'Ride Request';
+        case 'price':
+        case 'price_check':
+          return 'Price Request';
+        case 'tours':
+        case 'tour':
+          return 'Tour Request';
+        case 'events':
+        case 'event':
+          return 'Event Request';
+        case 'construction':
+          return 'Construction Request';
+        case 'education':
+          return 'Education Request';
+        case 'hiring':
+          return 'Job Request';
+        case 'other':
+          return 'Other Service Request';
+      }
+    }
+
+    // Default type names
     switch (type) {
       case RequestType.item:
         return 'Item Request';
