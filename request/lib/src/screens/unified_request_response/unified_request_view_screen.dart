@@ -69,7 +69,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
       if (userId != null) {
         ent = await _entitlementsService.getUserEntitlementsSimple(userId);
-        print('Loaded entitlements for user $userId: ${ent?.canRespond}');
+        print(
+            'Loaded entitlements for user $userId: canRespond=${ent?.canRespond}, responseCount=${ent?.responseCount}, remaining=${ent?.remainingResponses}');
       }
 
       if (!mounted) return;
@@ -389,7 +390,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           response: responseModel,
         ),
       ),
-    ).then((_) => _reloadResponses());
+    ).then((_) {
+      _reloadResponses();
+      _loadEntitlementsAndPrefs(); // Refresh entitlements after response edit
+    });
   }
 
   RequestType _getCurrentRequestType() {
@@ -1094,11 +1098,26 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                   Text(r.description,
                       style: TextStyle(color: Colors.grey[700], height: 1.4)),
 
-                  // Subscription limit banner
+                  // Debug subscription banner logic
+                  ...() {
+                    final currentUserId =
+                        RestAuthService.instance.currentUser?.uid;
+                    final hasResponded = _responses
+                        .any((response) => response.userId == currentUserId);
+                    final isOwner = currentUserId == r.userId;
+                    final canRespond = _entitlements?.canRespond ?? true;
+                    print(
+                        'DEBUG Banner: entitlements=${_entitlements != null}, canRespond=$canRespond, isOwner=$isOwner, hasResponded=$hasResponded, responsesCount=${_responses.length}');
+                    return <Widget>[];
+                  }(),
+
+                  // Subscription limit banner - only show if user hasn't responded to this request
                   if (_entitlements != null &&
                       !_entitlements!.canRespond &&
-                      RestAuthService.instance.currentUser?.uid !=
-                          r.userId) ...[
+                      RestAuthService.instance.currentUser?.uid != r.userId &&
+                      !_responses.any((response) =>
+                          response.userId ==
+                          RestAuthService.instance.currentUser?.uid)) ...[
                     const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
@@ -1132,7 +1151,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                   color: Colors.orange.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(Icons.star, color: Colors.orange, size: 20),
+                                child: Icon(Icons.star,
+                                    color: Colors.orange, size: 20),
                               ),
                               const SizedBox(width: 12),
                               const Text(
@@ -1338,11 +1358,14 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Show only one subscribe prompt if user has reached their limit
+                        // Show only one subscribe prompt if user has reached their limit and hasn't responded
                         if (!_isOwner &&
                             _entitlements != null &&
                             (!_entitlements!.canSendMessages ||
-                                !_entitlements!.canRespond))
+                                !_entitlements!.canRespond) &&
+                            !_responses.any((response) =>
+                                response.userId ==
+                                RestAuthService.instance.currentUser?.uid))
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
@@ -1488,8 +1511,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                         .toString()
                                         .toLowerCase();
                                     final isRide = reqType.contains('ride');
-                                    await QuickUpgradeSheet.show(
-                                        context, isRide ? 'driver' : 'business');
+                                    await QuickUpgradeSheet.show(context,
+                                        isRide ? 'driver' : 'business');
                                   },
                                   style: TextButton.styleFrom(
                                     foregroundColor: Colors.white,
@@ -1498,7 +1521,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                   ),
                                   child: const Text('Subscribe',
                                       style: TextStyle(
-                                          fontSize: 12, fontWeight: FontWeight.w600)),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600)),
                                 ),
                               ),
                             ]),
