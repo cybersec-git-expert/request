@@ -79,11 +79,19 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       });
     } catch (e) {
       print('Error loading entitlements: $e');
-      // For new users, default to allowing responses
+      // Use restrictive defaults when API fails to enforce limits
       if (!mounted) return;
       setState(() {
         _membershipCompleted = true;
-        _entitlements = null; // null means no restrictions
+        _entitlements = UserEntitlements.fromJson({
+          'canSeeContactDetails': false,
+          'canSendMessages': false,
+          'canRespond': false,
+          'responseCount': 3,
+          'remainingResponses': 0,
+          'subscriptionType': 'free',
+          'planName': 'Free Plan',
+        });
       });
     }
   }
@@ -218,8 +226,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     //   print('DEBUG: _canRespond = false (canMessage = false)');
     //   return false;
     // }
-    // If entitlements loaded and specifically deny, block response
-    // Otherwise allow response (default to true for new users)
+    // Check entitlements - now defaults to restrictive when API fails
     if (_entitlements != null && _entitlements!.canRespond == false) {
       print(
           'DEBUG: _canRespond = false (entitlements deny: ${_entitlements!.canRespond})');

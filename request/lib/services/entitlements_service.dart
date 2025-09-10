@@ -35,7 +35,17 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      return null;
+      // API failed - return restrictive defaults to enforce limits
+      print('API failed for main entitlements, returning restrictive defaults');
+      return UserEntitlements.fromJson({
+        'canSeeContactDetails': false,
+        'canSendMessages': false,
+        'canRespond': false,
+        'responseCount': 3,
+        'remainingResponses': 0,
+        'subscriptionType': 'free',
+        'planName': 'Free Plan',
+      });
     } catch (e) {
       print('Error fetching user entitlements: $e');
       // Return restrictive defaults when API fails to enforce limits
@@ -75,7 +85,17 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      return null;
+      // API failed - return restrictive defaults to enforce limits
+      print('API failed for entitlements, returning restrictive defaults');
+      return UserEntitlements.fromJson({
+        'canSeeContactDetails': false,
+        'canSendMessages': false,
+        'canRespond': false,
+        'responseCount': 3,
+        'remainingResponses': 0,
+        'subscriptionType': 'free',
+        'planName': 'Free Plan',
+      });
     } catch (e) {
       print('Error fetching user entitlements (simple): $e');
       // Return restrictive defaults when API fails to enforce limits
