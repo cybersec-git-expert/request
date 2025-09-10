@@ -221,12 +221,32 @@ safeUse('/api/entitlements-simple', entitlementsSimpleRoutes, 'entitlementsSimpl
 // Removed: subscriptions routes mount
 // Current user entitlements (for gating in app)
 app.get('/api/me/entitlements', authService.authMiddleware(), async (req, res) => {
+  const started = Date.now();
+  const userObj = req.user || {};
+  console.log('[entitlements-route] /api/me/entitlements start', {
+    ts: new Date().toISOString(),
+    userId: userObj.id,
+    role: userObj.role,
+    hasUser: !!userObj.id
+  });
+  if (!userObj.id) {
+    console.warn('[entitlements-route] missing req.user.id after auth middleware');
+    return res.status(401).json({ success: false, error: 'unauthorized' });
+  }
   try {
-    const data = await entitlementSvc.getEntitlements(req.user.id, req.user.role);
-    res.json({ success: true, data });
+    const data = await entitlementSvc.getEntitlements(userObj.id, userObj.role);
+    console.log('[entitlements-route] success', {
+      durationMs: Date.now() - started,
+      responseCountThisMonth: data.responseCountThisMonth,
+      remainingResponses: data.remainingResponses,
+      canRespond: data.canRespond
+    });
+    return res.json({ success: true, data });
   } catch (e) {
-    console.error('entitlements route error', e);
-    res.status(500).json({ success: false, error: 'failed' });
+    console.error('[entitlements-route] ERROR', e && e.message || e);
+    if (e && e.stack) console.error('[entitlements-route] STACK', e.stack);
+    // Provide diagnostic hint in response (non-sensitive)
+    return res.status(500).json({ success: false, error: 'failed', detail: e.message || String(e) });
   }
 });
 console.log('🔧 Driver-verifications route registered at /api/driver-verifications');

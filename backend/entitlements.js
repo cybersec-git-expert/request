@@ -11,8 +11,15 @@ function ym(date = new Date()) {
 
 // Core entitlements logic
 async function getEntitlements(userId, role, now = new Date()) {
-  console.log('[entitlements] Getting entitlements for user:', userId, 'role:', role);
-  const client = await dbService.pool.connect();
+  const t0 = Date.now();
+  console.log('[entitlements] START getEntitlements', { userId, role, ts: new Date().toISOString() });
+  let client;
+  try {
+    client = await dbService.pool.connect();
+  } catch (connErr) {
+    console.error('[entitlements] FAILED to obtain DB connection', connErr.message || connErr);
+    throw connErr;
+  }
   try {
     const yearMonth = ym(now);
     const audience = role === 'business' ? 'business' : 'normal';
@@ -58,10 +65,19 @@ async function getEntitlements(userId, role, now = new Date()) {
       subscription
     };
     
-    console.log('[entitlements] Returning entitlements:', JSON.stringify(result, null, 2));
+    console.log('[entitlements] Returning entitlements', {
+      userId,
+      responseCount: result.responseCountThisMonth,
+      canRespond: result.canRespond,
+      remaining: result.remainingResponses,
+      ms: Date.now() - t0
+    });
     return result;
+  } catch (err) {
+    console.error('[entitlements] ERROR during getEntitlements', err.message || err);
+    throw err;
   } finally {
-    client.release();
+    try { client && client.release(); } catch(_) {}
   }
 }
 
