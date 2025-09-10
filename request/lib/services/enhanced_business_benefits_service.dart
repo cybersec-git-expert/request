@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/enhanced_benefit_plan.dart';
 import '../services/auth_service.dart';
+import '../src/services/api_config.dart';
 
 class EnhancedBusinessBenefitsService {
-  static const String baseUrl =
-      'https://api.alphabet.lk/api/enhanced-business-benefits';
+  static String get baseUrl =>
+      '${ApiConfig.baseUrl}/enhanced-business-benefits';
 
   final AuthService _authService = AuthService();
 
