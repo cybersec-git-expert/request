@@ -1567,7 +1567,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                         const SizedBox(height: 8),
                         if (r.contactVisible &&
                             (r.userPhone?.isNotEmpty == true) &&
-                            (_entitlements?.canSeeContactDetails == true))
+                            (_entitlements?.canSeeContactDetails == true || _isOwner))
                           Row(children: [
                             Icon(Icons.phone,
                                 size: 16, color: Colors.grey[600]),
@@ -1578,9 +1578,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                             ),
                           ]),
                         // Show subscription prompt if contact details are hidden due to limits
+                        // BUT NOT for request owners - they should always see their own contact details
                         if (r.contactVisible &&
                             (r.userPhone?.isNotEmpty == true) &&
-                            (_entitlements?.canSeeContactDetails == false))
+                            (_entitlements?.canSeeContactDetails == false) &&
+                            !_isOwner)
                           Container(
                             padding: const EdgeInsets.all(16),
                             margin: const EdgeInsets.only(top: 8),
