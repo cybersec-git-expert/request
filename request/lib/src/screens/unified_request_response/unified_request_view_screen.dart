@@ -281,6 +281,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       final userService = EnhancedUserService();
       final user = await userService.getCurrentUser();
       if (user == null) {
+        print('DEBUG: User is null, navigating to business membership');
         Navigator.pushNamed(context, '/business-membership');
         return;
       }
@@ -291,63 +292,85 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       bool hasBusinessRole = user.roles.contains(UserRole.business);
       bool hasDriverRole = user.roles.contains(UserRole.driver);
 
-      // Check business verification
-      if (hasBusinessRole) {
-        try {
-          final resp = await ApiClient.instance
-              .get('/api/business-verifications/user/${user.uid}');
-          if (resp.isSuccess && resp.data != null) {
-            final responseWrapper = resp.data as Map<String, dynamic>;
-            final data = responseWrapper['data'] as Map<String, dynamic>?;
-            if (data != null) {
-              businessStatus =
-                  (data['status'] ?? 'pending').toString().trim().toLowerCase();
-            }
+      print(
+          'DEBUG: User roles - hasBusinessRole: $hasBusinessRole, hasDriverRole: $hasDriverRole');
+      print('DEBUG: User roles list: ${user.roles}');
+
+      // Check business verification (regardless of role assignment)
+      try {
+        final resp = await ApiClient.instance
+            .get('/api/business-verifications/user/${user.uid}');
+        print(
+            'DEBUG: Business verification API response - isSuccess: ${resp.isSuccess}, data: ${resp.data}');
+        if (resp.isSuccess && resp.data != null) {
+          final responseWrapper = resp.data as Map<String, dynamic>;
+          final data = responseWrapper['data'] as Map<String, dynamic>?;
+          if (data != null) {
+            businessStatus =
+                (data['status'] ?? 'pending').toString().trim().toLowerCase();
+            print('DEBUG: Business status from API: $businessStatus');
           }
-        } catch (e) {
-          print('Error checking business verification: $e');
         }
+      } catch (e) {
+        print('Error checking business verification: $e');
       }
 
-      // Check driver verification
-      if (hasDriverRole) {
-        try {
-          final resp = await ApiClient.instance
-              .get('/api/driver-verifications/user/${user.uid}');
-          if (resp.isSuccess && resp.data != null) {
-            final responseWrapper = resp.data as Map<String, dynamic>;
-            final data = responseWrapper['data'] as Map<String, dynamic>?;
-            if (data != null) {
-              driverStatus =
-                  (data['status'] ?? 'pending').toString().trim().toLowerCase();
-            }
+      // Check driver verification (regardless of role assignment)
+      try {
+        final resp = await ApiClient.instance
+            .get('/api/driver-verifications/user/${user.uid}');
+        print(
+            'DEBUG: Driver verification API response - isSuccess: ${resp.isSuccess}, data: ${resp.data}');
+        if (resp.isSuccess && resp.data != null) {
+          final responseWrapper = resp.data as Map<String, dynamic>;
+          final data = responseWrapper['data'] as Map<String, dynamic>?;
+          if (data != null) {
+            driverStatus =
+                (data['status'] ?? 'pending').toString().trim().toLowerCase();
+            print('DEBUG: Driver status from API: $driverStatus');
           }
-        } catch (e) {
-          print('Error checking driver verification: $e');
         }
+      } catch (e) {
+        print('Error checking driver verification: $e');
       }
 
-      // Route based on verification statuses
+      print(
+          'DEBUG: Final statuses - businessStatus: $businessStatus, driverStatus: $driverStatus');
+
+      // Determine request type to route to appropriate subscription page
+      final requestType = _request?.requestType ?? '';
+      final isRideRequest = requestType == 'ride' || requestType == 'delivery';
+
+      print('DEBUG: Request type: $requestType, isRideRequest: $isRideRequest');
+
+      // Route based on verification statuses and request type
       if (businessStatus == 'approved' && driverStatus == 'approved') {
-        // User has both verifications - let them choose or default to business
-        Navigator.pushNamed(context, '/membership', arguments: {
-          'requiredSubscriptionType': 'business',
-        });
+        // User has both verifications - route based on request type
+        if (isRideRequest) {
+          print(
+              'DEBUG: Both approved, ride request - navigating to driver subscriptions');
+          Navigator.pushNamed(context, '/driver-subscriptions');
+        } else {
+          print(
+              'DEBUG: Both approved, business request - navigating to business subscriptions');
+          Navigator.pushNamed(context, '/business-subscriptions');
+        }
       } else if (businessStatus == 'approved') {
         // User has approved business verification
-        Navigator.pushNamed(context, '/membership', arguments: {
-          'requiredSubscriptionType': 'business',
-        });
+        print(
+            'DEBUG: Business approved - navigating to business subscriptions');
+        Navigator.pushNamed(context, '/business-subscriptions');
       } else if (driverStatus == 'approved') {
         // User has approved driver verification
-        Navigator.pushNamed(context, '/membership', arguments: {
-          'requiredSubscriptionType': 'driver',
-        });
+        print('DEBUG: Driver approved - navigating to driver subscriptions');
+        Navigator.pushNamed(context, '/driver-subscriptions');
       } else if (businessStatus == 'pending' || driverStatus == 'pending') {
         // User has pending verifications - show role selection for status
+        print('DEBUG: Pending verifications - navigating to role selection');
         Navigator.pushNamed(context, '/role-selection');
       } else if (businessStatus == 'rejected' || driverStatus == 'rejected') {
         // User has rejected verifications
+        print('DEBUG: Rejected verifications - navigating to role selection');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -355,8 +378,18 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         );
         Navigator.pushNamed(context, '/role-selection');
       } else {
-        // New user or no verifications - go to business membership
-        Navigator.pushNamed(context, '/business-membership');
+        // User needs verification - guide them to register based on request type
+        if (isRideRequest) {
+          print(
+              'DEBUG: No verification, ride request - navigating to driver membership');
+          Navigator.pushNamed(context, '/membership', arguments: {
+            'requiredSubscriptionType': 'driver',
+          });
+        } else {
+          print(
+              'DEBUG: No verification, business request - navigating to business membership');
+          Navigator.pushNamed(context, '/business-membership');
+        }
       }
     } catch (e) {
       print('Error in _navigateToSubscriptionPlans: $e');

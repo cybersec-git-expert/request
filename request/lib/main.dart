@@ -37,7 +37,10 @@ import 'src/screens/membership/membership_screen.dart';
 import 'src/screens/membership/driver_membership_screen.dart';
 import 'src/screens/membership/business_membership_screen.dart';
 import 'src/screens/membership/role_selection_screen.dart';
-// Removed: Enhanced Business Benefits screen
+// Enhanced Business Benefits screen for business subscriptions
+import 'src/screens/membership/enhanced_business_benefits_screen.dart';
+// Driver subscription screen
+import 'src/screens/driver_subscription_screen.dart';
 // Removed: Role Management screen - bypassed in favor of Role Selection
 import 'src/screens/role_registration_screen.dart';
 
@@ -262,6 +265,14 @@ class MyApp extends StatelessWidget {
           case '/role-selection':
             return MaterialPageRoute(
               builder: (context) => const RoleSelectionScreen(),
+            );
+          case '/business-subscriptions':
+            return MaterialPageRoute(
+              builder: (context) => const EnhancedBusinessBenefitsScreen(),
+            );
+          case '/driver-subscriptions':
+            return MaterialPageRoute(
+              builder: (context) => const DriverSubscriptionScreen(),
             );
           // Removed: /enhanced-business-benefits route
           case '/role-registration':
