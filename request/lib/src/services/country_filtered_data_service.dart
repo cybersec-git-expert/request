@@ -9,7 +9,6 @@ import 'rest_request_service.dart'
     show RestRequestService, RequestModel, RequestsResponse;
 import 'country_service.dart';
 import 'user_registration_service.dart';
-import 'api_client.dart';
 
 /// Provides country-scoped data streams for all app content
 /// Ensures users only see content from their selected country
@@ -76,14 +75,10 @@ class CountryFilteredDataService {
     try {
       // Check user's registration status and allowed request types
       final allowedTypes = await _registrationService.getAllowedRequestTypes();
-      final driverVehicleTypeIds =
-          await _registrationService.getDriverVehicleTypeIds();
 
       if (kDebugMode) {
         print(
             '🔐 CountryFilteredDataService: User allowed request types: $allowedTypes');
-        print(
-            '🚗 CountryFilteredDataService: Driver vehicle types: $driverVehicleTypeIds');
         print('🎯 CountryFilteredDataService: Requested type filter: $type');
       }
 
@@ -149,44 +144,6 @@ class CountryFilteredDataService {
               'item';
           return allowedTypes.contains(requestType);
         }).toList();
-
-        // For drivers: filter ride requests by vehicle type (regardless of requestTypeFilter)
-        if (driverVehicleTypeIds != null && driverVehicleTypeIds.isNotEmpty) {
-          filtered = filtered.where((r) {
-            final requestType = r.requestType ??
-                r.metadata?['request_type']?.toString() ??
-                'item';
-
-            // Only apply vehicle filtering to ride requests
-            if (requestType == 'ride') {
-              final vehicleTypeId = r.metadata?['vehicle_type_id']?.toString();
-              bool matches = vehicleTypeId != null &&
-                  driverVehicleTypeIds.contains(vehicleTypeId);
-
-              if (kDebugMode) {
-                print(
-                    '🚗 CountryFilteredDataService: Ride request ${r.id} - vehicle_type_id: $vehicleTypeId, matches: $matches');
-              }
-
-              return matches;
-            }
-
-            // For non-ride requests, include them
-            return true;
-          }).toList();
-
-          if (kDebugMode) {
-            final rideCount = filtered
-                .where((r) =>
-                    (r.requestType ??
-                        r.metadata?['request_type']?.toString() ??
-                        'item') ==
-                    'ride')
-                .length;
-            print(
-                '🚗 CountryFilteredDataService: Filtered to $rideCount ride requests for vehicle types: $driverVehicleTypeIds');
-          }
-        }
 
         if (status != null) {
           filtered = filtered
@@ -501,76 +458,6 @@ class CountryFilteredDataService {
       return <Map<String, dynamic>>[];
     } catch (e) {
       if (kDebugMode) print('❌ Error loading variable types: $e');
-      return <Map<String, dynamic>>[];
-    }
-  }
-
-  /// Get available vehicle types for ride requests in the current country
-  /// Returns only vehicle types that are:
-  /// 1. Enabled by country admin in country_vehicle_types
-  /// 2. Actually registered by verified drivers in that country
-  Future<List<Map<String, dynamic>>> getAvailableVehicleTypes() async {
-    if (currentCountry == null) {
-      if (kDebugMode)
-        print('⚠️ No country selected, returning empty vehicle types');
-      return <Map<String, dynamic>>[];
-    }
-
-    try {
-      // Use centralized, production-safe base URL
-      // Avoid localhost/10.0.2.2 which causes hangs on real devices
-      final String baseUrl = ApiClient.baseUrlPublic;
-
-      final url =
-          Uri.parse('$baseUrl/api/vehicle-types/available/$currentCountry');
-
-      final response = await http.get(
-        url,
-        headers: const {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      )
-          // Add a timeout so UI doesn't hang indefinitely
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] is List) {
-          final vehicleTypes = data['data'] as List;
-
-          // Convert to expected format
-          final formattedTypes = vehicleTypes
-              .map((vt) => {
-                    'id': vt['id']?.toString() ?? '',
-                    'name': vt['name'] ?? '',
-                    'description': vt['description'] ?? '',
-                    'icon': vt['icon'] ?? 'DirectionsCar',
-                    'displayOrder': vt['displayOrder'] ?? 0,
-                    'passengerCapacity': vt['passengerCapacity'] ?? 1,
-                    'isActive': vt['isActive'] ?? true,
-                    'registeredDriversCount': vt['registeredDriversCount'] ?? 0,
-                  })
-              .toList();
-
-          if (kDebugMode) {
-            print(
-                '✅ Loaded ${formattedTypes.length} available vehicle types for country $currentCountry');
-            for (final vt in formattedTypes) {
-              print(
-                  '   ${vt['name']}: ${vt['registeredDriversCount']} drivers');
-            }
-          }
-          return formattedTypes;
-        }
-      }
-
-      if (kDebugMode)
-        print(
-            '❌ Failed to load available vehicle types: ${response.statusCode}');
-      return <Map<String, dynamic>>[];
-    } catch (e) {
-      if (kDebugMode) print('❌ Error loading available vehicle types: $e');
       return <Map<String, dynamic>>[];
     }
   }

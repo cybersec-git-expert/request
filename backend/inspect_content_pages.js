@@ -1,2 +1,0 @@
-const db=require('./services/database');
-(async()=>{try{const reg=await db.query('SELECT to_regclass(\'public.content_pages\') as tbl');console.log('table reg',reg.rows);if(reg.rows[0].tbl){const cnt=await db.query('SELECT COUNT(*) FROM content_pages');console.log('count',cnt.rows[0]);const sample=await db.query('SELECT * FROM content_pages LIMIT 3');console.log('sample',sample.rows);} }catch(e){console.error('inspect error',e);}finally{process.exit();}})();

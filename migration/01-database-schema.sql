@@ -67,32 +67,6 @@ CREATE TABLE cities (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Vehicle Types table
-CREATE TABLE vehicle_types (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    firebase_id VARCHAR(255),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    icon VARCHAR(255),
-    passenger_capacity INTEGER DEFAULT 1,
-    display_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    country_code VARCHAR(3) DEFAULT 'LK',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Country Vehicle Types (enabled vehicles per country)
-CREATE TABLE country_vehicle_types (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    country_code VARCHAR(3) NOT NULL,
-    vehicle_type_id UUID REFERENCES vehicle_types(id) ON DELETE CASCADE,
-    is_enabled BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(country_code, vehicle_type_id)
-);
-
 -- Variable Types table
 CREATE TABLE variable_types (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

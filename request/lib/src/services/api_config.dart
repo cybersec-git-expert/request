@@ -17,7 +17,7 @@ class ApiConfig {
   static const String authEndpoint = '/auth';
   static const String categoriesEndpoint = '/categories';
   static const String citiesEndpoint = '/cities';
-  static const String vehicleTypesEndpoint = '/vehicle-types';
+
   static const String requestsEndpoint = '/requests';
 
   // Request timeouts
