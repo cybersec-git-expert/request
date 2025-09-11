@@ -47,6 +47,8 @@ class RequestModel {
   final bool isUrgent;
   final DateTime createdAt;
   final DateTime updatedAt;
+  // Viewer context (owner/has_responded info)
+  final ViewerContext? viewerContext;
 
   RequestModel({
     required this.id,
@@ -80,7 +82,8 @@ class RequestModel {
     this.canMessage = true,
     this.isUrgent = false,
     required this.createdAt,
-    required this.updatedAt,
+  required this.updatedAt,
+  this.viewerContext,
   });
 
   factory RequestModel.fromJson(Map<String, dynamic> json) {
@@ -126,6 +129,11 @@ class RequestModel {
       isUrgent: (json['is_urgent'] == true),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+      viewerContext: json['viewer_context'] is Map<String, dynamic>
+          ? ViewerContext.fromJson(
+              json['viewer_context'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -159,6 +167,32 @@ class RequestModel {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+  }
+}
+
+class ViewerContext {
+  final bool isOwner;
+  final bool hasResponded;
+  final String? responseId;
+  final Map<String, dynamic>? entitlements;
+
+  ViewerContext({
+    required this.isOwner,
+    required this.hasResponded,
+    this.responseId,
+    this.entitlements,
+  });
+
+  factory ViewerContext.fromJson(Map<String, dynamic> json) {
+    return ViewerContext(
+      isOwner: json['is_owner'] == true || json['isOwner'] == true,
+      hasResponded:
+          json['has_responded'] == true || json['hasResponded'] == true,
+      responseId: (json['response_id'] ?? json['responseId'])?.toString(),
+      entitlements: json['entitlements'] is Map<String, dynamic>
+          ? (json['entitlements'] as Map<String, dynamic>)
+          : null,
+    );
   }
 }
 

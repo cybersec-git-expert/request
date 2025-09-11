@@ -50,6 +50,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
   // Simplified gating helpers
   bool get _hasResponded {
+    // Prefer backend-provided viewer context
+    final ctx = _request?.viewerContext;
+    if (ctx != null) return ctx.hasResponded;
+    // Fallback to local responses list
     final uid = RestAuthService.instance.currentUser?.uid;
     if (uid == null) return false;
     return _responses.any((r) => r.userId == uid);
@@ -137,10 +141,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final r = await _service.getRequestById(widget.requestId);
-      final currentUserId = RestAuthService.instance.currentUser?.uid;
-      bool owner =
-          r != null && currentUserId != null && r.userId == currentUserId;
+    final r = await _service.getRequestById(widget.requestId);
+    final currentUserId = RestAuthService.instance.currentUser?.uid;
+    bool owner =
+      r != null && currentUserId != null && r.userId == currentUserId;
       List<rest.ResponseModel> responses = [];
       if (r != null) {
         try {
@@ -156,10 +160,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           } catch (_) {}
         }
       }
-      if (mounted) {
+    if (mounted) {
         setState(() {
-          _request = r;
-          _isOwner = owner;
+      _request = r;
+      // Trust viewer_context when available
+      _isOwner = r?.viewerContext?.isOwner ?? owner;
           _responses = responses;
           _loading = false;
         });
