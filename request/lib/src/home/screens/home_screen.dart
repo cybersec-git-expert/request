@@ -194,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _RequestType(
           type: 'services',
           title: 'Services',
-          subtitle: 'Delivery, rides, and more',
+          subtitle: 'Delivery, tours, events, and more',
           icon: Icons.build,
           color: const Color(0xFF00BCD4),
         ),
@@ -227,13 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: 'Send or receive anything fast',
           icon: Icons.local_shipping,
           color: const Color(0xFF4CAF50),
-        ),
-        _RequestType(
-          type: 'ride',
-          title: 'Ride',
-          subtitle: 'Request for transportation',
-          icon: Icons.directions_car,
-          color: const Color(0xFF3B82F6),
         ),
         // Experiences
         _RequestType(
@@ -470,8 +463,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _SectionHeader(title: 'Transport'),
                     _OptionList(
                       options: _serviceOptions
-                          .where(
-                              (o) => o.type == 'delivery' || o.type == 'ride')
+                          .where((o) => o.type == 'delivery')
                           .toList(),
                       moduleEnabled: _moduleEnabled,
                       isFavorite: _isFavorite,
@@ -607,13 +599,6 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 'delivery':
         _openUnified(RequestType.delivery);
-        break;
-      case 'ride':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-              builder: (_) =>
-                  UnifiedRequestCreateScreen(initialModule: 'ride')),
-        );
         break;
       case 'tours':
       case 'events':

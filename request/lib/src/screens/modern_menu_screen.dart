@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/enhanced_user_service.dart';
-import '../services/user_registration_service.dart';
 import '../services/rest_notification_service.dart';
 import '../theme/glass_theme.dart';
 // Removed direct RestAuthService usage in this screen
@@ -31,18 +30,15 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
   Map<String, dynamic>? _currentUser;
   bool _isLoading = true;
   String? _profileImageUrl;
-  bool _isDriver = false;
   // Product seller flag no longer used for menu routing; dashboard self-gates
   int _unreadTotal = 0;
   int _unreadMessages = 0;
   String? _membershipLabel; // e.g., static member label
-  // Removed admin/business gating; keep Ride Alerts gated by driver status only.
 
   // Lightweight in-memory cache to avoid refetching every time tab opens
   static DateTime? _lastCountsFetchAt;
   static int _lastUnreadTotal = 0;
   static int _lastUnreadMessages = 0;
-  static bool? _lastIsDriver;
 
   @override
   void initState() {
@@ -87,17 +83,7 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
       }
 
       // Driver registration (cached in service for 5 minutes)
-      futures.add(UserRegistrationService.instance
-          .getUserRegistrations()
-          .timeout(const Duration(seconds: 3))
-          .then((regs) {
-        final isDriver = regs?.isApprovedDriver == true;
-        _lastIsDriver = isDriver;
-        if (mounted) setState(() => _isDriver = isDriver);
-      }).catchError((_) {
-        if (_lastIsDriver != null && mounted)
-          setState(() => _isDriver = _lastIsDriver!);
-      }));
+      // Removed driver functionality
 
       // Membership label (static)
       if (mounted && _membershipLabel == null) _membershipLabel = 'Member';
@@ -367,19 +353,6 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
         route: '/notifications',
         badgeCount: _unreadTotal,
       ),
-      _MenuItem(
-        title: 'Find Drivers',
-        icon: Icons.directions_car_filled,
-        color: const Color(0xFF3B82F6), // Blue
-        route: '/rider/browse-drivers',
-      ),
-      if (_isDriver)
-        _MenuItem(
-          title: 'Ride Alerts',
-          icon: Icons.directions_car,
-          color: const Color(0xFF3B82F6), // Blue
-          route: '/driver-subscriptions',
-        ),
     ];
 
     return Container(
@@ -482,16 +455,6 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
               );
             },
           ),
-          if (!_isDriver)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                'Become a verified driver to enable Ride Alerts',
-                style: TextStyle(
-                    color: GlassTheme.colors.textSecondary.withOpacity(0.8),
-                    fontSize: 13),
-              ),
-            ),
         ],
       ),
     );
