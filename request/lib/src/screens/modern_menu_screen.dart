@@ -82,9 +82,6 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
         }).catchError((_) {}));
       }
 
-      // Driver registration (cached in service for 5 minutes)
-      // Removed driver functionality
-
       // Membership label (static)
       if (mounted && _membershipLabel == null) _membershipLabel = 'Member';
 
