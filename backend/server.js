@@ -64,6 +64,8 @@ const masterProductRoutes = require('./routes/master-products');
 const productSyncRoutes = require('./routes/product-sync');
 
 const entityActivationRoutes = require('./routes/entity-activations');
+const enhancedBusinessBenefitsRoutes = require('./routes/enhanced-business-benefits');
+// Removed: subscription plan routes
 
 // Removed: subscription plan routes
 
@@ -399,6 +401,7 @@ app.use('/api/vehicle-types', vehicleTypeRoutes);
 app.use('/api/upload', uploadRoutes); // Image upload endpoint
 
 app.use('/api/s3', uploadS3Routes); // S3 upload endpoints
+app.use('/api/enhanced-business-benefits', enhancedBusinessBenefitsRoutes); // Enhanced business benefits
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
 app.use('/api/public/subscriptions', publicSubscriptionsRoutes); // Public subscriptions endpoints
 // Entitlements API endpoints will be added at the end of the file
