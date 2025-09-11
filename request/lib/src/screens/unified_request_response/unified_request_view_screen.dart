@@ -1252,111 +1252,125 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Modern response count display
-            FutureBuilder<Map<String, dynamic>>(
-              future: _getResponseStatus(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox.shrink();
-                }
+            // Modern response count display - only show for non-owners who can potentially respond
+            if (!_isOwner) // Only show subscription info if not the owner
+              FutureBuilder<Map<String, dynamic>>(
+                future: _getResponseStatus(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox.shrink();
+                  }
 
-                final data = snapshot.data;
-                if (data == null) return const SizedBox.shrink();
+                  final data = snapshot.data;
+                  if (data == null) return const SizedBox.shrink();
 
-                final hasUnlimited = data['hasUnlimited'] as bool;
-                final remaining = data['remaining'] as int;
-                return Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: hasUnlimited
-                        ? Colors.green.withOpacity(0.1)
-                        : remaining == 0
-                            ? Colors.red.withOpacity(0.1)
-                            : Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: hasUnlimited
-                              ? Colors.green.withOpacity(0.2)
-                              : remaining == 0
-                                  ? Colors.red.withOpacity(0.2)
-                                  : Colors.blue.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          hasUnlimited
-                              ? Icons.verified
-                              : remaining == 0
-                                  ? Icons.warning_rounded
-                                  : Icons.chat_bubble_outline,
-                          color: hasUnlimited
-                              ? Colors.green.shade700
-                              : remaining == 0
-                                  ? Colors.red.shade700
-                                  : Colors.blue.shade700,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              hasUnlimited
-                                  ? 'Pro Plan - Unlimited Responses'
-                                  : 'Free Plan - Response Usage',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              hasUnlimited
-                                  ? 'Create unlimited responses'
-                                  : remaining == 0
-                                      ? 'Monthly limit reached'
-                                      : 'Responses remaining this month: $remaining',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (!hasUnlimited && remaining <= 1) ...[
-                        const SizedBox(width: 8),
+                  final hasUnlimited = data['hasUnlimited'] as bool;
+                  final remaining = data['remaining'] as int;
+
+                  // Check if user has already responded to this request
+                  final userId = RestAuthService.instance.currentUser?.uid;
+                  final hasExistingResponse = userId != null &&
+                      _responses.any((r) => r.userId == userId);
+
+                  // Only show subscription bar if:
+                  // 1. User hasn't responded yet AND
+                  // 2. User has reached their limit (remaining == 0) OR is on unlimited plan
+                  if (hasExistingResponse || (!hasUnlimited && remaining > 0)) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: hasUnlimited
+                          ? Colors.green.withOpacity(0.1)
+                          : remaining == 0
+                              ? Colors.red.withOpacity(0.1)
+                              : Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius: BorderRadius.circular(20),
+                            color: hasUnlimited
+                                ? Colors.green.withOpacity(0.2)
+                                : remaining == 0
+                                    ? Colors.red.withOpacity(0.2)
+                                    : Colors.blue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'Upgrade',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Icon(
+                            hasUnlimited
+                                ? Icons.verified
+                                : remaining == 0
+                                    ? Icons.warning_rounded
+                                    : Icons.chat_bubble_outline,
+                            color: hasUnlimited
+                                ? Colors.green.shade700
+                                : remaining == 0
+                                    ? Colors.red.shade700
+                                    : Colors.blue.shade700,
+                            size: 20,
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                hasUnlimited
+                                    ? 'Pro Plan - Unlimited Responses'
+                                    : 'Free Plan - Response Usage',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                hasUnlimited
+                                    ? 'Create unlimited responses'
+                                    : remaining == 0
+                                        ? 'Monthly limit reached'
+                                        : 'Responses remaining this month: $remaining',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (!hasUnlimited && remaining <= 1) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Upgrade',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                );
-              },
-            ),
+                    ),
+                  );
+                },
+              ),
             _sectionCard(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
