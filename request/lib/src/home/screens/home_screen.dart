@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/rest_auth_service.dart';
 import '../../screens/unified_request_response/unified_request_create_screen.dart';
 import '../../models/enhanced_user_model.dart' show RequestType;
-import '../../screens/requests/ride/create_ride_request_screen.dart';
 import '../../services/rest_support_services.dart'
     show CountryService, ModuleService, CountryModules; // Module gating
 import '../../services/pricing_service.dart';
@@ -611,7 +610,7 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 'ride':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CreateRideRequestScreen()),
+          MaterialPageRoute(builder: (_) => UnifiedRequestCreateScreen(initialModule: 'ride')),
         );
         break;
       case 'tours':

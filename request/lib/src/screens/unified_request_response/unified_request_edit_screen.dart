@@ -10,7 +10,6 @@ import '../../services/country_service.dart';
 import '../../widgets/accurate_location_picker_widget.dart';
 import '../../widgets/category_picker.dart';
 import '../../utils/currency_helper.dart';
-import '../requests/ride/edit_ride_request_screen.dart';
 
 class UnifiedRequestEditScreen extends StatefulWidget {
   final RequestModel request;
@@ -816,11 +815,6 @@ class _UnifiedRequestEditScreenState extends State<UnifiedRequestEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Redirect ride requests to specific edit screen
-    if (_selectedType == RequestType.ride) {
-      return EditRideRequestScreen(request: widget.request);
-    }
-
     return GlassPage(
       title: 'Edit ${_getTypeDisplayNameWithModule()}',
       appBarBackgroundColor: GlassTheme.isDarkMode

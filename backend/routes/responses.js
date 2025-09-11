@@ -4,6 +4,7 @@ const db = require('../services/database');
 const auth = require('../services/auth');
 const entitlements = require('../entitlements');
 const notify = require('../services/notification-helper');
+const simpleSubscriptionService = require('../services/simple-subscription-service');
 
 // Dev-friendly optional auth (copied pattern from master-products)
 function optionalAuth(handler){
@@ -95,8 +96,8 @@ router.get('/', optionalAuth(async (req, res) => {
 }));
 
 // Create a response (one per user per request enforced by unique index)  
-// Entitlement check with enforcement enabled after 3 responses
-router.post('/', auth.authMiddleware(), entitlements.requireResponseEntitlement({ enforce: true }), async (req, res) => {
+// Check simple subscription limit before creating response
+router.post('/', auth.authMiddleware(), async (req, res) => {
   try {
     const requestId = req.params.requestId;
     const userId = req.user?.id || req.user?.userId; // auth middleware sets id
@@ -123,6 +124,18 @@ router.post('/', auth.authMiddleware(), entitlements.requireResponseEntitlement(
       return res.status(401).json({ success:false, message:'Missing user (auth token required). Provide Authorization: Bearer <token>' });
     }
 
+    // Check if user can make a response (3 per month limit)
+    const canRespond = await simpleSubscriptionService.canUserRespond(userId);
+    if (!canRespond) {
+      const status = await simpleSubscriptionService.getUserSubscriptionStatus(userId);
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Monthly response limit reached. You have used all 3 free responses this month.',
+        error: 'RESPONSE_LIMIT_EXCEEDED',
+        data: status
+      });
+    }
+
     // Ensure request is active and not owned by responding user (case-insensitive status)
     const request = await db.queryOne('SELECT id, user_id, status, currency FROM requests WHERE id = $1', [requestId]);
     if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
@@ -143,6 +156,15 @@ router.post('/', auth.authMiddleware(), entitlements.requireResponseEntitlement(
     `, [requestId, userId, message.trim(), price ?? null, currency || request.currency, metadata || null, finalImages, location_address || null, location_latitude || null, location_longitude || null, country_code || request.country_code || null]);
 
     console.log('[responses][create] inserted', { id: insert.id, requestId });
+    
+    // Increment user's response usage count
+    try {
+      await simpleSubscriptionService.incrementUserUsage(userId);
+      console.log('[responses][create] incremented usage count for user', userId);
+    } catch (e) {
+      console.warn('[responses][create] failed to increment usage count', e?.message || e);
+    }
+    
     // Notify request owner about new response
     try {
       await notify.createNotification({
@@ -154,15 +176,6 @@ router.post('/', auth.authMiddleware(), entitlements.requireResponseEntitlement(
         data: { requestId, responseId: insert.id }
       });
     } catch (e) { console.warn('notify newResponse failed', e?.message || e); }
-    // Increment usage count for free users (normal audience without active sub)
-    try {
-      const ent = req.entitlements;
-      if (ent && ent.audience === 'normal' && !ent.isSubscribed) {
-        await entitlements.incrementResponseCount(userId);
-      }
-    } catch (e) {
-      console.warn('[responses][create] failed to increment usage count', e?.message || e);
-    }
 
     res.status(201).json({ success: true, message: 'Response created', data: insert });
   } catch (error) {

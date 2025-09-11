@@ -3,7 +3,6 @@ import '../services/auth_service.dart';
 import '../services/rest_notification_service.dart';
 import '../models/notification_model.dart';
 import '../screens/unified_request_response/unified_request_view_screen.dart';
-import '../screens/requests/ride/view_ride_request_screen.dart';
 import '../screens/chat/conversation_screen.dart';
 import '../services/chat_service.dart';
 import '../models/chat_models.dart';
@@ -414,7 +413,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ViewRideRequestScreen(requestId: requestId),
+              builder: (_) => UnifiedRequestViewScreen(requestId: requestId),
             ),
           );
         }
