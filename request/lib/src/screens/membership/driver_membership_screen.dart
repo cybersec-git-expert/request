@@ -14,6 +14,9 @@ class _DriverMembershipScreenState extends State<DriverMembershipScreen> {
   bool _isLoading = true;
   bool _isRegistered = false;
   String _verificationStatus = 'not_registered';
+  // Add business verification status
+  String _businessVerificationStatus = 'not_registered';
+  bool _hasBusinessVerification = false;
   final EnhancedUserService _userService = EnhancedUserService();
 
   @override
@@ -27,32 +30,58 @@ class _DriverMembershipScreenState extends State<DriverMembershipScreen> {
       final user = await _userService.getCurrentUser();
       if (user == null) return;
 
-      // Check if user has driver role
-      bool hasDriverRole = user.roles.contains(UserRole.driver);
+      // Check both driver and business verification status
+      String driverStatus = 'not_registered';
+      String businessStatus = 'not_registered';
+      bool hasDriverVerification = false;
+      bool hasBusinessVerification = false;
 
-      if (hasDriverRole) {
-        // Check driver verification status
+      // Check driver verification status
+      try {
         final resp = await ApiClient.instance
             .get('/api/driver-verifications/user/${user.uid}');
         if (resp.isSuccess && resp.data != null) {
           final responseWrapper = resp.data as Map<String, dynamic>;
           final data = responseWrapper['data'] as Map<String, dynamic>?;
           if (data != null) {
-            final status =
+            driverStatus =
                 (data['status'] ?? 'pending').toString().trim().toLowerCase();
-            setState(() {
-              _isRegistered = true;
-              _verificationStatus = status;
-              _isLoading = false;
-            });
-            return;
+            hasDriverVerification = true;
           }
         }
+      } catch (e) {
+        print('Driver verification check error: $e');
+      }
+
+      // Check business verification status
+      try {
+        final resp = await ApiClient.instance
+            .get('/api/business-verifications/user/${user.uid}');
+        if (resp.isSuccess && resp.data != null) {
+          final responseWrapper = resp.data as Map<String, dynamic>;
+          final data = responseWrapper['data'] as Map<String, dynamic>?;
+          if (data != null) {
+            businessStatus =
+                (data['status'] ?? 'pending').toString().trim().toLowerCase();
+            hasBusinessVerification = true;
+          }
+        }
+      } catch (e) {
+        print('Business verification check error: $e');
+      }
+
+      // Fallback: Check if user has driver role
+      if (!hasDriverVerification) {
+        bool hasDriverRole = user.roles.contains(UserRole.driver);
+        hasDriverVerification = hasDriverRole;
+        driverStatus = hasDriverRole ? 'pending' : 'not_registered';
       }
 
       setState(() {
-        _isRegistered = hasDriverRole;
-        _verificationStatus = hasDriverRole ? 'pending' : 'not_registered';
+        _isRegistered = hasDriverVerification;
+        _verificationStatus = driverStatus;
+        _businessVerificationStatus = businessStatus;
+        _hasBusinessVerification = hasBusinessVerification;
         _isLoading = false;
       });
     } catch (e) {
@@ -77,6 +106,32 @@ class _DriverMembershipScreenState extends State<DriverMembershipScreen> {
 
   Color get _statusColor {
     switch (_verificationStatus) {
+      case 'approved':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String get _businessStatusText {
+    switch (_businessVerificationStatus) {
+      case 'approved':
+        return 'Business Verified';
+      case 'pending':
+        return 'Business Pending';
+      case 'rejected':
+        return 'Business Rejected';
+      default:
+        return 'No Business Role';
+    }
+  }
+
+  Color get _businessStatusColor {
+    switch (_businessVerificationStatus) {
       case 'approved':
         return Colors.green;
       case 'pending':
@@ -156,21 +211,47 @@ class _DriverMembershipScreenState extends State<DriverMembershipScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: _statusColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      _statusText,
-                                      style: TextStyle(
-                                        color: _statusColor,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: _statusColor.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          _statusText,
+                                          style: TextStyle(
+                                            color: _statusColor,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (_hasBusinessVerification) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: _businessStatusColor
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Text(
+                                            _businessStatusText,
+                                            style: TextStyle(
+                                              color: _businessStatusColor,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),
