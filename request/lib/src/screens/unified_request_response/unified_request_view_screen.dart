@@ -275,66 +275,93 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     return true;
   }
 
-  /// Check business verification status for smart routing
-  Future<String> _checkBusinessVerificationStatus() async {
+  /// Smart navigation to subscription plans based on verification status
+  Future<void> _navigateToSubscriptionPlans() async {
     try {
       final userService = EnhancedUserService();
       final user = await userService.getCurrentUser();
-      if (user == null) return 'no_auth';
-
-      // Check if user has business role
-      if (!user.roles.contains(UserRole.business)) {
-        return 'no_business_role';
+      if (user == null) {
+        Navigator.pushNamed(context, '/business-membership');
+        return;
       }
 
-      // Check business verification status
-      final resp = await ApiClient.instance
-          .get('/api/business-verifications/user/${user.uid}');
-      if (resp.isSuccess && resp.data != null) {
-        final responseWrapper = resp.data as Map<String, dynamic>;
-        final data = responseWrapper['data'] as Map<String, dynamic>?;
-        if (data != null) {
-          final status =
-              (data['status'] ?? 'pending').toString().trim().toLowerCase();
-          return status; // 'approved', 'pending', 'rejected'
+      // Check both business and driver verification statuses
+      String businessStatus = 'not_verified';
+      String driverStatus = 'not_verified';
+      bool hasBusinessRole = user.roles.contains(UserRole.business);
+      bool hasDriverRole = user.roles.contains(UserRole.driver);
+
+      // Check business verification
+      if (hasBusinessRole) {
+        try {
+          final resp = await ApiClient.instance
+              .get('/api/business-verifications/user/${user.uid}');
+          if (resp.isSuccess && resp.data != null) {
+            final responseWrapper = resp.data as Map<String, dynamic>;
+            final data = responseWrapper['data'] as Map<String, dynamic>?;
+            if (data != null) {
+              businessStatus =
+                  (data['status'] ?? 'pending').toString().trim().toLowerCase();
+            }
+          }
+        } catch (e) {
+          print('Error checking business verification: $e');
         }
       }
-      return 'no_verification';
-    } catch (e) {
-      print('Error checking business verification: $e');
-      return 'error';
-    }
-  }
 
-  /// Smart navigation to subscription plans based on business verification status
-  Future<void> _navigateToSubscriptionPlans() async {
-    final verificationStatus = await _checkBusinessVerificationStatus();
+      // Check driver verification
+      if (hasDriverRole) {
+        try {
+          final resp = await ApiClient.instance
+              .get('/api/driver-verifications/user/${user.uid}');
+          if (resp.isSuccess && resp.data != null) {
+            final responseWrapper = resp.data as Map<String, dynamic>;
+            final data = responseWrapper['data'] as Map<String, dynamic>?;
+            if (data != null) {
+              driverStatus =
+                  (data['status'] ?? 'pending').toString().trim().toLowerCase();
+            }
+          }
+        } catch (e) {
+          print('Error checking driver verification: $e');
+        }
+      }
 
-    switch (verificationStatus) {
-      case 'approved':
-        // User is verified business, go to role selection to manage roles
+      // Route based on verification statuses
+      if (businessStatus == 'approved' && driverStatus == 'approved') {
+        // User has both verifications - let them choose or default to business
+        Navigator.pushNamed(context, '/membership', arguments: {
+          'requiredSubscriptionType': 'business',
+        });
+      } else if (businessStatus == 'approved') {
+        // User has approved business verification
+        Navigator.pushNamed(context, '/membership', arguments: {
+          'requiredSubscriptionType': 'business',
+        });
+      } else if (driverStatus == 'approved') {
+        // User has approved driver verification
+        Navigator.pushNamed(context, '/membership', arguments: {
+          'requiredSubscriptionType': 'driver',
+        });
+      } else if (businessStatus == 'pending' || driverStatus == 'pending') {
+        // User has pending verifications - show role selection for status
         Navigator.pushNamed(context, '/role-selection');
-        break;
-      case 'pending':
-        // User has pending verification, go to role selection
-        Navigator.pushNamed(context, '/role-selection');
-        break;
-      case 'rejected':
-        // User was rejected, show message and go to role selection
+      } else if (businessStatus == 'rejected' || driverStatus == 'rejected') {
+        // User has rejected verifications
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
-                  'Your business verification was rejected. Please check your role status for details.')),
+                  'Your verification was rejected. Please check your role status for details.')),
         );
         Navigator.pushNamed(context, '/role-selection');
-        break;
-      case 'no_business_role':
-      case 'no_verification':
-      case 'error':
-      default:
-        // New user or no existing business role, go directly to business membership
+      } else {
+        // New user or no verifications - go to business membership
         Navigator.pushNamed(context, '/business-membership');
-        break;
+      }
+    } catch (e) {
+      print('Error in _navigateToSubscriptionPlans: $e');
+      // Fallback to business membership for new users
+      Navigator.pushNamed(context, '/business-membership');
     }
   }
 

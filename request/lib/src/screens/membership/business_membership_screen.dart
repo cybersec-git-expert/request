@@ -93,6 +93,9 @@ class _BusinessMembershipScreenState extends State<BusinessMembershipScreen> {
         _hasDriverVerification = hasDriverVerification;
         if (businessData != null) {
           _updateCompletionStatus(businessData);
+        } else {
+          // If no detailed data but user is verified, mark all as complete
+          _updateCompletionStatusFromVerification(businessStatus);
         }
         _isLoading = false;
       });
@@ -104,13 +107,69 @@ class _BusinessMembershipScreenState extends State<BusinessMembershipScreen> {
   }
 
   void _updateCompletionStatus(Map<String, dynamic> data) {
-    // This is a simplified status check - adjust based on your API response
-    _completionStatus = {
-      'registration': true, // If we have data, registration is complete
-      'contact': data['contact_verified'] == true,
-      'documents': data['documents_verified'] == true,
-      'profile': data['profile_complete'] == true,
-    };
+    // Check if user is fully approved first
+    final status =
+        (data['status'] ?? 'pending').toString().trim().toLowerCase();
+
+    if (status == 'approved') {
+      // If approved, all steps are complete regardless of individual flags
+      _completionStatus = {
+        'registration': true,
+        'contact': true,
+        'documents': true,
+        'profile': true,
+      };
+    } else {
+      // Use detailed verification flags for pending/rejected status
+      _completionStatus = {
+        'registration': true, // If we have data, registration is complete
+        'contact': data['contact_verified'] == true,
+        'documents': data['documents_verified'] == true,
+        'profile': data['profile_complete'] == true,
+      };
+    }
+  }
+
+  void _updateCompletionStatusFromVerification(String verificationStatus) {
+    // Set completion status based on verification status
+    switch (verificationStatus) {
+      case 'approved':
+        // If approved, all steps are complete
+        _completionStatus = {
+          'registration': true,
+          'contact': true,
+          'documents': true,
+          'profile': true,
+        };
+        break;
+      case 'pending':
+        // If pending, registration is complete but others depend on verification stage
+        _completionStatus = {
+          'registration': true,
+          'contact': false,
+          'documents': false,
+          'profile': false,
+        };
+        break;
+      case 'rejected':
+        // If rejected, registration is complete but others failed
+        _completionStatus = {
+          'registration': true,
+          'contact': false,
+          'documents': false,
+          'profile': false,
+        };
+        break;
+      default:
+        // Not registered
+        _completionStatus = {
+          'registration': false,
+          'contact': false,
+          'documents': false,
+          'profile': false,
+        };
+        break;
+    }
   }
 
   String get _statusText {
