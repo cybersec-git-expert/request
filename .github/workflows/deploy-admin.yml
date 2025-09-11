@@ -1,0 +1,144 @@
+name: Deploy Admin React App
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'admin-react/**'
+      - '.github/workflows/deploy-admin.yml'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even without admin changes'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: admin-react/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./admin-react
+      run: npm ci
+
+    - name: Build application
+      working-directory: ./admin-react
+      run: npm run build
+      env:
+        # Add any environment variables needed for build
+        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'https://your-api-domain.com' }}
+
+    - name: Create deployment archive
+      working-directory: ./admin-react
+      run: |
+        tar -czf admin-dist.tgz -C dist .
+        ls -la admin-dist.tgz
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          # Create admin directory if it doesn't exist
+          sudo mkdir -p /var/www/admin
+          sudo chown -R ec2-user:ec2-user /var/www/admin
+          
+          # Backup current deployment (if exists)
+          if [ -d "/var/www/admin/current" ]; then
+            sudo rm -rf /var/www/admin/backup 2>/dev/null || true
+            sudo mv /var/www/admin/current /var/www/admin/backup
+          fi
+          
+          # Create new deployment directory
+          mkdir -p /var/www/admin/current
+
+    - name: Upload build files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        source: "./admin-react/admin-dist.tgz"
+        target: "/home/ec2-user/"
+
+    - name: Extract and configure
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          # Extract the build files
+          cd /var/www/admin/current
+          tar -xzf /home/ec2-user/admin-react/admin-dist.tgz
+          
+          # Clean up the uploaded archive
+          rm -f /home/ec2-user/admin-react/admin-dist.tgz
+          
+          # Set proper permissions
+          sudo chown -R nginx:nginx /var/www/admin/current 2>/dev/null || sudo chown -R www-data:www-data /var/www/admin/current 2>/dev/null || true
+          sudo chmod -R 755 /var/www/admin/current
+          
+          # Restart nginx if it's running
+          sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || echo "Nginx not running, skipping reload"
+          
+          echo "✅ Admin app deployed successfully!"
+
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          echo "📋 Deployment verification:"
+          echo "Files in /var/www/admin/current:"
+          ls -la /var/www/admin/current/ | head -10
+          
+          echo ""
+          echo "📁 Total files deployed:"
+          find /var/www/admin/current -type f | wc -l
+          
+          echo ""
+          echo "💾 Disk usage:"
+          du -sh /var/www/admin/current
+
+    - name: Rollback on failure
+      if: failure()
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          echo "❌ Deployment failed, attempting rollback..."
+          if [ -d "/var/www/admin/backup" ]; then
+            sudo rm -rf /var/www/admin/current
+            sudo mv /var/www/admin/backup /var/www/admin/current
+            sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || true
+            echo "✅ Rollback completed"
+          else
+            echo "⚠️ No backup available for rollback"
+          fi

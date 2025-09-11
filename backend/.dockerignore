@@ -1,0 +1,48 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env*
+.nyc_output
+coverage
+.nyc_output
+*.log
+.DS_Store
+Thumbs.db
+
+# Local development files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Documentation
+docs/
+documentation/
+*.md
+
+# Deployment scripts (not needed in container)
+scripts/deploy*
+scripts/*deploy*
+deploy*.sh
+deploy*.ps1
+
+# Environment files (should be mounted or passed via env vars)
+production.env*
+local*.env
+development.env
+staging.env
+
+# Uploads directory (should be mounted as volume)
+uploads/*
+
+# Temporary files
+tmp/
+temp/

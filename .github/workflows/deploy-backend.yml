@@ -1,0 +1,146 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even without backend changes'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: gitgurusl/request-backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          # Set environment variables for the deployment
+          export IMAGE_TAG="${{ github.sha }}"
+          export IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          
+          echo "🚀 Starting deployment of $IMAGE_NAME:$IMAGE_TAG"
+          
+          # Login to GitHub Container Registry
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          
+          # Stop and remove old containers
+          echo "🧹 Cleaning up old containers..."
+          docker stop request-backend-container 2>/dev/null || true
+          docker rm -f request-backend-container 2>/dev/null || true
+          
+          # Pull the latest image
+          echo "📥 Pulling $IMAGE_NAME:latest..."
+          docker pull "$IMAGE_NAME:latest"
+          
+          # Start new container
+          echo "🚀 Starting new container..."
+          docker run -d --name request-backend-container \
+            --restart unless-stopped \
+            --env-file production.env \
+            --label "com.gitgurusl.app=request-backend" \
+            -p "0.0.0.0:3001:3001" \
+            "$IMAGE_NAME:latest"
+          
+          # Health check
+          echo "🏥 Performing health check..."
+          sleep 10
+          
+          for i in {1..30}; do
+            if curl -s -f "http://localhost:3001/health" >/dev/null 2>&1; then
+              echo "✅ Health check passed! Deployment successful."
+              docker logs --tail 20 request-backend-container
+              exit 0
+            else
+              echo "⏳ Waiting for service to start... ($i/30)"
+              sleep 2
+            fi
+          done
+          
+          echo "❌ Health check failed!"
+          echo "Container logs:"
+          docker logs --tail 50 request-backend-container
+          exit 1
+
+    - name: Cleanup old images
+      uses: appleboy/ssh-action@v1.0.3
+      if: success()
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          echo "🗑️ Cleaning up old Docker images..."
+          # Keep only the latest 3 images
+          OLD_IMAGES=$(docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} --format "{{.ID}}" | tail -n +4 2>/dev/null || true)
+          if [ -n "$OLD_IMAGES" ]; then
+            docker rmi -f $OLD_IMAGES 2>/dev/null || true
+            echo "✅ Cleaned up old images"
+          else
+            echo "ℹ️ No old images to clean up"
+          fi
+
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Backend is available at: http://${{ secrets.EC2_HOST }}:3001"
+        else
+          echo "❌ Deployment failed!"
+        fi
