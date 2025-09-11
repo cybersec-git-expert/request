@@ -108,9 +108,9 @@ const usersRoutes = require('./routes/users');
 
 const adminUserRoutes = require('./routes/admin-users');
 
-const driverVerificationRoutes = require('./routes/driver-verifications');
+// const driverVerificationRoutes = require('./routes/driver-verifications'); // DISABLED - functionality moved to unified-verification
 
-const businessVerificationRoutes = require('./routes/business-verifications-simple'); // Use the simple working version
+// const businessVerificationRoutes = require('./routes/business-verifications-simple'); // DISABLED - functionality moved to unified-verification
 
 const businessCategoriesRoutes = require('./routes/business-categories'); // NEW - Business categories management
 
@@ -371,7 +371,7 @@ app.head('/ready', async (req, res) => {
 
 
 // API routes
-const subscriptionPlansNewRoutes = require('./routes/subscription-plans-new');
+// const subscriptionRoutes = require('./routes/subscription'); // Not needed - already handled elsewhere
 
 app.use('/api/auth', authRoutes);
 
@@ -485,9 +485,9 @@ app.use('/api/country-variable-types', countryVariableTypeRoutes);
 
 app.use('/api/admin-users', adminUserRoutes);
 
-app.use('/api/driver-verifications', driverVerificationRoutes);
+// app.use('/api/driver-verifications', driverVerificationRoutes); // DISABLED - functionality moved to unified-verification
 
-app.use('/api/business-verifications', businessVerificationRoutes); // NEW - Business verification routes
+// app.use('/api/business-verifications', businessVerificationRoutes); // DISABLED - functionality moved to unified-verification
 
 app.use('/api/business-categories', businessCategoriesRoutes); // NEW - Business categories management
 
