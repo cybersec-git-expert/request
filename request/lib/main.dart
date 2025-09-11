@@ -37,6 +37,7 @@ import 'src/screens/membership/membership_screen.dart';
 import 'src/screens/membership/driver_membership_screen.dart';
 import 'src/screens/membership/business_membership_screen.dart';
 import 'src/screens/membership/role_selection_screen.dart';
+import 'src/screens/simple_subscription_screen.dart';
 // Enhanced Business Benefits screen for business subscriptions
 import 'src/screens/membership/enhanced_business_benefits_screen.dart';
 // Driver subscription screen
@@ -269,6 +270,10 @@ class MyApp extends StatelessWidget {
           case '/business-subscriptions':
             return MaterialPageRoute(
               builder: (context) => const EnhancedBusinessBenefitsScreen(),
+            );
+          case '/simple-subscription':
+            return MaterialPageRoute(
+              builder: (context) => const SimpleSubscriptionScreen(),
             );
           case '/driver-subscriptions':
             return MaterialPageRoute(
