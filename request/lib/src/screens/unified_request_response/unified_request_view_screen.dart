@@ -1567,7 +1567,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                         const SizedBox(height: 8),
                         if (r.contactVisible &&
                             (r.userPhone?.isNotEmpty == true) &&
-                            (_entitlements?.canSeeContactDetails == true || _isOwner))
+                            (_entitlements?.canSeeContactDetails == true ||
+                                _isOwner))
                           Row(children: [
                             Icon(Icons.phone,
                                 size: 16, color: Colors.grey[600]),
