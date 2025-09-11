@@ -230,8 +230,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     try {
       print('DEBUG: Reloading responses for request ${_request!.id}');
 
-      // Add a small delay to ensure backend has processed the update
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Reduced delay for faster refresh - backend is usually ready quickly
+      await Future.delayed(const Duration(milliseconds: 200));
 
       final page =
           await _service.getResponses(_request!.id, page: 1, limit: 50);
@@ -443,10 +443,9 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
               UnifiedResponseCreateScreen(request: requestModel),
         ),
       ).then((_) async {
-        // Increment local response count when user successfully creates a response
-        await ResponseLimitService.incrementResponseCount();
+        // Immediately refresh data for responsive UI - backend sync will handle count updates
         _reloadResponses();
-        _loadEntitlementsAndPrefs(); // Refresh entitlements after response creation
+        _loadEntitlementsAndPrefs(); // Refresh entitlements for updated count display
       });
     }();
   }
@@ -1369,98 +1368,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                   Text(r.description,
                       style: TextStyle(color: Colors.grey[700], height: 1.4)),
 
-                  // Debug subscription banner logic
-                  ...() {
-                    final currentUserId =
-                        RestAuthService.instance.currentUser?.uid;
-                    final hasResponded = _responses
-                        .any((response) => response.userId == currentUserId);
-                    final isOwner = currentUserId == r.userId;
-                    final canRespond = _entitlements?.canRespond ?? true;
-                    print(
-                        'DEBUG Banner: entitlements=${_entitlements != null}, canRespond=$canRespond, isOwner=$isOwner, hasResponded=$hasResponded, responsesCount=${_responses.length}');
-                    return <Widget>[];
-                  }(),
-
-                  // Subscription limit banner - only show if user hasn't responded to this request
-                  if (_entitlements != null &&
-                      !_entitlements!.canRespond &&
-                      RestAuthService.instance.currentUser?.uid != r.userId &&
-                      !_responses.any((response) =>
-                          response.userId ==
-                          RestAuthService.instance.currentUser?.uid)) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.orange.withOpacity(0.1),
-                            Colors.orange.withOpacity(0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.orange.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(Icons.star,
-                                    color: Colors.orange, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Response Limit Reached',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'You\'ve reached your monthly limit of 3 responses. Subscribe to continue responding to requests and view contact details.',
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              await _navigateToSubscriptionPlans();
-                            },
-                            icon: const Icon(Icons.star),
-                            label: const Text('View Subscription Plans'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
                   // Images Section
                   if (r.imageUrls != null && r.imageUrls!.isNotEmpty) ...[
                     const SizedBox(height: 16),
@@ -1623,82 +1530,38 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Show only one subscribe prompt if user has reached their limit and hasn't responded
-                        if (!_isOwner &&
-                            _entitlements != null &&
-                            (!_entitlements!.canSendMessages ||
-                                !_entitlements!.canRespond) &&
-                            !_responses.any((response) =>
-                                response.userId ==
-                                RestAuthService.instance.currentUser?.uid))
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.lock_outline,
-                                    size: 24, color: Colors.amber.shade700),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Subscribe to view details and message instantly.',
-                                    style: TextStyle(
-                                      color: Colors.amber.shade800,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15,
+                        Row(children: [
+                          _buildRequesterAvatar(r),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                if ((r.userId).isNotEmpty) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          PublicProfileScreen(userId: r.userId),
                                     ),
-                                  ),
-                                ),
-                              ],
+                                  );
+                                }
+                              },
+                              child: Text(r.userName ?? 'Unknown User',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  )),
                             ),
-                          )
-                        else ...[
-                          Row(children: [
-                            _buildRequesterAvatar(r),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  if ((r.userId).isNotEmpty) {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => PublicProfileScreen(
-                                            userId: r.userId),
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Text(r.userName ?? 'Unknown User',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    )),
+                          ),
+                          if (!_isOwner)
+                            IconButton(
+                              onPressed: () => _messageRequester(r),
+                              icon: Icon(
+                                Icons.message,
+                                color: _getTypeColor(_getCurrentRequestType()),
+                                size: 20,
                               ),
+                              tooltip: 'Message Requester',
                             ),
-                            // Debug message icon visibility
-                            ...() {
-                              final canMessage =
-                                  _entitlements?.canSendMessages ?? true;
-                              print(
-                                  'DEBUG Message Icon: isOwner=$_isOwner, canSendMessages=$canMessage, membershipCompleted=$_membershipCompleted');
-                              return <Widget>[];
-                            }(),
-                            if (!_isOwner)
-                              IconButton(
-                                onPressed: () => _messageRequester(r),
-                                icon: Icon(
-                                  Icons.message,
-                                  color:
-                                      _getTypeColor(_getCurrentRequestType()),
-                                  size: 20,
-                                ),
-                                tooltip: 'Message Requester',
-                              ),
-                          ]),
-                        ],
+                        ]),
                         const SizedBox(height: 8),
                         if (r.contactVisible &&
                             (r.userPhone?.isNotEmpty == true) &&
@@ -1713,77 +1576,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                   style: TextStyle(color: Colors.grey[700])),
                             ),
                           ]),
-                        // Show subscription prompt if contact details are hidden due to limits
-                        // BUT NOT for request owners - they should always see their own contact details
-                        if (r.contactVisible &&
-                            (r.userPhone?.isNotEmpty == true) &&
-                            (_entitlements?.canSeeContactDetails == false) &&
-                            !_isOwner)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            margin: const EdgeInsets.only(top: 8),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.orange.withOpacity(0.08),
-                                  Colors.orange.withOpacity(0.04),
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.orange.withOpacity(0.08),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                            child: Row(children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(Icons.visibility_off,
-                                    size: 16, color: Colors.orange[600]),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Contact details hidden. Subscribe to view.',
-                                  style: TextStyle(
-                                    color: Colors.orange[700],
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: TextButton(
-                                  onPressed: () async {
-                                    // Navigate new users directly to business membership
-                                    await _navigateToSubscriptionPlans();
-                                  },
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 4),
-                                  ),
-                                  child: const Text('Subscribe',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600)),
-                                ),
-                              ),
-                            ]),
-                          ),
                       ],
                     ),
                   ),
