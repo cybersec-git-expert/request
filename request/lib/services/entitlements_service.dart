@@ -16,7 +16,7 @@ class EntitlementsService {
       // Use simple endpoint that reads from usage_monthly via backend service
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/api/entitlements-simple/me',
-        queryParameters: { 'user_id': uid },
+        queryParameters: {'user_id': uid},
         fromJson: (json) => json,
       );
 
@@ -43,13 +43,13 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-  // API failed - no fallback
-  print('API failed for entitlements (main)');
-  return null;
+      // API failed - no fallback
+      print('API failed for entitlements (main)');
+      return null;
     } catch (e) {
       print('Error fetching user entitlements: $e');
-  // No fallback
-  return null;
+      // No fallback
+      return null;
     }
   }
 
@@ -60,7 +60,7 @@ class EntitlementsService {
       if (uid.isEmpty) throw Exception('userId required');
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/api/entitlements-simple/me',
-        queryParameters: { 'user_id': uid },
+        queryParameters: {'user_id': uid},
         fromJson: (json) => json,
       );
 
@@ -87,13 +87,13 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-  // API failed - no fallback
-  print('API failed for entitlements (simple)');
-  return null;
+      // API failed - no fallback
+      print('API failed for entitlements (simple)');
+      return null;
     } catch (e) {
       print('Error fetching user entitlements (simple): $e');
-  // No fallback
-  return null;
+      // No fallback
+      return null;
     }
   }
 

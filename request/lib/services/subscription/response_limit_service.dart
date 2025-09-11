@@ -70,11 +70,15 @@ class ResponseLimitService {
         return responseCount;
       }
 
-      print('DEBUG: EntitlementsService returned null, returning 0');
-      return 0;
+      // No fallback: treat as limit reached
+      print(
+          'DEBUG: EntitlementsService returned null, treating as at limit (${_freeMonthlyLimit})');
+      return _freeMonthlyLimit;
     } catch (e) {
-      print('DEBUG: Error getting response count from EntitlementsService: $e');
-      return 0;
+      // On error, assume at limit to be safe
+      print(
+          'DEBUG: Error getting response count from EntitlementsService: $e (treating as at limit)');
+      return _freeMonthlyLimit;
     }
   }
 
