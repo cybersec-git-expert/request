@@ -16,10 +16,9 @@ import '../../services/chat_service.dart';
 import '../../services/rest_request_service.dart' show ReviewsService;
 import '../account/public_profile_screen.dart';
 import '../../services/rest_user_service.dart';
-import '../membership/quick_upgrade_sheet.dart';
-import '../../../services/entitlements_service.dart';
 import '../../services/enhanced_user_service.dart';
 import '../../services/api_client.dart';
+import '../../../services/entitlements_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// UnifiedRequestViewScreen (Minimal REST Migration)
@@ -333,8 +332,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       case 'no_verification':
       case 'error':
       default:
-        // New user or no existing business role, go to role selection
-        Navigator.pushNamed(context, '/role-selection');
+        // New user or no existing business role, go directly to business membership
+        Navigator.pushNamed(context, '/business-membership');
         break;
     }
   }
@@ -371,13 +370,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
             action: SnackBarAction(
               label: 'View Plans',
               onPressed: () async {
-                final reqType =
-                    (_request?.requestType ?? _request?.categoryType ?? '')
-                        .toString()
-                        .toLowerCase();
-                final isRide = reqType.contains('ride');
-                await QuickUpgradeSheet.show(
-                    context, isRide ? 'driver' : 'business');
+                // Navigate new users directly to business membership
+                await _navigateToSubscriptionPlans();
               },
             ),
           ),
@@ -388,11 +382,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       if (!_membershipCompleted ||
           (_entitlements != null && !_entitlements!.canRespond)) {
         if (!mounted) return;
-        final reqType = (_request?.requestType ?? _request?.categoryType ?? '')
-            .toString()
-            .toLowerCase();
-        final isRide = reqType.contains('ride');
-        await QuickUpgradeSheet.show(context, isRide ? 'driver' : 'business');
+        // Navigate new users directly to business membership
+        await _navigateToSubscriptionPlans();
         return;
       }
       if (!mounted) return;
@@ -1579,14 +1570,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                                 ),
                                 child: TextButton(
                                   onPressed: () async {
-                                    final reqType = (_request?.requestType ??
-                                            _request?.categoryType ??
-                                            '')
-                                        .toString()
-                                        .toLowerCase();
-                                    final isRide = reqType.contains('ride');
-                                    await QuickUpgradeSheet.show(context,
-                                        isRide ? 'driver' : 'business');
+                                    // Navigate new users directly to business membership
+                                    await _navigateToSubscriptionPlans();
                                   },
                                   style: TextButton.styleFrom(
                                     foregroundColor: Colors.white,
