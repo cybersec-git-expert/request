@@ -20,6 +20,7 @@ import '../../services/enhanced_user_service.dart';
 import '../../services/api_client.dart';
 import '../../../services/entitlements_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../widgets/subscription/response_limit_widgets.dart';
 
 /// UnifiedRequestViewScreen (Minimal REST Migration)
 /// Legacy Firebase-based logic removed. Displays core request info only.

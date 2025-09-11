@@ -28,6 +28,7 @@ import 'src/screens/chat/chat_conversations_screen.dart';
 import 'src/screens/notification_screen.dart';
 import 'src/services/notification_service.dart';
 import 'src/services/notification_center.dart';
+import 'pages/subscription/simple_subscription_page.dart';
 import 'src/screens/simple_subscription_screen.dart';
 import 'src/screens/role_registration_screen.dart';
 
@@ -186,6 +187,13 @@ class MyApp extends StatelessWidget {
           case '/verification-status':
             return MaterialPageRoute(
               builder: (context) => const VerificationStatusScreen(),
+            );
+          // Subscription routes - Fixed the "Something went wrong" error
+          case '/driver-subscriptions':
+          case '/business-subscriptions':
+          case '/subscription':
+            return MaterialPageRoute(
+              builder: (context) => const SimpleSubscriptionPage(),
             );
           // Commented out - Role Management screen bypassed in favor of Role Selection
           // case '/role-management':
