@@ -1,20 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const entitlementsService = require('../services/entitlements');
 
-// Simple proxy route - simplified entitlements system
+// Get entitlements for a specific user
 router.get('/user/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
-    
-    // Simplified - everyone has full access
-    const entitlements = {
-      canRespond: true,
-      responseCountThisMonth: 0,
-      remainingResponses: -1, // unlimited
-      audience: 'normal',
-      isSubscribed: false
-    };
-    
+    const entitlements = await entitlementsService.getUserEntitlements(userId);
     res.json({ success: true, data: entitlements });
   } catch (error) {
     console.error('Entitlements route error:', error);

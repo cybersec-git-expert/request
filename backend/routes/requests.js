@@ -5,7 +5,7 @@ const auth = require('../services/auth');
 const responsesRouter = require('./responses');
 const notify = require('../services/notification-helper');
 const BusinessNotificationService = require('../services/business-notification-service'); // NEW
-const entitlements = require('../entitlements'); // NEW - for gating contact visibility
+const entitlements = require('../services/entitlements'); // NEW - for gating contact visibility
 
 // Optional auth wrapper (copied pattern used in responses)
 function optionalAuth(handler){

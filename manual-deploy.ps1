@@ -68,7 +68,7 @@ try {
 Write-Host "🏥 Checking container health..." -ForegroundColor Blue
 Start-Sleep -Seconds 5
 
-$containerStatus = docker inspect --format='{{.State.Status}}' $NAME 2>$null
+$containerStatus = docker inspect --format="{{.State.Status}}" $NAME 2>$null
 if ($containerStatus -eq "running") {
     Write-Host "✅ Container is running successfully!" -ForegroundColor Green
     Write-Host "📡 Backend available at: http://localhost:$PORT" -ForegroundColor Cyan
