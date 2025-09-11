@@ -412,8 +412,22 @@ app.get('/api/me/entitlements', authService.authMiddleware(), async (req, res) =
     hasUser: !!u.id
   });
   if (!u.id) {
-    console.warn('[entitlements-route] auth middleware provided no user id');
-    return res.status(401).json({ success:false, error:'unauthorized' });
+    // Dev-only viewer override to assist local testing without token
+    if (process.env.NODE_ENV === 'development') {
+      const headerId = req.headers['x-user-id'] || req.headers['user-id'];
+      const queryId = req.query.viewer_id;
+      const devId = (typeof headerId === 'string' && headerId.trim()) ? headerId.trim() : (typeof queryId === 'string' && queryId.trim() ? queryId.trim() : null);
+      if (devId) {
+        req.user = { id: devId, role: 'user' };
+        console.warn('[entitlements-route] DEV viewer override in use (no auth)', { userId: devId });
+      } else {
+        console.warn('[entitlements-route] auth middleware provided no user id');
+        return res.status(401).json({ success:false, error:'unauthorized' });
+      }
+    } else {
+      console.warn('[entitlements-route] auth middleware provided no user id');
+      return res.status(401).json({ success:false, error:'unauthorized' });
+    }
   }
   try {
     // Use entitlements service

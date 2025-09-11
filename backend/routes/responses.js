@@ -38,7 +38,14 @@ function optionalAuth(handler){
 router.get('/', optionalAuth(async (req, res) => {
   try {
     const requestId = req.params.requestId;
-    const userId = req.user?.id || req.user?.userId;
+    let userId = req.user?.id || req.user?.userId;
+    // Dev-only fallback to allow mobile/web testing without auth
+    if (!userId && process.env.NODE_ENV === 'development') {
+      const headerId = req.headers['x-user-id'] || req.headers['user-id'];
+      const queryId = req.query.viewer_id;
+      userId = (typeof headerId === 'string' && headerId.trim()) ? headerId.trim() : (typeof queryId === 'string' && queryId.trim() ? queryId.trim() : null);
+      if (userId) console.warn('[responses][list] DEV viewer override in use (no auth)', { userId });
+    }
     const { page = 1, limit = 20 } = req.query;
     const pageNum = parseInt(page) || 1;
     const lim = Math.min(parseInt(limit) || 20, 100);

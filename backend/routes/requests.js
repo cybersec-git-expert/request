@@ -31,13 +31,14 @@ function optionalAuth(handler){
   };
 }
 
-// Helper to mask contact details based on entitlements and ownership
+// Helper to mask contact details based on entitlements, ownership, and if viewer already responded
 function applyContactGating(row, viewer) {
   const viewerId = viewer?.id || viewer?.userId || null;
   const isOwner = viewerId && row.user_id === viewerId;
+  const hasResponded = !!viewer?.hasResponded; // viewer responded to this request
   const ent = viewer?.entitlements || null;
-  const canViewContact = isOwner || (ent ? !!ent.canViewContact : false);
-  const canMessage = isOwner || (ent ? !!ent.canMessage : false);
+  const canViewContact = isOwner || hasResponded || (ent ? !!ent.canViewContact : false);
+  const canMessage = isOwner || hasResponded || (ent ? !!ent.canMessage : false);
   // Shallow copy to avoid mutating original
   const masked = { ...row };
   if (!canViewContact) {
@@ -356,12 +357,33 @@ router.get('/:id', optionalAuth(async (req, res) => {
       metadata = {};
     }
 
-    // Compute viewer entitlements and apply masking
-    let ent = null;
-    if (req.user && req.user.id) {
-      try { ent = await entitlements.getEntitlements(req.user.id, req.user.role); } catch (e) { console.warn('[requests][detail] entitlements failed', e?.message || e); }
+    // Compute viewer info (auth or dev-only fallbacks)
+    let viewerId = req.user?.id || req.user?.userId || null;
+    // Dev-only fallback to help local testing when Authorization header is missing
+    if (!viewerId && process.env.NODE_ENV === 'development') {
+      const headerId = req.headers['x-user-id'] || req.headers['user-id'];
+      const queryId = req.query.viewer_id;
+      viewerId = (typeof headerId === 'string' && headerId.trim()) ? headerId.trim() : (typeof queryId === 'string' && queryId.trim() ? queryId.trim() : null);
+      if (viewerId) console.warn('[requests][detail] DEV viewer override in use (no auth)', { viewerId });
     }
-    const viewer = { id: req.user?.id || req.user?.userId || null, entitlements: ent };
+
+    // Entitlements (if we have a viewer)
+    let ent = null;
+    if (viewerId) {
+      try { ent = await entitlements.getEntitlements(viewerId, req.user?.role); } catch (e) { console.warn('[requests][detail] entitlements failed', e?.message || e); }
+    }
+
+    // Has the viewer already responded to this request?
+    let respondedRow = null;
+    if (viewerId) {
+      try {
+        respondedRow = await database.queryOne('SELECT id FROM responses WHERE request_id = $1 AND user_id = $2 LIMIT 1', [requestId, viewerId]);
+      } catch (e) {
+        console.warn('[requests][detail] responded check failed', e?.message || e);
+      }
+    }
+
+    const viewer = { id: viewerId, entitlements: ent, hasResponded: !!respondedRow };
     const masked = applyContactGating(request, viewer);
 
     res.json({
@@ -369,7 +391,14 @@ router.get('/:id', optionalAuth(async (req, res) => {
       data: {
         ...masked,
         metadata,
-        variables: [] // For compatibility with frontend expecting variables array
+        variables: [], // For compatibility with frontend expecting variables array
+        // Provide viewer context to help the app decide UI (e.g., hide subscribe bar if responded)
+        viewer_context: {
+          is_owner: !!(viewerId && request.user_id === viewerId),
+          has_responded: !!respondedRow,
+          response_id: respondedRow ? respondedRow.id : null,
+          entitlements: ent || null
+        }
       }
     });
   } catch (error) {

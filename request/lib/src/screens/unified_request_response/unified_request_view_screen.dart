@@ -16,10 +16,7 @@ import '../../services/chat_service.dart';
 import '../../services/rest_request_service.dart' show ReviewsService;
 import '../account/public_profile_screen.dart';
 import '../../services/rest_user_service.dart';
-import '../../services/enhanced_user_service.dart';
-import '../../services/api_client.dart';
-import '../../../services/entitlements_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// Removed unused membership navigation imports after simplification
 import '../../../services/subscription/response_limit_service.dart';
 import '../../../pages/subscription/simple_subscription_page.dart';
 
@@ -47,91 +44,55 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   bool _submittingReview = false;
   bool _alreadyReviewed = false;
   String? _requesterPhotoUrl;
-  // Entitlements and membership gating
-  final EntitlementsService _entitlementsService = EntitlementsService();
-  UserEntitlements? _entitlements;
-  bool _membershipCompleted = false;
+  // Simplified gating state
+  int? _remainingResponses; // null while loading
+  bool _loadingRemaining = true;
+
+  // Simplified gating helpers
+  bool get _hasResponded {
+    final uid = RestAuthService.instance.currentUser?.uid;
+    if (uid == null) return false;
+    return _responses.any((r) => r.userId == uid);
+  }
+
+  bool get _reachedLimit => (_remainingResponses ?? 0) <= 0;
+
+  bool get _canRespondSimplified {
+    if (_request == null) return false;
+    final uid = RestAuthService.instance.currentUser?.uid;
+    if (uid == null) return false;
+    if (uid == _request!.userId) return false; // owner cannot respond
+    final status = _request!.status.toLowerCase();
+    final isActive = (status == 'active' || status == 'open');
+    if (!isActive) return false;
+    if (_hasResponded) return false; // already responded
+    if (_reachedLimit) return false; // hit free limit
+    return true;
+  }
 
   @override
   void initState() {
     super.initState();
     _load();
-    _loadEntitlementsAndPrefs();
+    _refreshRemaining();
   }
 
-  Future<Map<String, dynamic>> _getResponseStatus() async {
+  Future<void> _refreshRemaining() async {
     try {
-      final hasUnlimited = await ResponseLimitService.hasUnlimitedPlan();
       final remaining = await ResponseLimitService.getRemainingResponses();
-      final current = await ResponseLimitService.getCurrentResponseCount();
-
-      print(
-          'DEBUG: Response status - unlimited: $hasUnlimited, remaining: $remaining, current: $current');
-
-      return {
-        'hasUnlimited': hasUnlimited,
-        'remaining': remaining,
-        'current': current,
-      };
-    } catch (e) {
-      print('DEBUG: Error getting response status: $e');
-      return {
-        'hasUnlimited': false,
-        'remaining': 3,
-        'current': 0,
-      };
-    }
-  }
-
-  Future<void> _loadEntitlementsAndPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final completed = prefs.getBool('membership_completed') ??
-          true; // Default to true for new users
-
-      // Get current user ID
-      final userId = RestAuthService.instance.currentUser?.uid;
-      UserEntitlements? ent;
-
-      if (userId != null) {
-        print('DEBUG: Loading entitlements for user $userId...');
-
-        // Try both methods to ensure we get fresh data
-        ent = await _entitlementsService.getUserEntitlements();
-        if (ent == null) {
-          print(
-              'DEBUG: Main entitlements method failed, trying simple method...');
-          ent = await _entitlementsService.getUserEntitlementsSimple(userId);
-        }
-
-        print(
-            'DEBUG: Loaded entitlements for user $userId: canRespond=${ent?.canRespond}, responseCount=${ent?.responseCount}, remaining=${ent?.remainingResponses}');
-        print('DEBUG: Full entitlements object: $ent');
-      } else {
-        print('DEBUG: No user ID found, skipping entitlements load');
-      }
-
       if (!mounted) return;
       setState(() {
-        _membershipCompleted = completed;
-        _entitlements = ent;
+        _remainingResponses = remaining;
+        _loadingRemaining = false;
       });
+      print('DEBUG: Remaining free responses this month: $remaining');
     } catch (e) {
-      print('Error loading entitlements: $e');
-      // Use permissive defaults for new users when API fails
       if (!mounted) return;
       setState(() {
-        _membershipCompleted = true;
-        _entitlements = UserEntitlements.fromJson({
-          'canSeeContactDetails': true,
-          'canSendMessages': true,
-          'canRespond': true,
-          'responseCount': 0,
-          'remainingResponses': 3,
-          'subscriptionType': 'free',
-          'planName': 'Free Plan',
-        });
+        _remainingResponses = 0; // default to 0 if unknown
+        _loadingRemaining = false;
       });
+      print('DEBUG: Failed to load remaining responses, defaulting to 0: $e');
     }
   }
 
@@ -244,6 +205,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       }
 
       if (mounted) setState(() => _responses = page.responses);
+      // Also refresh remaining count after reload (in case user just responded)
+      await _refreshRemaining();
     } catch (e) {
       print('DEBUG: Error reloading responses: $e');
       if (mounted) {
@@ -255,185 +218,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     }
   }
 
-  bool get _canRespond {
-    if (_request == null) {
-      print('DEBUG: _canRespond = false (no request)');
-      return false;
-    }
-    final userId = RestAuthService.instance.currentUser?.uid;
-    if (userId == null) {
-      print('DEBUG: _canRespond = false (no user ID)');
-      return false;
-    }
-    if (userId == _request!.userId) {
-      print('DEBUG: _canRespond = false (user is owner)');
-      return false; // owner cannot respond
-    }
-    final status = _request!.status.toLowerCase();
-    if (!(status == 'active' || status == 'open')) {
-      print('DEBUG: _canRespond = false (status not active/open: $status)');
-      return false;
-    }
-    // Skip old canMessage check - now using entitlements system
-    // if (_request?.canMessage == false) {
-    //   print('DEBUG: _canRespond = false (canMessage = false)');
-    //   return false;
-    // }
-    // Check entitlements - now defaults to restrictive when API fails
-    if (_entitlements != null && _entitlements!.canRespond == false) {
-      print(
-          'DEBUG: _canRespond = false (entitlements deny: ${_entitlements!.canRespond})');
-      print(
-          'DEBUG: _entitlements responseCount: ${_entitlements!.responseCount}, remainingResponses: ${_entitlements!.remainingResponses}');
-      return false;
-    }
-    // Only allow one response per user on this screen
-    final hasExistingResponse = _responses.any((r) => r.userId == userId);
-    if (hasExistingResponse) {
-      print('DEBUG: _canRespond = false (user already responded)');
-      return false;
-    }
-
-    print(
-        'DEBUG: _canRespond = true (all checks passed, entitlements: ${_entitlements?.canRespond})');
-    print(
-        'DEBUG: Current entitlements: responseCount=${_entitlements?.responseCount}, remaining=${_entitlements?.remainingResponses}');
-    return true;
-  }
-
-  /// Smart navigation to subscription plans based on verification status
-  Future<void> _navigateToSubscriptionPlans() async {
-    try {
-      final userService = EnhancedUserService();
-      final user = await userService.getCurrentUser();
-      if (user == null) {
-        print('DEBUG: User is null, navigating to business membership');
-        Navigator.pushNamed(context, '/business-membership');
-        return;
-      }
-
-      // Check both business and driver verification statuses
-      String businessStatus = 'not_verified';
-      String driverStatus = 'not_verified';
-      bool hasBusinessRole = user.roles.contains(UserRole.business);
-      bool hasDriverRole = user.roles.contains(UserRole.driver);
-
-      print(
-          'DEBUG: User roles - hasBusinessRole: $hasBusinessRole, hasDriverRole: $hasDriverRole');
-      print('DEBUG: User roles list: ${user.roles}');
-
-      // Check business verification (regardless of role assignment)
-      try {
-        final resp = await ApiClient.instance
-            .get('/api/business-verifications/user/${user.uid}');
-        print(
-            'DEBUG: Business verification API response - isSuccess: ${resp.isSuccess}, data: ${resp.data}');
-        if (resp.isSuccess && resp.data != null) {
-          final responseWrapper = resp.data as Map<String, dynamic>;
-          final data = responseWrapper['data'] as Map<String, dynamic>?;
-          if (data != null) {
-            businessStatus =
-                (data['status'] ?? 'pending').toString().trim().toLowerCase();
-            print('DEBUG: Business status from API: $businessStatus');
-          }
-        }
-      } catch (e) {
-        print('Error checking business verification: $e');
-      }
-
-      // Check driver verification (regardless of role assignment)
-      try {
-        final resp = await ApiClient.instance
-            .get('/api/driver-verifications/user/${user.uid}');
-        print(
-            'DEBUG: Driver verification API response - isSuccess: ${resp.isSuccess}, data: ${resp.data}');
-        if (resp.isSuccess && resp.data != null) {
-          final responseWrapper = resp.data as Map<String, dynamic>;
-          final data = responseWrapper['data'] as Map<String, dynamic>?;
-          if (data != null) {
-            driverStatus =
-                (data['status'] ?? 'pending').toString().trim().toLowerCase();
-            print('DEBUG: Driver status from API: $driverStatus');
-          }
-        }
-      } catch (e) {
-        print('Error checking driver verification: $e');
-      }
-
-      print(
-          'DEBUG: Final statuses - businessStatus: $businessStatus, driverStatus: $driverStatus');
-
-      // Determine request type to route to appropriate subscription page
-      final requestType = _request?.requestType ?? '';
-      final isRideRequest = requestType == 'ride' || requestType == 'delivery';
-
-      print('DEBUG: Request type: $requestType, isRideRequest: $isRideRequest');
-
-      // Route based on verification statuses and request type
-      if (businessStatus == 'approved' && driverStatus == 'approved') {
-        // User has both verifications - route based on request type
-        if (isRideRequest) {
-          print(
-              'DEBUG: Both approved, ride request - navigating to driver subscriptions');
-          Navigator.pushNamed(context, '/driver-subscriptions');
-        } else {
-          print(
-              'DEBUG: Both approved, business request - navigating to business subscriptions');
-          Navigator.pushNamed(context, '/business-subscriptions');
-        }
-      } else if (businessStatus == 'approved') {
-        // User has approved business verification
-        print(
-            'DEBUG: Business approved - navigating to business subscriptions');
-        Navigator.pushNamed(context, '/business-subscriptions');
-      } else if (driverStatus == 'approved') {
-        // User has approved driver verification
-        print('DEBUG: Driver approved - navigating to driver subscriptions');
-        Navigator.pushNamed(context, '/driver-subscriptions');
-      } else if (businessStatus == 'pending' || driverStatus == 'pending') {
-        // User has pending verifications - show role selection for status
-        print('DEBUG: Pending verifications - navigating to role selection');
-        Navigator.pushNamed(context, '/role-selection');
-      } else if (businessStatus == 'rejected' || driverStatus == 'rejected') {
-        // User has rejected verifications
-        print('DEBUG: Rejected verifications - navigating to role selection');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  'Your verification was rejected. Please check your role status for details.')),
-        );
-        Navigator.pushNamed(context, '/role-selection');
-      } else {
-        // User needs verification - guide them to register based on request type
-        if (isRideRequest) {
-          print(
-              'DEBUG: No verification, ride request - navigating to driver membership');
-          Navigator.pushNamed(context, '/membership', arguments: {
-            'requiredSubscriptionType': 'driver',
-          });
-        } else {
-          print(
-              'DEBUG: No verification, business request - navigating to business membership');
-          Navigator.pushNamed(context, '/business-membership');
-        }
-      }
-    } catch (e) {
-      print('Error in _navigateToSubscriptionPlans: $e');
-      // Fallback to business membership for new users
-      Navigator.pushNamed(context, '/business-membership');
-    }
-  }
+  // Removed _navigateToSubscriptionPlans per simplified gating rules
 
   void _openCreateResponseSheet() {
     if (_request == null) return;
     () async {
-      // Basic membership completion check (ResponseLimitChecker handles usage limits)
-      if (!_membershipCompleted) {
-        if (!mounted) return;
-        await _navigateToSubscriptionPlans();
-        return;
-      }
-
       if (!mounted) return;
       final requestModel = _convertToRequestModel(_request!);
       Navigator.push(
@@ -445,7 +234,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       ).then((_) async {
         // Immediately refresh data for responsive UI - backend sync will handle count updates
         _reloadResponses();
-        _loadEntitlementsAndPrefs(); // Refresh entitlements for updated count display
+        await _refreshRemaining(); // Refresh remaining counter after a response
       });
     }();
   }
@@ -1180,7 +969,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       }
 
       // If user can respond but hasn't yet, show respond button with limit checking
-      if (_canRespond) {
+      if (_canRespondSimplified) {
         return FloatingActionButton.extended(
           onPressed: () async {
             // Check if user can send response
@@ -1252,124 +1041,55 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Modern response count display - only show for non-owners who can potentially respond
-            if (!_isOwner) // Only show subscription info if not the owner
-              FutureBuilder<Map<String, dynamic>>(
-                future: _getResponseStatus(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox.shrink();
-                  }
-
-                  final data = snapshot.data;
-                  if (data == null) return const SizedBox.shrink();
-
-                  final hasUnlimited = data['hasUnlimited'] as bool;
-                  final remaining = data['remaining'] as int;
-
-                  // Check if user has already responded to this request
-                  final userId = RestAuthService.instance.currentUser?.uid;
-                  final hasExistingResponse = userId != null &&
-                      _responses.any((r) => r.userId == userId);
-
-                  // Only show subscription bar if:
-                  // 1. User hasn't responded yet AND
-                  // 2. User has reached their limit (remaining == 0) OR is on unlimited plan
-                  if (hasExistingResponse || (!hasUnlimited && remaining > 0)) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: hasUnlimited
-                          ? Colors.green.withOpacity(0.1)
-                          : remaining == 0
-                              ? Colors.red.withOpacity(0.1)
-                              : Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+            // Subscription bar: show only if not owner, not already responded, and limit reached
+            if (!_isOwner &&
+                !_hasResponded &&
+                _reachedLimit &&
+                !_loadingRemaining)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.warning_rounded,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: hasUnlimited
-                                ? Colors.green.withOpacity(0.2)
-                                : remaining == 0
-                                    ? Colors.red.withOpacity(0.2)
-                                    : Colors.blue.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            hasUnlimited
-                                ? Icons.verified
-                                : remaining == 0
-                                    ? Icons.warning_rounded
-                                    : Icons.chat_bubble_outline,
-                            color: hasUnlimited
-                                ? Colors.green.shade700
-                                : remaining == 0
-                                    ? Colors.red.shade700
-                                    : Colors.blue.shade700,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                hasUnlimited
-                                    ? 'Pro Plan - Unlimited Responses'
-                                    : 'Free Plan - Response Usage',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                hasUnlimited
-                                    ? 'Create unlimited responses'
-                                    : remaining == 0
-                                        ? 'Monthly limit reached'
-                                        : 'Responses remaining this month: $remaining',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (!hasUnlimited && remaining <= 1) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              'Upgrade',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        "You've reached your free response limit. Upgrade to continue and see contact details.",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const SimpleSubscriptionPage(),
+                          ),
+                        );
+                      },
+                      child: const Text('See Plans'),
+                    )
+                  ],
+                ),
               ),
             _sectionCard(
                 child: Column(
@@ -1577,10 +1297,9 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                             ),
                         ]),
                         const SizedBox(height: 8),
-                        if (r.contactVisible &&
-                            (r.userPhone?.isNotEmpty == true) &&
-                            (_entitlements?.canSeeContactDetails == true ||
-                                _isOwner))
+                        // Contact details: show if owner, already responded, or backend allowed contactVisible
+                        if ((r.userPhone?.isNotEmpty == true) &&
+                            (_isOwner || _hasResponded || r.contactVisible))
                           Row(children: [
                             Icon(Icons.phone,
                                 size: 16, color: Colors.grey[600]),
@@ -2200,7 +1919,9 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           if (!_responsesLoading) ...[
             if (_responses.isEmpty)
               Text(
-                _canRespond ? 'Be the first to respond.' : 'No responses yet.',
+                _canRespondSimplified
+                    ? 'Be the first to respond.'
+                    : 'No responses yet.',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             if (_responses.isNotEmpty)

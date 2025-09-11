@@ -11,24 +11,32 @@ const db = require('./database');
  */
 async function getEntitlements(userId, role) {
   try {
-    // Get current month in YYYYMM format
+    // Prefer the same source used by simple-subscription-service (user_usage, YYYY-MM)
     const now = new Date();
-    const yearMonth = now.getFullYear() * 100 + (now.getMonth() + 1);
-    
-    // Query actual response count from usage_monthly table
+    const ymDash = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // e.g., 2025-09
+
     let responseCountThisMonth = 0;
     try {
-      const countQuery = `
-        SELECT response_count 
-        FROM usage_monthly 
-        WHERE user_id = $1 AND year_month = $2
-      `;
-      const countResult = await db.query(countQuery, [userId, yearMonth]);
-      responseCountThisMonth = countResult.rows[0]?.response_count || 0;
-      console.log(`[entitlements] User ${userId} has ${responseCountThisMonth} responses this month (${yearMonth})`);
+      const r = await db.query(
+        `SELECT responses_used FROM user_usage WHERE user_id = $1 AND month_year = $2`,
+        [userId, ymDash]
+      );
+      if (r?.rows?.length) {
+        responseCountThisMonth = Number(r.rows[0].responses_used) || 0;
+        console.log(`[entitlements] user_usage count for ${userId} @ ${ymDash} = ${responseCountThisMonth}`);
+      } else {
+        // Fallback: derive from responses table for current month
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const derived = await db.query(
+          `SELECT COUNT(*)::int AS cnt FROM responses WHERE user_id = $1 AND created_at >= $2 AND created_at < $3`,
+          [userId, start.toISOString(), end.toISOString()]
+        );
+        responseCountThisMonth = derived?.rows?.[0]?.cnt || 0;
+        console.log(`[entitlements] derived responses count for ${userId} = ${responseCountThisMonth}`);
+      }
     } catch (dbError) {
-      console.error('[entitlements] Error querying usage_monthly:', dbError);
-      // Continue with 0 count as fallback
+      console.warn('[entitlements] usage lookup failed, defaulting to 0', dbError?.message || dbError);
     }
     
     // Calculate remaining responses (3 per month for free tier)
@@ -45,6 +53,7 @@ async function getEntitlements(userId, role) {
       canSendMessages,
       canRespond,
       responseCount: responseCountThisMonth,
+      responseCountThisMonth: responseCountThisMonth, // for Flutter mapping
       remainingResponses,
       subscriptionType: 'free',
       planName: 'Free Plan',
@@ -59,6 +68,7 @@ async function getEntitlements(userId, role) {
       canSendMessages: false,
       canRespond: false,
       responseCount: 3,
+      responseCountThisMonth: 3,
       remainingResponses: 0,
       subscriptionType: 'free',
       planName: 'Free Plan',
