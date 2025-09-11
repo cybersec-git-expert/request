@@ -1,11 +1,11 @@
-name: Deploy Backend to EC2
+name: Deploy Backend to EC2 (Docker Hub)
 
 on:
   push:
     branches: [ master, main ]
     paths:
       - 'backend/**'
-      - '.github/workflows/deploy-backend.yml'
+      - '.github/workflows/deploy-backend-dockerhub.yml'
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -15,16 +15,11 @@ on:
         type: boolean
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: cybersec-git-expert/request-backend
+  IMAGE_NAME: cybersecgitexpert/request-backend
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
 
     steps:
     - name: Checkout repository
@@ -33,18 +28,17 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Container Registry
+    - name: Log in to Docker Hub
       uses: docker/login-action@v3
       with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        images: ${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
           type=ref,event=pr
@@ -71,13 +65,10 @@ jobs:
         port: 22
         script: |
           # Set environment variables for the deployment
-          export IMAGE_TAG="${{ github.sha }}"
-          export IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          export IMAGE_TAG="latest"
+          export IMAGE_NAME="${{ env.IMAGE_NAME }}"
           
           echo "🚀 Starting deployment of $IMAGE_NAME:$IMAGE_TAG"
-          
-          # Login to GitHub Container Registry (public access)
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.repository_owner }} --password-stdin
           
           # Stop and remove old containers
           echo "🧹 Cleaning up old containers..."
@@ -93,7 +84,7 @@ jobs:
           docker run -d --name request-backend-container \
             --restart unless-stopped \
             --env-file production.env \
-            --label "com.gitgurusl.app=request-backend" \
+            --label "com.cybersec-git-expert.app=request-backend" \
             -p "0.0.0.0:3001:3001" \
             "$IMAGE_NAME:latest"
           
@@ -128,7 +119,7 @@ jobs:
         script: |
           echo "🗑️ Cleaning up old Docker images..."
           # Keep only the latest 3 images
-          OLD_IMAGES=$(docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} --format "{{.ID}}" | tail -n +4 2>/dev/null || true)
+          OLD_IMAGES=$(docker images ${{ env.IMAGE_NAME }} --format "{{.ID}}" | tail -n +4 2>/dev/null || true)
           if [ -n "$OLD_IMAGES" ]; then
             docker rmi -f $OLD_IMAGES 2>/dev/null || true
             echo "✅ Cleaned up old images"

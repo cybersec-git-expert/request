@@ -5,7 +5,7 @@
 set -euo pipefail
 
 IMAGE_TAG=${1:-latest}
-IMAGE="ghcr.io/gitgurusl/request-backend:$IMAGE_TAG"
+IMAGE="ghcr.io/cybersec-git-expert/request-backend:$IMAGE_TAG"
 NAME="request-backend-container"
 PORT=3001
 
@@ -27,12 +27,12 @@ fi
 
 # Stop and remove old containers
 echo "🧹 Cleaning up old containers..."
-docker stop $(docker ps -aq --filter "ancestor=ghcr.io/gitgurusl/request-backend" 2>/dev/null) 2>/dev/null || true
-docker rm -f $(docker ps -aq --filter "ancestor=ghcr.io/gitgurusl/request-backend" 2>/dev/null) 2>/dev/null || true
+docker stop $(docker ps -aq --filter "ancestor=ghcr.io/cybersec-git-expert/request-backend" 2>/dev/null) 2>/dev/null || true
+docker rm -f $(docker ps -aq --filter "ancestor=ghcr.io/cybersec-git-expert/request-backend" 2>/dev/null) 2>/dev/null || true
 docker rm -f "$NAME" request-backend 2>/dev/null || true
 
 # Clean old images (keep latest 3)
-OLD_IMAGES=$(docker images ghcr.io/gitgurusl/request-backend --format "{{.ID}}" | tail -n +4 2>/dev/null || true)
+OLD_IMAGES=$(docker images ghcr.io/cybersec-git-expert/request-backend --format "{{.ID}}" | tail -n +4 2>/dev/null || true)
 if [ -n "$OLD_IMAGES" ]; then
   echo "🗑️  Removing old images..."
   docker rmi -f $OLD_IMAGES 2>/dev/null || true

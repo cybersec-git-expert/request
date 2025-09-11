@@ -1,0 +1,96 @@
+name: Build and Deploy Backend Directly
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-direct.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          echo "🚀 Starting direct deployment..."
+          
+          # Create deployment directory
+          mkdir -p /tmp/request-backend-deploy
+          cd /tmp/request-backend-deploy
+          
+          # Clone the repository
+          echo "📥 Cloning repository..."
+          git clone https://github.com/cybersec-git-expert/request.git .
+          cd backend
+          
+          # Build Docker image locally
+          echo "🔨 Building Docker image..."
+          docker build -t request-backend:latest .
+          
+          # Stop and remove old container
+          echo "🧹 Cleaning up old container..."
+          docker stop request-backend-container 2>/dev/null || true
+          docker rm -f request-backend-container 2>/dev/null || true
+          
+          # Start new container
+          echo "🚀 Starting new container..."
+          docker run -d --name request-backend-container \
+            --restart unless-stopped \
+            --env-file /home/ec2-user/production.env \
+            --label "com.cybersec-git-expert.app=request-backend" \
+            -p "0.0.0.0:3001:3001" \
+            request-backend:latest
+          
+          # Health check
+          echo "🏥 Performing health check..."
+          sleep 10
+          
+          for i in {1..30}; do
+            if curl -s -f "http://localhost:3001/health" >/dev/null 2>&1; then
+              echo "✅ Health check passed! Deployment successful."
+              docker logs --tail 20 request-backend-container
+              
+              # Cleanup
+              cd /home/ec2-user
+              rm -rf /tmp/request-backend-deploy
+              
+              # Remove old images (keep latest 2)
+              OLD_IMAGES=$(docker images request-backend --format "{{.ID}}" | tail -n +3 2>/dev/null || true)
+              if [ -n "$OLD_IMAGES" ]; then
+                echo "🗑️ Cleaning up old images..."
+                docker rmi -f $OLD_IMAGES 2>/dev/null || true
+              fi
+              
+              exit 0
+            else
+              echo "⏳ Waiting for service to start... ($i/30)"
+              sleep 2
+            fi
+          done
+          
+          echo "❌ Health check failed!"
+          echo "Container logs:"
+          docker logs --tail 50 request-backend-container
+          exit 1
+
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Backend is available at: http://${{ secrets.EC2_HOST }}:3001"
+        else
+          echo "❌ Deployment failed!"
+        fi
