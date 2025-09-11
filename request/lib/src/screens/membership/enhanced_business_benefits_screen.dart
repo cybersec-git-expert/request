@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/glass_theme.dart';
-import '../../theme/app_theme.dart';
 import '../../services/enhanced_business_benefits_service.dart';
 import '../../models/enhanced_business_benefits.dart';
 import '../../widgets/enhanced_benefit_plan_card.dart';
@@ -73,70 +72,49 @@ class _EnhancedBusinessBenefitsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return GlassTheme.backgroundContainer(
-      child: Scaffold(
-        backgroundColor: AppTheme.backgroundColor,
-        appBar: AppBar(
-          title: const Text('Enhanced Business Benefits'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: AppTheme.textPrimary,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadPlans,
-            ),
-          ],
-        ),
-        body: Column(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Business Subscriptions'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Business Type Selector
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: GlassTheme.colors.glassBorder,
-                  width: 1,
-                ),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: _selectedBusinessTypeId,
-                  isExpanded: true,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: GlassTheme.colors.textSecondary,
-                  ),
-                  style: TextStyle(
-                    color: GlassTheme.colors.textPrimary,
-                    fontSize: 16,
-                  ),
-                  dropdownColor: Colors.white,
-                  items: _businessTypes.entries.map((entry) {
-                    return DropdownMenuItem<int>(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    );
-                  }).toList(),
-                  onChanged: (int? newValue) {
-                    if (newValue != null &&
-                        newValue != _selectedBusinessTypeId) {
-                      setState(() {
-                        _selectedBusinessTypeId = newValue;
-                      });
-                      _loadPlans();
-                    }
-                  },
-                ),
+            Icon(Icons.business, size: 64, color: Colors.blue),
+            SizedBox(height: 16),
+            Text(
+              'Business Subscription Plans',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
-
-            // Content
-            Expanded(
-              child: _buildContent(),
+            SizedBox(height: 8),
+            Text(
+              'Loading: $_isLoading',
+              style: TextStyle(color: Colors.grey),
+            ),
+            if (_error != null)
+              Text(
+                'Error: $_error',
+                style: TextStyle(color: Colors.red),
+              ),
+            SizedBox(height: 16),
+            Text(
+              'Plans count: ${_plans.length}',
+              style: TextStyle(color: Colors.blue),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                print('Debug: Reloading plans...');
+                _loadPlans();
+              },
+              child: Text('Reload Plans'),
             ),
           ],
         ),

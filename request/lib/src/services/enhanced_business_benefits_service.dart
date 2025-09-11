@@ -5,7 +5,11 @@ class EnhancedBusinessBenefitsService {
       String countryCode) async {
     return {
       'success': true,
-      'data': {'plans': []}
+      'data': {
+        'businessTypeId': 1,
+        'businessTypeName': 'General Business',
+        'plans': []
+      }
     };
   }
 
@@ -13,7 +17,11 @@ class EnhancedBusinessBenefitsService {
       String countryCode, int businessTypeId) async {
     return {
       'success': true,
-      'data': {'plans': []}
+      'data': {
+        'businessTypeId': businessTypeId,
+        'businessTypeName': 'General Business',
+        'plans': []
+      }
     };
   }
 
