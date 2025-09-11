@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const db = require('../services/database');
 const auth = require('../services/auth');
-const entitlements = require('../services/entitlements');
+const entitlements = require('../services/entitlements-service');
 const notify = require('../services/notification-helper');
 const simpleSubscriptionService = require('../services/simple-subscription-service');
 
