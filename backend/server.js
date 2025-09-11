@@ -29,6 +29,7 @@ dotenv.config();
 // Import services
 
 const dbService = require('./services/database');
+const entitlementsService = require('./services/entitlements-service');
 
 
 
@@ -415,15 +416,9 @@ app.get('/api/me/entitlements', authService.authMiddleware(), async (req, res) =
     return res.status(401).json({ success:false, error:'unauthorized' });
   }
   try {
-    // Simplified - no entitlements, everyone can respond
-    const data = {
-      canRespond: true,
-      responseCountThisMonth: 0,
-      remainingResponses: -1, // unlimited
-      audience: 'normal',
-      isSubscribed: false
-    };
-    console.log('[entitlements-route] success - simplified system');
+    // Use entitlements service
+    const data = await entitlementsService.getEntitlements(u.id, u.role);
+    console.log('[entitlements-route] success - using entitlements service');
     return res.json({ success: true, data });
   } catch (e) {
     console.error('[entitlements-route] ERROR', e && e.message || e);
@@ -620,7 +615,7 @@ app.listen(PORT, HOST, () => {
 
 });
 
-// Entitlements API endpoints - Simplified
+// Entitlements API endpoints - Using proper service
 app.get('/api/entitlements-simple/me', async (req, res) => {
   try {
     const userId = req.query.user_id;
@@ -631,14 +626,8 @@ app.get('/api/entitlements-simple/me', async (req, res) => {
       });
     }
     
-    // Simplified - everyone has full access
-    const entitlements = {
-      canRespond: true,
-      responseCountThisMonth: 0,
-      remainingResponses: -1, // unlimited
-      audience: 'normal',
-      isSubscribed: false
-    };
+    // Use entitlements service
+    const entitlements = await entitlementsService.getEntitlements(userId);
     
     res.json({
       success: true,
@@ -663,39 +652,8 @@ app.get('/api/entitlements/me', async (req, res) => {
       });
     }
     
-    // Get current month in YYYYMM format
-    const now = new Date();
-    const yearMonth = now.getFullYear() * 100 + (now.getMonth() + 1);
-    
-    // Query actual response count from usage_monthly table
-    let responseCountThisMonth = 0;
-    try {
-      const countQuery = `
-        SELECT response_count 
-        FROM usage_monthly 
-        WHERE user_id = $1 AND year_month = $2
-      `;
-      const countResult = await db.query(countQuery, [userId, yearMonth]);
-      responseCountThisMonth = countResult.rows[0]?.response_count || 0;
-      console.log(`[entitlements] User ${userId} has ${responseCountThisMonth} responses this month (${yearMonth})`);
-    } catch (dbError) {
-      console.error('[entitlements] Error querying usage_monthly:', dbError);
-      // Continue with 0 count as fallback
-    }
-    
-    // Calculate remaining responses (3 per month for free tier)
-    const freeMonthlyLimit = 3;
-    const remainingResponses = Math.max(0, freeMonthlyLimit - responseCountThisMonth);
-    const canRespond = remainingResponses > 0;
-    
-    const entitlements = {
-      canRespond,
-      responseCountThisMonth,
-      remainingResponses,
-      freeMonthlyLimit,
-      audience: 'normal',
-      isSubscribed: false
-    };
+    // Use entitlements service
+    const entitlements = await entitlementsService.getEntitlements(userId);
     
     res.json({
       success: true,
