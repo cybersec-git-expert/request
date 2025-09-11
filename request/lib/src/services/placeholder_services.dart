@@ -2,7 +2,6 @@
 // TODO: Implement with REST API
 
 import '../models/notification_model.dart';
-import '../models/vehicle_type_model.dart';
 import '../models/request_model.dart';
 
 class ComprehensiveNotificationService {
@@ -115,14 +114,6 @@ class MessagingService {
   Future<void> sendMessage(String conversationId, String message) async {
     // TODO: Implement
   }
-}
-
-class VehicleService {
-  Future<List<VehicleTypeModel>> getVehicleTypes() async =>
-      <VehicleTypeModel>[];
-  Future<VehicleTypeModel?> getVehicleById(String? id) async => null;
-  Future<List<VehicleTypeModel>> refreshVehicles() async =>
-      <VehicleTypeModel>[];
 }
 
 class CategoryService {

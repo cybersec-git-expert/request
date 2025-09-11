@@ -610,7 +610,9 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 'ride':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => UnifiedRequestCreateScreen(initialModule: 'ride')),
+          MaterialPageRoute(
+              builder: (_) =>
+                  UnifiedRequestCreateScreen(initialModule: 'ride')),
         );
         break;
       case 'tours':

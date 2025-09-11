@@ -9,7 +9,6 @@ import '../theme/glass_theme.dart';
 import 'my_activities_screen.dart';
 import 'help_support_screen.dart';
 import 'notification_screen.dart';
-import 'driver_subscription_screen.dart';
 import 'account/user_profile_screen.dart';
 import 'about_us_simple_screen.dart';
 import 'pricing/business_product_dashboard.dart';
@@ -414,13 +413,6 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const NotificationScreen()),
-                      );
-                    } else if (item.route == '/driver-subscriptions') {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const DriverSubscriptionScreen()),
                       );
                     } else if (item.route == 'products') {
                       // Always route to the business product dashboard; it self-gates for non-approved users

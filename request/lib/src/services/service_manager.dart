@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'rest_auth_service.dart';
 import 'rest_category_service.dart';
 import 'rest_city_service.dart';
-import 'rest_vehicle_type_service.dart';
 import 'rest_request_service.dart';
 
 /// Service Manager to handle REST API services
@@ -22,7 +21,6 @@ class ServiceManager {
       RestAuthService.instance;
       RestCategoryService.instance;
       RestCityService.instance;
-      RestVehicleTypeService.instance;
       RestRequestService.instance;
 
       if (kDebugMode) {
@@ -40,8 +38,6 @@ class ServiceManager {
   RestAuthService get authService => RestAuthService.instance;
   RestCategoryService get categoryService => RestCategoryService.instance;
   RestCityService get cityService => RestCityService.instance;
-  RestVehicleTypeService get vehicleTypeService =>
-      RestVehicleTypeService.instance;
   RestRequestService get requestService => RestRequestService.instance;
 
   Future<bool> isAuthenticated() async {
