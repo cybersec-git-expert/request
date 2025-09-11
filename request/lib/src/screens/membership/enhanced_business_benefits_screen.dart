@@ -4,6 +4,9 @@ import '../../services/enhanced_business_benefits_service.dart';
 import '../../models/enhanced_business_benefits.dart';
 import '../../widgets/enhanced_benefit_plan_card.dart';
 
+// Explicit export to ensure BusinessTypeBenefits is available
+export '../../models/enhanced_business_benefits.dart' show BusinessTypeBenefits;
+
 class EnhancedBusinessBenefitsScreen extends StatefulWidget {
   const EnhancedBusinessBenefitsScreen({super.key});
 
