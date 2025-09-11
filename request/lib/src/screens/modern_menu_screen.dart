@@ -353,7 +353,7 @@ class _ModernMenuScreenState extends State<ModernMenuScreen> {
         title: 'Membership',
         icon: Icons.verified_user_outlined,
         color: const Color(0xFF8B5CF6), // Violet
-        route: '/role-management',
+        route: '/role-selection',
       ),
       _MenuItem(
         title: 'My Activities',

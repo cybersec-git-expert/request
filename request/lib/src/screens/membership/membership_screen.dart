@@ -328,17 +328,17 @@ class _MembershipScreenState extends State<MembershipScreen> {
                     });
                     break;
                   case 'pending':
-                    // User has pending verification, go to role management
-                    Navigator.pushNamed(context, '/role-management');
+                    // User has pending verification, go to role selection
+                    Navigator.pushNamed(context, '/role-selection');
                     break;
                   case 'rejected':
-                    // User was rejected, show message and go to role management
+                    // User was rejected, show message and go to role selection
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Text(
-                              'Your business verification was rejected. Please check your role management for details.')),
+                              'Your business verification was rejected. Please check your role status for details.')),
                     );
-                    Navigator.pushNamed(context, '/role-management');
+                    Navigator.pushNamed(context, '/role-selection');
                     break;
                   case 'no_business_role':
                   case 'no_verification':

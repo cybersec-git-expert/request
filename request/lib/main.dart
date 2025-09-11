@@ -38,7 +38,7 @@ import 'src/screens/membership/driver_membership_screen.dart';
 import 'src/screens/membership/business_membership_screen.dart';
 import 'src/screens/membership/role_selection_screen.dart';
 // Removed: Enhanced Business Benefits screen
-import 'src/screens/role_management_screen.dart';
+// Removed: Role Management screen - bypassed in favor of Role Selection
 import 'src/screens/role_registration_screen.dart';
 
 void main() async {
@@ -209,10 +209,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => const DriverVerificationScreen(),
             );
-          case '/role-management':
-            return MaterialPageRoute(
-              builder: (context) => const RoleManagementScreen(),
-            );
+          // Commented out - Role Management screen bypassed in favor of Role Selection
+          // case '/role-management':
+          //   return MaterialPageRoute(
+          //     builder: (context) => const RoleManagementScreen(),
+          //   );
           case '/main-dashboard':
           case '/home':
             final args = settings.arguments as Map<String, dynamic>?;
