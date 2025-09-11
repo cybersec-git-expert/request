@@ -82,8 +82,8 @@ class RequestModel {
     this.canMessage = true,
     this.isUrgent = false,
     required this.createdAt,
-  required this.updatedAt,
-  this.viewerContext,
+    required this.updatedAt,
+    this.viewerContext,
   });
 
   factory RequestModel.fromJson(Map<String, dynamic> json) {

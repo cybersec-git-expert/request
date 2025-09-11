@@ -141,10 +141,10 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-    final r = await _service.getRequestById(widget.requestId);
-    final currentUserId = RestAuthService.instance.currentUser?.uid;
-    bool owner =
-      r != null && currentUserId != null && r.userId == currentUserId;
+      final r = await _service.getRequestById(widget.requestId);
+      final currentUserId = RestAuthService.instance.currentUser?.uid;
+      bool owner =
+          r != null && currentUserId != null && r.userId == currentUserId;
       List<rest.ResponseModel> responses = [];
       if (r != null) {
         try {
@@ -160,11 +160,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           } catch (_) {}
         }
       }
-    if (mounted) {
+      if (mounted) {
         setState(() {
-      _request = r;
-      // Trust viewer_context when available
-      _isOwner = r?.viewerContext?.isOwner ?? owner;
+          _request = r;
+          // Trust viewer_context when available
+          _isOwner = r?.viewerContext?.isOwner ?? owner;
           _responses = responses;
           _loading = false;
         });
