@@ -1,28 +1,51 @@
-// Minimal no-op service to keep app compiling after removing benefits backend.
-// All methods return empty data and do not perform network calls.
+import '../services/api_client.dart';
+
 class EnhancedBusinessBenefitsService {
+  static final ApiClient _apiClient = ApiClient.instance;
+
   static Future<Map<String, dynamic>> getBusinessTypeBenefits(
       String countryCode) async {
-    return {
-      'success': true,
-      'data': {
-        'businessTypeId': 1,
-        'businessTypeName': 'General Business',
-        'plans': []
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/api/enhanced-business-benefits/$countryCode',
+      );
+
+      if (response.isSuccess && response.data != null) {
+        // Transform the backend response to match our expected format
+        final data = response.data!;
+        return {
+          'success': true,
+          'data': {
+            'businessTypeId': 1, // Default business type
+            'businessTypeName': 'General Business',
+            'plans': data['plans'] ?? []
+          }
+        };
       }
-    };
+
+      return {'success': false, 'error': 'Failed to load business benefits'};
+    } catch (e) {
+      print('Error loading business benefits: $e');
+      return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
   }
 
   static Future<Map<String, dynamic>> getBusinessTypePlans(
       String countryCode, int businessTypeId) async {
-    return {
-      'success': true,
-      'data': {
-        'businessTypeId': businessTypeId,
-        'businessTypeName': 'General Business',
-        'plans': []
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/api/enhanced-business-benefits/$countryCode/$businessTypeId',
+      );
+
+      if (response.isSuccess && response.data != null) {
+        return {'success': true, 'data': response.data};
       }
-    };
+
+      return {'success': false, 'error': 'Failed to load business type plans'};
+    } catch (e) {
+      print('Error loading business type plans: $e');
+      return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
   }
 
   static Future<Map<String, dynamic>> createBenefitPlan({
