@@ -11,32 +11,22 @@ const db = require('./database');
  */
 async function getEntitlements(userId, role) {
   try {
-    // Prefer the same source used by simple-subscription-service (user_usage, YYYY-MM)
+    // Source of truth: usage_monthly (year_month as YYYYMM, response_count)
     const now = new Date();
-    const ymDash = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // e.g., 2025-09
+    const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`; // e.g., 202509
 
     let responseCountThisMonth = 0;
-    try {
-      const r = await db.query(
-        `SELECT responses_used FROM user_usage WHERE user_id = $1 AND month_year = $2`,
-        [userId, ymDash]
-      );
-      if (r?.rows?.length) {
-        responseCountThisMonth = Number(r.rows[0].responses_used) || 0;
-        console.log(`[entitlements] user_usage count for ${userId} @ ${ymDash} = ${responseCountThisMonth}`);
-      } else {
-        // Fallback: derive from responses table for current month
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        const derived = await db.query(
-          `SELECT COUNT(*)::int AS cnt FROM responses WHERE user_id = $1 AND created_at >= $2 AND created_at < $3`,
-          [userId, start.toISOString(), end.toISOString()]
-        );
-        responseCountThisMonth = derived?.rows?.[0]?.cnt || 0;
-        console.log(`[entitlements] derived responses count for ${userId} = ${responseCountThisMonth}`);
-      }
-    } catch (dbError) {
-      console.warn('[entitlements] usage lookup failed, defaulting to 0', dbError?.message || dbError);
+    const r = await db.query(
+      `SELECT response_count FROM usage_monthly WHERE user_id = $1 AND year_month = $2`,
+      [userId, ym]
+    );
+    if (r?.rows?.length) {
+      responseCountThisMonth = Number(r.rows[0].response_count) || 0;
+      console.log(`[entitlements] usage_monthly count for ${userId} @ ${ym} = ${responseCountThisMonth}`);
+    } else {
+      // No row => zero used
+      responseCountThisMonth = 0;
+      console.log(`[entitlements] usage_monthly no row for ${userId} @ ${ym}, defaulting to 0`);
     }
     
     // Calculate remaining responses (3 per month for free tier)
@@ -44,9 +34,9 @@ async function getEntitlements(userId, role) {
     const remainingResponses = Math.max(0, freeMonthlyLimit - responseCountThisMonth);
     const canRespond = remainingResponses > 0;
     
-    // Hide contact details if user has reached limit
-    const canSeeContactDetails = remainingResponses > 0;
-    const canSendMessages = remainingResponses > 0;
+  // Hide contact details if user has reached limit (note: request detail endpoint may override when user hasResponded)
+  const canSeeContactDetails = remainingResponses > 0;
+  const canSendMessages = remainingResponses > 0;
     
     return {
       canSeeContactDetails,

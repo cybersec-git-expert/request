@@ -1,16 +1,22 @@
 import 'dart:async';
 import '../src/services/api_client.dart';
+import '../src/services/rest_auth_service.dart';
 
 /// Entitlements service for managing user subscription and response limits
 class EntitlementsService {
   final ApiClient _apiClient = ApiClient.instance;
 
-  /// Get user's current entitlements (authenticated version)
+  /// Get user's current entitlements (fetch real data from backend table)
   Future<UserEntitlements?> getUserEntitlements() async {
     try {
-      // Let the API client handle authentication automatically
+      final uid = RestAuthService.instance.currentUser?.uid;
+      if (uid == null || uid.isEmpty) {
+        throw Exception('No user id available');
+      }
+      // Use simple endpoint that reads from usage_monthly via backend service
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/api/me/entitlements',
+        '/api/entitlements-simple/me',
+        queryParameters: { 'user_id': uid },
         fromJson: (json) => json,
       );
 
@@ -37,38 +43,24 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      // API failed - return restrictive defaults for security
-      print('API failed for main entitlements, returning restrictive defaults');
-      return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
-        'subscriptionType': 'free',
-        'planName': 'Free Plan',
-      });
+  // API failed - no fallback
+  print('API failed for entitlements (main)');
+  return null;
     } catch (e) {
       print('Error fetching user entitlements: $e');
-      // Return restrictive defaults for security when API fails
-      return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
-        'subscriptionType': 'free',
-        'planName': 'Free Plan',
-      });
+  // No fallback
+  return null;
     }
   }
 
   /// Get user's current entitlements (simple version with user ID)
   Future<UserEntitlements?> getUserEntitlementsSimple(String userId) async {
     try {
-      // Use the existing authenticated endpoint
+      final uid = userId;
+      if (uid.isEmpty) throw Exception('userId required');
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/api/me/entitlements',
+        '/api/entitlements-simple/me',
+        queryParameters: { 'user_id': uid },
         fromJson: (json) => json,
       );
 
@@ -95,29 +87,13 @@ class EntitlementsService {
         return UserEntitlements.fromJson(converted);
       }
 
-      // API failed - return restrictive defaults for security
-      print('API failed for entitlements, returning restrictive defaults');
-      return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
-        'subscriptionType': 'free',
-        'planName': 'Free Plan',
-      });
+  // API failed - no fallback
+  print('API failed for entitlements (simple)');
+  return null;
     } catch (e) {
       print('Error fetching user entitlements (simple): $e');
-      // Return restrictive defaults for security when API fails
-      return UserEntitlements.fromJson({
-        'canSeeContactDetails': false,
-        'canSendMessages': false,
-        'canRespond': false,
-        'responseCount': 3,
-        'remainingResponses': 0,
-        'subscriptionType': 'free',
-        'planName': 'Free Plan',
-      });
+  // No fallback
+  return null;
     }
   }
 

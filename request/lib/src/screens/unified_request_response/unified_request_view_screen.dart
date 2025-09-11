@@ -55,7 +55,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     return _responses.any((r) => r.userId == uid);
   }
 
-  bool get _reachedLimit => (_remainingResponses ?? 0) <= 0;
+  bool get _hasUnlimited => (_remainingResponses ?? 0) < 0;
+  bool get _reachedLimit => !_hasUnlimited && (_remainingResponses ?? 0) <= 0;
 
   bool get _canRespondSimplified {
     if (_request == null) return false;
