@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
+import '../entitlements_service.dart';
 
 /// Simple subscription service to track response limits and subscription status
 /// Syncs with backend usage_monthly table for accurate counting
@@ -56,52 +55,27 @@ class ResponseLimitService {
     return count;
   }
 
-  /// Get backend response count from API
+  /// Get backend response count from entitlements service
   static Future<int> _getBackendResponseCount() async {
     try {
-      print('DEBUG: Making API call to get backend response count...');
+      print('DEBUG: Getting response count from EntitlementsService...');
 
-      // Get the auth token
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final entitlementsService = EntitlementsService();
+      final entitlements = await entitlementsService.getUserEntitlements();
 
-      if (token == null) {
-        print('DEBUG: No auth token found, returning 0');
-        return 0;
+      if (entitlements != null) {
+        final responseCount = entitlements.responseCount;
+        print(
+            'DEBUG: EntitlementsService returned response count: $responseCount');
+        return responseCount;
       }
 
-      // Make API call to /api/entitlements/me
-      final url = Uri.parse('${_getBaseUrl()}/api/entitlements/me');
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          final responseCount = data['data']['responseCountThisMonth'] ?? 0;
-          print('DEBUG: Backend API returned response count: $responseCount');
-          return responseCount;
-        }
-      }
-
-      print(
-          'DEBUG: API call failed with status ${response.statusCode}: ${response.body}');
+      print('DEBUG: EntitlementsService returned null, returning 0');
       return 0;
     } catch (e) {
-      print('DEBUG: Error getting backend response count: $e');
+      print('DEBUG: Error getting response count from EntitlementsService: $e');
       return 0;
     }
-  }
-
-  /// Get base URL for API calls
-  static String _getBaseUrl() {
-    // TODO: Make this configurable based on environment
-    return 'https://request-api-production.up.railway.app';
   }
 
   /// Increment response count (called after successful response creation)
