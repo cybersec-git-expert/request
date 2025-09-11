@@ -49,8 +49,6 @@ const cityRoutes = require('./routes/cities');
 
 const requestRoutes = require('./routes/requests');
 
-const vehicleTypeRoutes = require('./routes/vehicle-types');
-
 const uploadRoutes = require('./routes/upload'); // Image upload routes
 
 const uploadS3Routes = require('./routes/uploadS3'); // S3 upload routes
@@ -64,7 +62,6 @@ const masterProductRoutes = require('./routes/master-products');
 const productSyncRoutes = require('./routes/product-sync');
 
 const entityActivationRoutes = require('./routes/entity-activations');
-const enhancedBusinessBenefitsRoutes = require('./routes/enhanced-business-benefits');
 const simpleSubscriptionRoutes = require('./routes/simple-subscription');
 // Removed: subscription plan routes
 
@@ -89,8 +86,6 @@ const bannersRoutes = require('./routes/banners'); // NEW - Banners CRUD
 const reviewsRoutes = require('./routes/reviews'); // NEW - User reviews API
 const promoCodesRoutes = require('./routes/promo-codes'); // NEW - Promo codes admin
 // Removed: subscriptions and subscription-country-pricing routes
-const entitlementSvc = require('./entitlements'); // Entitlements service
-// Entitlements routes will be added separately
 const authService = require('./services/auth'); // Auth middleware for protected routes
 
 
@@ -116,12 +111,6 @@ const driverVerificationRoutes = require('./routes/driver-verifications');
 const businessVerificationRoutes = require('./routes/business-verifications-simple'); // Use the simple working version
 
 const businessCategoriesRoutes = require('./routes/business-categories'); // NEW - Business categories management
-
-const businessTypesRoutes = require('./routes/business-types'); // NEW - Admin business types management
-const businessTypeBenefitsRoutes = require('./routes/business-type-benefits'); // NEW - Business type benefits management
-const subscriptionsRoutes = require('./routes/subscriptions'); // NEW - Subscription management
-const publicSubscriptionsRoutes = require('./routes/public-subscriptions'); // NEW - Public subscriptions
-const flutterSubscriptionsRoutes = require('./routes/flutter-subscriptions'); // NEW - Flutter subscription API
 
 const businessRegistrationFormRoutes = require('./routes/business-registration-form'); // NEW - Business registration form data
 
@@ -397,15 +386,11 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/reviews', reviewsRoutes); // Mount reviews for public profiles
 
-app.use('/api/vehicle-types', vehicleTypeRoutes);
-
 app.use('/api/upload', uploadRoutes); // Image upload endpoint
 
 app.use('/api/s3', uploadS3Routes); // S3 upload endpoints
-app.use('/api/enhanced-business-benefits', enhancedBusinessBenefitsRoutes); // Enhanced business benefits
 app.use('/api/simple-subscription', simpleSubscriptionRoutes); // Simple subscription system
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
-app.use('/api/public/subscriptions', publicSubscriptionsRoutes); // Public subscriptions endpoints
 // Entitlements API endpoints will be added at the end of the file
 
 // Removed: subscription management routes
@@ -429,13 +414,15 @@ app.get('/api/me/entitlements', authService.authMiddleware(), async (req, res) =
     return res.status(401).json({ success:false, error:'unauthorized' });
   }
   try {
-    const data = await entitlementSvc.getEntitlements(u.id, u.role);
-    console.log('[entitlements-route] success', {
-      ms: Date.now() - startTs,
-      responseCount: data.responseCountThisMonth,
-      remaining: data.remainingResponses,
-      canRespond: data.canRespond
-    });
+    // Simplified - no entitlements, everyone can respond
+    const data = {
+      canRespond: true,
+      responseCountThisMonth: 0,
+      remainingResponses: -1, // unlimited
+      audience: 'normal',
+      isSubscribed: false
+    };
+    console.log('[entitlements-route] success - simplified system');
     return res.json({ success: true, data });
   } catch (e) {
     console.error('[entitlements-route] ERROR', e && e.message || e);
@@ -487,10 +474,6 @@ app.use('/api/price-staging', priceStagingRoutes); // Price staging system endpo
 app.use('/api/payment-methods', paymentMethodsRoutes); // Payment methods endpoints
 
 app.use('/api/banners', bannersRoutes); // NEW - Banners CRUD
-// Mount business-type-benefits endpoints
-app.use('/api/business-type-benefits', businessTypeBenefitsRoutes);
-
-
 
 // Country-specific routes
 
@@ -511,10 +494,6 @@ app.use('/api/driver-verifications', driverVerificationRoutes);
 app.use('/api/business-verifications', businessVerificationRoutes); // NEW - Business verification routes
 
 app.use('/api/business-categories', businessCategoriesRoutes); // NEW - Business categories management
-
-app.use('/api/business-types', businessTypesRoutes); // NEW - Admin business types management
-app.use('/api/subscriptions', subscriptionsRoutes); // NEW - Subscription management
-app.use('/api/flutter/subscriptions', flutterSubscriptionsRoutes); // NEW - Flutter subscription API
 
 app.use('/api/business-registration', businessRegistrationFormRoutes); // NEW - Business registration form data
 
@@ -640,7 +619,7 @@ app.listen(PORT, HOST, () => {
 
 });
 
-// Entitlements API endpoints
+// Entitlements API endpoints - Simplified
 app.get('/api/entitlements-simple/me', async (req, res) => {
   try {
     const userId = req.query.user_id;
@@ -651,7 +630,14 @@ app.get('/api/entitlements-simple/me', async (req, res) => {
       });
     }
     
-    const entitlements = await entitlementSvc.getUserEntitlements(userId);
+    // Simplified - everyone has full access
+    const entitlements = {
+      canRespond: true,
+      responseCountThisMonth: 0,
+      remainingResponses: -1, // unlimited
+      audience: 'normal',
+      isSubscribed: false
+    };
     
     res.json({
       success: true,
@@ -676,7 +662,14 @@ app.get('/api/entitlements/me', async (req, res) => {
       });
     }
     
-    const entitlements = await entitlementSvc.getUserEntitlements(userId);
+    // Simplified - everyone has full access
+    const entitlements = {
+      canRespond: true,
+      responseCountThisMonth: 0,
+      remainingResponses: -1, // unlimited
+      audience: 'normal',
+      isSubscribed: false
+    };
     
     res.json({
       success: true,

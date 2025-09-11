@@ -13,10 +13,7 @@ import 'src/screens/pricing/price_comparison_screen.dart';
 import 'src/screens/pricing/business_product_dashboard.dart';
 import 'src/screens/profile/business_profile_edit_screen.dart';
 import 'src/screens/settings/payment_methods_settings_screen.dart';
-import 'src/screens/requests/ride/create_ride_request_screen.dart';
 import 'src/screens/unified_request_response/unified_response_edit_screen.dart';
-import 'src/screens/driver_registration_screen.dart'; // Driver registration (was driver_verification)
-import 'src/screens/driver_verification_screen.dart'; // Driver verification (was driver_documents_view)
 import 'src/screens/business_verification_screen.dart';
 import 'src/screens/business_registration_screen.dart';
 import 'src/screens/delivery_verification_screen.dart';
@@ -29,20 +26,9 @@ import 'src/screens/terms_conditions_screen.dart';
 import 'src/theme/app_theme.dart';
 import 'src/screens/chat/chat_conversations_screen.dart';
 import 'src/screens/notification_screen.dart';
-import 'src/screens/ride/rider_browse_drivers_screen.dart';
 import 'src/services/notification_service.dart';
 import 'src/services/notification_center.dart';
-// Removed: subscription screen
-import 'src/screens/membership/membership_screen.dart';
-import 'src/screens/membership/driver_membership_screen.dart';
-import 'src/screens/membership/business_membership_screen.dart';
-import 'src/screens/membership/role_selection_screen.dart';
 import 'src/screens/simple_subscription_screen.dart';
-// Enhanced Business Benefits screen for business subscriptions
-import 'src/screens/membership/enhanced_business_benefits_screen.dart';
-// Driver subscription screen
-import 'src/screens/driver_subscription_screen.dart';
-// Removed: Role Management screen - bypassed in favor of Role Selection
 import 'src/screens/role_registration_screen.dart';
 
 void main() async {
@@ -185,14 +171,6 @@ class MyApp extends StatelessWidget {
                 otpToken: args?['otpToken'],
               ),
             );
-          case '/driver-registration':
-            return MaterialPageRoute(
-              builder: (context) => const DriverRegistrationScreen(),
-            );
-          case '/driver-verification':
-            return MaterialPageRoute(
-              builder: (context) => const DriverVerificationScreen(),
-            );
           case '/business-verification':
             return MaterialPageRoute(
               builder: (context) => const BusinessVerificationScreen(),
@@ -208,10 +186,6 @@ class MyApp extends StatelessWidget {
           case '/verification-status':
             return MaterialPageRoute(
               builder: (context) => const VerificationStatusScreen(),
-            );
-          case '/driver-documents-view':
-            return MaterialPageRoute(
-              builder: (context) => const DriverVerificationScreen(),
             );
           // Commented out - Role Management screen bypassed in favor of Role Selection
           // case '/role-management':
@@ -248,38 +222,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => const NotificationScreen(),
             );
-          case '/membership':
-            final args = settings.arguments as Map<String, dynamic>?;
-            return MaterialPageRoute(
-              builder: (context) => MembershipScreen(
-                promptOnboarding: args?['promptOnboarding'] == true,
-              ),
-            );
-          case '/driver-membership':
-            return MaterialPageRoute(
-              builder: (context) => const DriverMembershipScreen(),
-            );
-          case '/business-membership':
-            return MaterialPageRoute(
-              builder: (context) => const BusinessMembershipScreen(),
-            );
-          case '/role-selection':
-            return MaterialPageRoute(
-              builder: (context) => const RoleSelectionScreen(),
-            );
-          case '/business-subscriptions':
-            return MaterialPageRoute(
-              builder: (context) => const EnhancedBusinessBenefitsScreen(),
-            );
           case '/simple-subscription':
             return MaterialPageRoute(
               builder: (context) => const SimpleSubscriptionScreen(),
             );
-          case '/driver-subscriptions':
-            return MaterialPageRoute(
-              builder: (context) => const DriverSubscriptionScreen(),
-            );
-          // Removed: /enhanced-business-benefits route
           case '/role-registration':
             final args = settings.arguments as Map<String, dynamic>?;
             return MaterialPageRoute(
@@ -287,16 +233,6 @@ class MyApp extends StatelessWidget {
                 selectedRole: args?['selectedRole'] ?? 'business',
                 professionalArea: args?['professionalArea'],
               ),
-            );
-          case '/onboarding/membership':
-            return MaterialPageRoute(
-              builder: (context) =>
-                  const MembershipScreen(promptOnboarding: true),
-            );
-          // Removed: /subscriptions and /membership routes
-          case '/rider/browse-drivers':
-            return MaterialPageRoute(
-              builder: (context) => const RiderBrowseDriversScreen(),
             );
           case '/business-pricing':
             return MaterialPageRoute(
@@ -309,10 +245,6 @@ class MyApp extends StatelessWidget {
           case '/settings/payment-methods':
             return MaterialPageRoute(
               builder: (context) => const PaymentMethodsSettingsScreen(),
-            );
-          case '/create-ride-request':
-            return MaterialPageRoute(
-              builder: (context) => const CreateRideRequestScreen(),
             );
           case '/edit-response':
             final args = settings.arguments as Map<String, dynamic>?;
