@@ -20,8 +20,8 @@ import '../../services/enhanced_user_service.dart';
 import '../../services/api_client.dart';
 import '../../../services/entitlements_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../widgets/subscription/response_limit_widgets.dart';
 import '../../../services/subscription/response_limit_service.dart';
+import '../../../pages/subscription/simple_subscription_page.dart';
 
 /// UnifiedRequestViewScreen (Minimal REST Migration)
 /// Legacy Firebase-based logic removed. Displays core request info only.
@@ -1109,6 +1109,37 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     );
   }
 
+  void _showUpgradeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Upgrade to Pro'),
+        content: const Text(
+          'You\'ve reached your monthly limit of 3 responses. Upgrade to Pro for unlimited responses!',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // Navigate to subscription page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SimpleSubscriptionPage(),
+                ),
+              );
+            },
+            child: const Text('Upgrade Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -1151,19 +1182,21 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
       // If user can respond but hasn't yet, show respond button with limit checking
       if (_canRespond) {
-        return ResponseLimitChecker(
-          onResponseAllowed: _openCreateResponseSheet,
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              // This will be handled by ResponseLimitChecker
-              // If user is within limit, it calls onResponseAllowed
-              // If user exceeded limit, it shows upgrade prompt
-            },
-            backgroundColor: _getTypeColor(_getCurrentRequestType()),
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.reply),
-            label: const Text('Respond'),
-          ),
+        return FloatingActionButton.extended(
+          onPressed: () async {
+            // Check if user can send response
+            final canSend = await ResponseLimitService.canSendResponse();
+            if (canSend) {
+              _openCreateResponseSheet();
+            } else {
+              // Show upgrade dialog
+              _showUpgradeDialog(context);
+            }
+          },
+          backgroundColor: _getTypeColor(_getCurrentRequestType()),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.reply),
+          label: const Text('Respond'),
         );
       }
 
