@@ -662,11 +662,36 @@ app.get('/api/entitlements/me', async (req, res) => {
       });
     }
     
-    // Simplified - everyone has full access
+    // Get current month in YYYYMM format
+    const now = new Date();
+    const yearMonth = now.getFullYear() * 100 + (now.getMonth() + 1);
+    
+    // Query actual response count from usage_monthly table
+    let responseCountThisMonth = 0;
+    try {
+      const countQuery = `
+        SELECT response_count 
+        FROM usage_monthly 
+        WHERE user_id = $1 AND year_month = $2
+      `;
+      const countResult = await db.query(countQuery, [userId, yearMonth]);
+      responseCountThisMonth = countResult.rows[0]?.response_count || 0;
+      console.log(`[entitlements] User ${userId} has ${responseCountThisMonth} responses this month (${yearMonth})`);
+    } catch (dbError) {
+      console.error('[entitlements] Error querying usage_monthly:', dbError);
+      // Continue with 0 count as fallback
+    }
+    
+    // Calculate remaining responses (3 per month for free tier)
+    const freeMonthlyLimit = 3;
+    const remainingResponses = Math.max(0, freeMonthlyLimit - responseCountThisMonth);
+    const canRespond = remainingResponses > 0;
+    
     const entitlements = {
-      canRespond: true,
-      responseCountThisMonth: 0,
-      remainingResponses: -1, // unlimited
+      canRespond,
+      responseCountThisMonth,
+      remainingResponses,
+      freeMonthlyLimit,
       audience: 'normal',
       isSubscribed: false
     };

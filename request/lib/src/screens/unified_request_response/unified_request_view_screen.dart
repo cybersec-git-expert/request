@@ -20,7 +20,8 @@ import '../../services/enhanced_user_service.dart';
 import '../../services/api_client.dart';
 import '../../../services/entitlements_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../widgets/subscription/response_limit_widgets.dart';
+import '../../../widgets/subscription/response_limit_widgets.dart';
+import '../../../services/subscription/response_limit_service.dart';
 
 /// UnifiedRequestViewScreen (Minimal REST Migration)
 /// Legacy Firebase-based logic removed. Displays core request info only.
@@ -56,6 +57,30 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     super.initState();
     _load();
     _loadEntitlementsAndPrefs();
+  }
+
+  Future<Map<String, dynamic>> _getResponseStatus() async {
+    try {
+      final hasUnlimited = await ResponseLimitService.hasUnlimitedPlan();
+      final remaining = await ResponseLimitService.getRemainingResponses();
+      final current = await ResponseLimitService.getCurrentResponseCount();
+
+      print(
+          'DEBUG: Response status - unlimited: $hasUnlimited, remaining: $remaining, current: $current');
+
+      return {
+        'hasUnlimited': hasUnlimited,
+        'remaining': remaining,
+        'current': current,
+      };
+    } catch (e) {
+      print('DEBUG: Error getting response status: $e');
+      return {
+        'hasUnlimited': false,
+        'remaining': 3,
+        'current': 0,
+      };
+    }
   }
 
   Future<void> _loadEntitlementsAndPrefs() async {
@@ -402,51 +427,13 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   void _openCreateResponseSheet() {
     if (_request == null) return;
     () async {
-      // Check entitlements instead of old canMessage flag
-      final userId = RestAuthService.instance.currentUser?.uid;
-      bool canRespond = true;
-
-      if (userId != null && _entitlements != null) {
-        canRespond = _entitlements!.canRespond;
-      }
-
-      if (!canRespond) {
+      // Basic membership completion check (ResponseLimitChecker handles usage limits)
+      if (!_membershipCompleted) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-                'You have reached your response limit for this month.'),
-            action: SnackBarAction(
-              label: 'OK',
-              onPressed: () {},
-            ),
-          ),
-        );
-        // Offer quick navigation to membership page
-        await Future.delayed(const Duration(milliseconds: 200));
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Upgrade membership to continue responding'),
-            action: SnackBarAction(
-              label: 'View Plans',
-              onPressed: () async {
-                // Navigate new users directly to business membership
-                await _navigateToSubscriptionPlans();
-              },
-            ),
-          ),
-        );
-        return;
-      }
-      // Gate by membership completion and entitlements
-      if (!_membershipCompleted ||
-          (_entitlements != null && !_entitlements!.canRespond)) {
-        if (!mounted) return;
-        // Navigate new users directly to business membership
         await _navigateToSubscriptionPlans();
         return;
       }
+
       if (!mounted) return;
       final requestModel = _convertToRequestModel(_request!);
       Navigator.push(
@@ -455,7 +442,9 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           builder: (context) =>
               UnifiedResponseCreateScreen(request: requestModel),
         ),
-      ).then((_) {
+      ).then((_) async {
+        // Increment local response count when user successfully creates a response
+        await ResponseLimitService.incrementResponseCount();
         _reloadResponses();
         _loadEntitlementsAndPrefs(); // Refresh entitlements after response creation
       });
@@ -1160,14 +1149,21 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         );
       }
 
-      // If user can respond but hasn't yet, show respond button
+      // If user can respond but hasn't yet, show respond button with limit checking
       if (_canRespond) {
-        return FloatingActionButton.extended(
-          onPressed: _openCreateResponseSheet,
-          backgroundColor: _getTypeColor(_getCurrentRequestType()),
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.reply),
-          label: const Text('Respond'),
+        return ResponseLimitChecker(
+          onResponseAllowed: _openCreateResponseSheet,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              // This will be handled by ResponseLimitChecker
+              // If user is within limit, it calls onResponseAllowed
+              // If user exceeded limit, it shows upgrade prompt
+            },
+            backgroundColor: _getTypeColor(_getCurrentRequestType()),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.reply),
+            label: const Text('Respond'),
+          ),
         );
       }
 
@@ -1224,6 +1220,111 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Modern response count display
+            FutureBuilder<Map<String, dynamic>>(
+              future: _getResponseStatus(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox.shrink();
+                }
+
+                final data = snapshot.data;
+                if (data == null) return const SizedBox.shrink();
+
+                final hasUnlimited = data['hasUnlimited'] as bool;
+                final remaining = data['remaining'] as int;
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: hasUnlimited
+                        ? Colors.green.withOpacity(0.1)
+                        : remaining == 0
+                            ? Colors.red.withOpacity(0.1)
+                            : Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: hasUnlimited
+                              ? Colors.green.withOpacity(0.2)
+                              : remaining == 0
+                                  ? Colors.red.withOpacity(0.2)
+                                  : Colors.blue.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          hasUnlimited
+                              ? Icons.verified
+                              : remaining == 0
+                                  ? Icons.warning_rounded
+                                  : Icons.chat_bubble_outline,
+                          color: hasUnlimited
+                              ? Colors.green.shade700
+                              : remaining == 0
+                                  ? Colors.red.shade700
+                                  : Colors.blue.shade700,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasUnlimited
+                                  ? 'Pro Plan - Unlimited Responses'
+                                  : 'Free Plan - Response Usage',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              hasUnlimited
+                                  ? 'Create unlimited responses'
+                                  : remaining == 0
+                                      ? 'Monthly limit reached'
+                                      : 'Responses remaining this month: $remaining',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!hasUnlimited && remaining <= 1) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Upgrade',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
             _sectionCard(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

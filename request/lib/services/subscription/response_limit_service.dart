@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 /// Simple subscription service to track response limits and subscription status
-/// Implements the 3 responses per month limit for free users
+/// Syncs with backend usage_monthly table for accurate counting
 class ResponseLimitService {
-  static const String _responseCountKey = 'monthly_response_count';
-  static const String _lastResetKey = 'last_monthly_reset';
   static const String _hasUnlimitedPlanKey = 'has_unlimited_plan';
   static const int _freeMonthlyLimit = 3;
 
@@ -14,15 +14,18 @@ class ResponseLimitService {
 
     // Check if user has unlimited plan
     final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
-    if (hasUnlimited) return true;
+    if (hasUnlimited) {
+      print('DEBUG: canSendResponse = true (unlimited plan)');
+      return true;
+    }
 
-    // Check monthly reset
-    await _checkAndResetMonthlyCount();
+    // Get current response count from backend
+    final responseCount = await _getBackendResponseCount();
+    final canSend = responseCount < _freeMonthlyLimit;
 
-    // Get current response count
-    final responseCount = prefs.getInt(_responseCountKey) ?? 0;
-
-    return responseCount < _freeMonthlyLimit;
+    print(
+        'DEBUG: canSendResponse = $canSend (responseCount: $responseCount, limit: $_freeMonthlyLimit)');
+    return canSend;
   }
 
   /// Get remaining responses for the month
@@ -31,64 +34,126 @@ class ResponseLimitService {
 
     // Check if user has unlimited plan
     final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
-    if (hasUnlimited) return -1; // -1 indicates unlimited
+    if (hasUnlimited) {
+      print('DEBUG: getRemainingResponses = -1 (unlimited)');
+      return -1; // -1 indicates unlimited
+    }
 
-    // Check monthly reset
-    await _checkAndResetMonthlyCount();
+    // Get current response count from backend
+    final responseCount = await _getBackendResponseCount();
+    final remaining =
+        (_freeMonthlyLimit - responseCount).clamp(0, _freeMonthlyLimit);
 
-    // Get current response count
-    final responseCount = prefs.getInt(_responseCountKey) ?? 0;
-
-    return (_freeMonthlyLimit - responseCount).clamp(0, _freeMonthlyLimit);
+    print(
+        'DEBUG: getRemainingResponses = $remaining (responseCount: $responseCount)');
+    return remaining;
   }
 
-  /// Increment response count (call this when user sends a response)
-  static Future<void> incrementResponseCount() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // Check if user has unlimited plan
-    final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
-    if (hasUnlimited) return; // Don't count for unlimited users
-
-    // Check monthly reset
-    await _checkAndResetMonthlyCount();
-
-    // Increment count
-    final currentCount = prefs.getInt(_responseCountKey) ?? 0;
-    await prefs.setInt(_responseCountKey, currentCount + 1);
+  /// Get current response count for the month from backend
+  static Future<int> getCurrentResponseCount() async {
+    final count = await _getBackendResponseCount();
+    print('DEBUG: getCurrentResponseCount = $count');
+    return count;
   }
 
-  /// Check if it's a new month and reset count if needed
-  static Future<void> _checkAndResetMonthlyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-    final currentMonth = now.year * 12 + now.month;
+  /// Get backend response count from API
+  static Future<int> _getBackendResponseCount() async {
+    try {
+      print('DEBUG: Making API call to get backend response count...');
 
-    final lastReset = prefs.getInt(_lastResetKey) ?? 0;
+      // Get the auth token
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
 
-    if (currentMonth > lastReset) {
-      // New month, reset count
-      await prefs.setInt(_responseCountKey, 0);
-      await prefs.setInt(_lastResetKey, currentMonth);
+      if (token == null) {
+        print('DEBUG: No auth token found, returning 0');
+        return 0;
+      }
+
+      // Make API call to /api/entitlements/me
+      final url = Uri.parse('${_getBaseUrl()}/api/entitlements/me');
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          final responseCount = data['data']['responseCountThisMonth'] ?? 0;
+          print('DEBUG: Backend API returned response count: $responseCount');
+          return responseCount;
+        }
+      }
+
+      print(
+          'DEBUG: API call failed with status ${response.statusCode}: ${response.body}');
+      return 0;
+    } catch (e) {
+      print('DEBUG: Error getting backend response count: $e');
+      return 0;
     }
   }
 
-  /// Upgrade user to unlimited plan
-  static Future<void> upgradeToUnlimited() async {
+  /// Get base URL for API calls
+  static String _getBaseUrl() {
+    // TODO: Make this configurable based on environment
+    return 'https://request-api-production.up.railway.app';
+  }
+
+  /// Increment response count (called after successful response creation)
+  static Future<void> incrementResponseCount() async {
+    // No longer needed - backend automatically increments via usage_monthly table
+    // But we keep this method for compatibility and to trigger UI refresh
+    print('DEBUG: incrementResponseCount - delegated to backend');
+  }
+
+  /// Set unlimited plan status
+  static Future<void> setUnlimitedPlan(bool hasUnlimited) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_hasUnlimitedPlanKey, true);
+    await prefs.setBool(_hasUnlimitedPlanKey, hasUnlimited);
+    print('DEBUG: setUnlimitedPlan = $hasUnlimited');
   }
 
   /// Check if user has unlimited plan
   static Future<bool> hasUnlimitedPlan() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_hasUnlimitedPlanKey) ?? false;
+    final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
+    print('DEBUG: hasUnlimitedPlan = $hasUnlimited');
+    return hasUnlimited;
   }
 
-  /// Downgrade user to free plan (for testing or subscription cancellation)
-  static Future<void> downgradeToFree() async {
+  /// Get current plan status for display
+  static Future<String> getPlanStatus() async {
+    final hasUnlimited = await hasUnlimitedPlan();
+    if (hasUnlimited) {
+      return 'Pro Plan - Unlimited responses';
+    } else {
+      final remaining = await getRemainingResponses();
+      return 'Free Plan - $remaining responses remaining this month';
+    }
+  }
+
+  /// Testing methods for debugging
+  static Future<void> resetResponseCount() async {
+    print('DEBUG: resetResponseCount - not supported with backend sync');
+  }
+
+  static Future<void> setResponseCount(int count) async {
+    print('DEBUG: setResponseCount - not supported with backend sync');
+  }
+
+  static Future<void> setToLimit() async {
+    print('DEBUG: setToLimit - not supported with backend sync');
+  }
+
+  static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_hasUnlimitedPlanKey, false);
+    await prefs.remove(_hasUnlimitedPlanKey);
+    print('DEBUG: clearAllData - cleared local data only');
   }
 
   /// Get user's subscription status info
@@ -101,14 +166,6 @@ class ResponseLimitService {
       remainingResponses: remaining,
       planType: hasUnlimited ? 'pro' : 'free',
     );
-  }
-
-  /// Reset all subscription data (for testing)
-  static Future<void> resetAllData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_responseCountKey);
-    await prefs.remove(_lastResetKey);
-    await prefs.remove(_hasUnlimitedPlanKey);
   }
 }
 
