@@ -385,11 +385,11 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
       );
 
       final service = SimpleSubscriptionService.instance;
-      final success = await service.subscribeToPlan(selectedPlanId);
+      final result = await service.subscribeToPlan(selectedPlanId);
 
       Navigator.pop(context); // Close loading dialog
 
-      if (success) {
+      if (result.success) {
         // Reload data to reflect changes
         await _loadSubscriptionData();
 
@@ -397,19 +397,27 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Successfully subscribed!',
+              result.requiresPayment
+                  ? 'Redirecting to payment...'
+                  : 'Successfully subscribed!',
               style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
             ),
             backgroundColor: GlassTheme.colors.successColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
+
+        // If payment is required, handle payment flow
+        if (result.requiresPayment && result.paymentId != null) {
+          // TODO: Navigate to payment screen with result.paymentId
+          print('Payment required. Payment ID: ${result.paymentId}');
+        }
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to subscribe. Please try again.',
+              result.message ?? 'Failed to subscribe. Please try again.',
               style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
             ),
             backgroundColor: GlassTheme.colors.errorColor,

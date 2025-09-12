@@ -48,21 +48,30 @@ class _SimpleSubscriptionScreenState extends State<SimpleSubscriptionScreen> {
 
   Future<void> _subscribeToPlan(String planCode) async {
     try {
-      final success =
+      final result =
           await SimpleSubscriptionService.instance.subscribeToPlan(planCode);
 
-      if (success) {
+      if (result.success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Subscription updated successfully!'),
+          SnackBar(
+            content: Text(result.requiresPayment
+                ? 'Redirecting to payment...'
+                : 'Subscription updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
+
+        // If payment is required, handle payment flow
+        if (result.requiresPayment && result.paymentId != null) {
+          // TODO: Navigate to payment screen with result.paymentId
+          print('Payment required. Payment ID: ${result.paymentId}');
+        }
+
         _loadSubscriptionData(); // Refresh data
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to update subscription'),
+          SnackBar(
+            content: Text(result.message ?? 'Failed to update subscription'),
             backgroundColor: Colors.red,
           ),
         );

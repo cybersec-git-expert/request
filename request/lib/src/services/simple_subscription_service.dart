@@ -119,6 +119,7 @@ class SimpleSubscriptionService {
           return SubscriptionResult(
             success: true,
             requiresPayment: true,
+            paymentId: data['paymentId'],
             subscription: data['subscription'],
             plan: data['plan'],
             message: data['message'],
@@ -168,6 +169,7 @@ class SimpleSubscriptionService {
 class SubscriptionResult {
   final bool success;
   final bool requiresPayment;
+  final String? paymentId;
   final Map<String, dynamic>? subscription;
   final Map<String, dynamic>? plan;
   final String? message;
@@ -175,6 +177,7 @@ class SubscriptionResult {
   SubscriptionResult({
     required this.success,
     this.requiresPayment = false,
+    this.paymentId,
     this.subscription,
     this.plan,
     this.message,
