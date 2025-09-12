@@ -444,7 +444,9 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         );
 
         // If payment is required, handle payment flow
-        if (result.requiresPayment && result.paymentId != null) {
+        if (result.requiresPayment) {
+          print('🚀 [Payment Flow] Payment required - starting payment flow');
+          print('🚀 [Payment Flow] Payment ID: ${result.paymentId}');
           // INTEGRATION COMPLETE: Navigate to payment gateway system
           await _handlePaymentFlow(result);
         }
