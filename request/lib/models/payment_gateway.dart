@@ -163,31 +163,31 @@ class PaymentGatewayResponse {
 }
 
 class PaymentSession {
-  final String paymentId;
+  final String id;
+  final String subscriptionId;
   final String gatewayCode;
   final String status;
-  final double amount;
-  final String currency;
+  final String createdAt;
   final String? checkoutUrl;
   final Map<String, dynamic>? metadata;
 
   PaymentSession({
-    required this.paymentId,
+    required this.id,
+    required this.subscriptionId,
     required this.gatewayCode,
     required this.status,
-    required this.amount,
-    required this.currency,
+    required this.createdAt,
     this.checkoutUrl,
     this.metadata,
   });
 
   factory PaymentSession.fromJson(Map<String, dynamic> json) {
     return PaymentSession(
-      paymentId: json['payment_id'] as String,
+      id: json['id'] as String,
+      subscriptionId: json['subscription_id'] as String,
       gatewayCode: json['gateway_code'] as String,
       status: json['status'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      currency: json['currency'] as String,
+      createdAt: json['created_at'] as String,
       checkoutUrl: json['checkout_url'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
     );

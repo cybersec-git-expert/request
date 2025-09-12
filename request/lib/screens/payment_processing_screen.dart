@@ -151,7 +151,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
       // For demonstration purposes, we'll always approve the payment
       // In a real implementation, you would integrate with actual payment processors
       final result = await PaymentGatewayService.instance.confirmPayment(
-        paymentId: _paymentSession!.paymentId,
+        paymentId: _paymentSession!.id,
         transactionId: 'CARD_TXN_${DateTime.now().millisecondsSinceEpoch}',
         metadata: {
           'plan_code': widget.planCode,
@@ -178,7 +178,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           Navigator.of(context)
-              .pop({'success': true, 'paymentId': _paymentSession!.paymentId});
+              .pop({'success': true, 'paymentId': _paymentSession!.id});
         }
       } else {
         setState(() {
@@ -211,7 +211,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
       });
 
       final result = await PaymentGatewayService.instance.confirmPayment(
-        paymentId: _paymentSession!.paymentId,
+        paymentId: _paymentSession!.id,
         transactionId: 'TXN_${DateTime.now().millisecondsSinceEpoch}',
         metadata: {
           'plan_code': widget.planCode,
@@ -232,7 +232,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           Navigator.of(context)
-              .pop({'success': true, 'paymentId': _paymentSession!.paymentId});
+              .pop({'success': true, 'paymentId': _paymentSession!.id});
         }
       } else {
         setState(() {
@@ -1062,7 +1062,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      _paymentSession!.paymentId,
+                      _paymentSession!.id,
                       style: const TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 16,
@@ -1071,8 +1071,8 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => _copyToClipboard(
-                        _paymentSession!.paymentId, 'Reference ID'),
+                    onPressed: () =>
+                        _copyToClipboard(_paymentSession!.id, 'Reference ID'),
                     icon: const Icon(Icons.copy),
                     tooltip: 'Copy Reference ID',
                   ),

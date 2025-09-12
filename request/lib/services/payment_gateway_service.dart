@@ -125,7 +125,10 @@ class PaymentGatewayService {
       );
 
       if (response.isSuccess && response.data != null) {
-        return PaymentSession.fromJson(response.data!);
+        final sessionData = response.data!['session'];
+        if (sessionData != null) {
+          return PaymentSession.fromJson(sessionData);
+        }
       }
 
       return null;
