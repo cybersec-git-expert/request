@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS simple_subscription_country_pricing (
 -- Create user subscriptions table (if not exists)
 CREATE TABLE IF NOT EXISTS user_simple_subscriptions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     plan_code VARCHAR(50) NOT NULL REFERENCES simple_subscription_plans(code),
     responses_used_this_month INTEGER DEFAULT 0,
     month_reset_date DATE DEFAULT CURRENT_DATE,

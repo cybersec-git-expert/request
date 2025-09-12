@@ -1,4 +1,5 @@
 import 'api_client.dart';
+import 'country_service.dart';
 
 class SimpleSubscriptionService {
   SimpleSubscriptionService._();
@@ -64,11 +65,17 @@ class SimpleSubscriptionService {
     }
   }
 
-  /// Get available subscription plans
+  /// Get available subscription plans with country-specific pricing
   Future<List<SubscriptionPlan>> getAvailablePlans() async {
     try {
-      final response = await ApiClient.instance
-          .get<Map<String, dynamic>>('/simple-subscription/plans');
+      // Get current country code
+      final countryService = CountryService.instance;
+      final countryCode =
+          countryService.countryCode ?? 'LK'; // Default to Sri Lanka
+
+      final response = await ApiClient.instance.get<Map<String, dynamic>>(
+          '/simple-subscription/plans',
+          queryParameters: {'country': countryCode});
 
       if (response.isSuccess && response.data != null) {
         final plans = response.data!['plans'] as List?;

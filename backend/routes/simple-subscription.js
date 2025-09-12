@@ -188,11 +188,34 @@ router.post('/record-response', auth.authMiddleware(), async (req, res) => {
 // Get available subscription plans
 router.get('/plans', async (req, res) => {
   try {
-    const plans = await db.query(`
-      SELECT * FROM simple_subscription_plans 
-      WHERE is_active = true 
-      ORDER BY price ASC
-    `);
+    const { country } = req.query;
+    
+    let plans;
+    
+    if (country) {
+      // Get plans with country-specific pricing
+      plans = await db.query(`
+        SELECT 
+          ssp.*,
+          COALESCE(sscp.price, ssp.price) as price,
+          COALESCE(sscp.currency, ssp.currency) as currency,
+          sscp.is_active as country_pricing_active
+        FROM simple_subscription_plans ssp
+        LEFT JOIN simple_subscription_country_pricing sscp 
+          ON ssp.code = sscp.plan_code 
+          AND sscp.country_code = $1 
+          AND sscp.is_active = true
+        WHERE ssp.is_active = true 
+        ORDER BY COALESCE(sscp.price, ssp.price) ASC
+      `, [country]);
+    } else {
+      // Get default plans
+      plans = await db.query(`
+        SELECT * FROM simple_subscription_plans 
+        WHERE is_active = true 
+        ORDER BY price ASC
+      `);
+    }
     
     res.json({
       success: true,
