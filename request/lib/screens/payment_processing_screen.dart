@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/payment_gateway.dart';
 import '../services/payment_gateway_service.dart';
+import '../src/theme/glass_theme.dart';
 
 class PaymentProcessingScreen extends StatefulWidget {
   final PaymentGateway paymentGateway;
@@ -39,7 +40,8 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Payment method selection
-  String _selectedPaymentMethod = 'card'; // 'card', 'bank', 'wallet'
+  String _selectedPaymentMethod = 'card'; // 'card', 'bank'
+  String _selectedCardType = 'debit'; // 'debit', 'credit'
 
   @override
   void initState() {
@@ -261,12 +263,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      backgroundColor: GlassTheme.backgroundColor,
       body: SafeArea(
         child: _buildBody(),
       ),
@@ -294,15 +291,17 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   }
 
   Widget _buildLoadingView() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
+          CircularProgressIndicator(
+            color: GlassTheme.colors.primaryBlue,
+          ),
+          const SizedBox(height: 16),
           Text(
             'Preparing payment...',
-            style: TextStyle(fontSize: 16),
+            style: GlassTheme.bodyLarge,
           ),
         ],
       ),
@@ -319,21 +318,19 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red.shade400,
+              color: GlassTheme.colors.errorColor,
             ),
             const SizedBox(height: 16),
             Text(
               'Payment Error',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.red.shade700,
+              style: GlassTheme.titleLarge.copyWith(
+                color: GlassTheme.colors.errorColor,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               _error ?? 'An unexpected error occurred',
-              style: const TextStyle(fontSize: 16),
+              style: GlassTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -343,12 +340,25 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
+                    backgroundColor: Colors.grey[300],
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: _createPaymentSession,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4285F4),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: const Text('Retry'),
                 ),
               ],
@@ -369,29 +379,30 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
             Icon(
               Icons.check_circle_outline,
               size: 64,
-              color: Colors.green.shade400,
+              color: GlassTheme.colors.successColor,
             ),
             const SizedBox(height: 16),
             Text(
               'Payment Successful!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.green.shade700,
+              style: GlassTheme.titleLarge.copyWith(
+                color: GlassTheme.colors.successColor,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               _successMessage!,
-              style: const TextStyle(fontSize: 16),
+              style: GlassTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(
-              color: Colors.green,
+            CircularProgressIndicator(
+              color: GlassTheme.colors.successColor,
             ),
             const SizedBox(height: 16),
-            const Text('Redirecting...'),
+            Text(
+              'Redirecting...',
+              style: GlassTheme.bodyMedium,
+            ),
           ],
         ),
       ),
@@ -400,248 +411,158 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
 
   Widget _buildPaymentView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Payment method header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        widget.paymentGateway.icon,
-                        style: const TextStyle(fontSize: 24),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.paymentGateway.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Secure Payment',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // Header with back button
+              _buildHeader(),
+              const SizedBox(height: 30),
 
-            const SizedBox(height: 24),
+              // Payment Gateway Card
+              _buildPaymentGatewayCard(),
+              const SizedBox(height: 20),
 
-            // Order summary
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Order Summary',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Subscription Plan',
-                        style: TextStyle(color: Colors.grey.shade700),
-                      ),
-                      Text(
-                        widget.planCode,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Amount',
-                        style: TextStyle(color: Colors.grey.shade700),
-                      ),
-                      Text(
-                        PaymentGatewayService.instance
-                            .formatAmount(widget.amount, widget.currency),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+              // Order Summary
+              _buildOrderSummary(),
+              const SizedBox(height: 20),
 
-            const SizedBox(height: 24),
+              // Payment Method Selection
+              _buildPaymentMethodSelection(),
+              const SizedBox(height: 20),
 
-            // Payment method selection
-            _buildPaymentMethodSelection(),
-
-            const SizedBox(height: 24),
-
-            // Payment form based on selected method
-            if (_selectedPaymentMethod == 'card') ...[
-              _buildCardPaymentForm(),
-            ] else ...[
-              _buildManualPaymentInstructions(),
+              // Card Form or Other Payment Methods
+              if (_selectedPaymentMethod == 'card') ...[
+                _buildCardPaymentForm(),
+              ] else if (_selectedPaymentMethod == 'bank') ...[
+                _buildManualPaymentInstructions(),
+              ] else if (_selectedPaymentMethod == 'gpay') ...[
+                _buildUPIPaymentForm('Google Pay'),
+              ] else if (_selectedPaymentMethod == 'phonepe') ...[
+                _buildUPIPaymentForm('PhonePe'),
+              ] else ...[
+                _buildManualPaymentInstructions(),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPaymentMethodSelection() {
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          'Payment',
+          style: GlassTheme.titleLarge,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentGatewayCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: GlassTheme.glassContainer,
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F4FD),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                widget.paymentGateway.icon,
+                style: const TextStyle(fontSize: 24),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.paymentGateway.name,
+                  style: GlassTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Secure Payment',
+                  style: GlassTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildOrderSummary() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: GlassTheme.glassContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Payment Method',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          Text(
+            'Order Summary',
+            style: GlassTheme.titleMedium,
           ),
           const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedPaymentMethod = 'card';
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _selectedPaymentMethod == 'card'
-                          ? Colors.blue.shade50
-                          : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _selectedPaymentMethod == 'card'
-                            ? Colors.blue
-                            : Colors.grey.shade300,
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.credit_card,
-                          color: _selectedPaymentMethod == 'card'
-                              ? Colors.blue
-                              : Colors.grey.shade600,
-                          size: 32,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Credit/Debit Card',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: _selectedPaymentMethod == 'card'
-                                ? Colors.blue
-                                : Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              Text(
+                'Subscription Plan',
+                style: GlassTheme.bodyMedium,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedPaymentMethod = 'manual';
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _selectedPaymentMethod == 'manual'
-                          ? Colors.orange.shade50
-                          : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _selectedPaymentMethod == 'manual'
-                            ? Colors.orange
-                            : Colors.grey.shade300,
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.account_balance,
-                          color: _selectedPaymentMethod == 'manual'
-                              ? Colors.orange
-                              : Colors.grey.shade600,
-                          size: 32,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Bank Transfer',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: _selectedPaymentMethod == 'manual'
-                                ? Colors.orange
-                                : Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              Text(
+                widget.planCode,
+                style: GlassTheme.bodyLarge,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Amount',
+                style: GlassTheme.bodyMedium,
+              ),
+              Text(
+                PaymentGatewayService.instance
+                    .formatAmount(widget.amount, widget.currency),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: GlassTheme.colors.successColor,
                 ),
               ),
             ],
@@ -651,74 +572,262 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
     );
   }
 
+  Widget _buildPaymentMethodSelection() {
+    return FutureBuilder<List<PaymentGateway>>(
+      future: PaymentGatewayService.instance.getConfiguredPaymentGateways(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: GlassTheme.glassContainer,
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: GlassTheme.glassContainer,
+            child: Text(
+              'Error loading payment methods: ${snapshot.error}',
+              style: GlassTheme.bodyMedium.copyWith(
+                color: GlassTheme.colors.errorColor,
+              ),
+            ),
+          );
+        }
+
+        final activeGateways = snapshot.data ?? [];
+
+        if (activeGateways.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: GlassTheme.glassContainer,
+            child: Text(
+              'No payment methods available',
+              style: GlassTheme.bodyMedium,
+            ),
+          );
+        }
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: GlassTheme.glassContainer,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Choose your preferred payment method:',
+                style: GlassTheme.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Build payment options from active gateways
+              ...activeGateways
+                  .map((gateway) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildModernPaymentOption(
+                          gateway.code,
+                          gateway.name,
+                          _getIconForGateway(gateway.code),
+                          _getColorForGateway(gateway.code),
+                          subtitle: _getSubtitleForGateway(gateway.code),
+                        ),
+                      ))
+                  .toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernPaymentOption(
+    String value,
+    String title,
+    IconData icon,
+    Color color, {
+    String? subtitle,
+  }) {
+    final isSelected = _selectedPaymentMethod == value;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedPaymentMethod = value;
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GlassTheme.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GlassTheme.bodySmall.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              )
+            else
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[400]!),
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper methods to get appropriate icons, colors, and subtitles for different gateways
+  IconData _getIconForGateway(String gatewayCode) {
+    switch (gatewayCode.toLowerCase()) {
+      case 'stripe':
+        return Icons.credit_card;
+      case 'payhere':
+        return Icons.payment;
+      case 'bank_transfer':
+        return Icons.account_balance;
+      case 'manual':
+        return Icons.receipt;
+      default:
+        return Icons.payment;
+    }
+  }
+
+  Color _getColorForGateway(String gatewayCode) {
+    switch (gatewayCode.toLowerCase()) {
+      case 'stripe':
+        return const Color(0xFF635BFF);
+      case 'payhere':
+        return const Color(0xFF00A651);
+      case 'bank_transfer':
+        return const Color(0xFF1976D2);
+      case 'manual':
+        return const Color(0xFF757575);
+      default:
+        return const Color(0xFF4285F4);
+    }
+  }
+
+  String? _getSubtitleForGateway(String gatewayCode) {
+    switch (gatewayCode.toLowerCase()) {
+      case 'stripe':
+        return 'Credit/Debit Cards';
+      case 'payhere':
+        return 'Local Cards & Banking';
+      case 'bank_transfer':
+        return 'Direct Bank Transfer';
+      case 'manual':
+        return 'Manual Verification';
+      default:
+        return null;
+    }
+  }
+
   Widget _buildCardPaymentForm() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
+      decoration: GlassTheme.glassContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Security indicator
           Row(
             children: [
-              Icon(Icons.security, color: Colors.green.shade600, size: 20),
+              Icon(Icons.security,
+                  color: GlassTheme.colors.successColor, size: 20),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Secure Card Payment',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GlassTheme.titleMedium,
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Your card information is encrypted and secure',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: GlassTheme.bodySmall,
           ),
           const SizedBox(height: 20),
 
+          // Debit/Credit Card Selection
+          _buildCardTypeSelection(),
+          const SizedBox(height: 20),
+
           // Card Number
-          TextFormField(
+          _buildModernTextField(
             controller: _cardNumberController,
-            decoration: InputDecoration(
-              labelText: 'Card Number',
-              hintText: '1234 5678 9012 3456',
-              prefixIcon: const Icon(Icons.credit_card),
-              suffixIcon: _cardNumberController.text.isNotEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        _getCardType(_cardNumberController.text),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.blue, width: 2),
-              ),
-            ),
+            label: 'Card Number',
+            hint: '0000  0000  0000  0000',
             keyboardType: TextInputType.number,
-            inputFormatters: [
+            formatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(19),
               TextInputFormatter.withFunction((oldValue, newValue) {
@@ -739,33 +848,19 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
               }
               return null;
             },
-            onChanged: (value) {
-              setState(() {});
-            },
+            suffixWidget: _cardNumberController.text.isNotEmpty
+                ? _buildCardBrandIcon()
+                : null,
           ),
 
           const SizedBox(height: 16),
 
           // Cardholder Name
-          TextFormField(
+          _buildModernTextField(
             controller: _holderNameController,
-            decoration: InputDecoration(
-              labelText: 'Cardholder Name',
-              hintText: 'John Doe',
-              prefixIcon: const Icon(Icons.person),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.blue, width: 2),
-              ),
-            ),
-            textCapitalization: TextCapitalization.words,
+            label: 'Cardholder Name',
+            hint: 'ADDISON NELSON',
+            textCapitalization: TextCapitalization.characters,
             validator: (value) {
               if (value?.isEmpty ?? true) {
                 return 'Please enter cardholder name';
@@ -779,31 +874,16 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
 
           const SizedBox(height: 16),
 
-          // Expiry and CVV Row
+          // Expiry and CVV
           Row(
             children: [
               Expanded(
-                child: TextFormField(
+                child: _buildModernTextField(
                   controller: _expiryController,
-                  decoration: InputDecoration(
-                    labelText: 'Expiry Date',
-                    hintText: 'MM/YY',
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: Colors.blue, width: 2),
-                    ),
-                  ),
+                  label: 'Expiry Date',
+                  hint: 'MM / YY',
                   keyboardType: TextInputType.number,
-                  inputFormatters: [
+                  formatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(4),
                     TextInputFormatter.withFunction((oldValue, newValue) {
@@ -819,13 +899,8 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                     if (value?.isEmpty ?? true) {
                       return 'Required';
                     }
-                    if (value!.length != 5) {
-                      return 'Invalid format';
-                    }
-                    // Basic validation for month (01-12)
-                    final month = int.tryParse(value.substring(0, 2));
-                    if (month == null || month < 1 || month > 12) {
-                      return 'Invalid month';
+                    if (!_isValidExpiry(value!)) {
+                      return 'Invalid date';
                     }
                     return null;
                   },
@@ -833,31 +908,16 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: TextFormField(
+                child: _buildModernTextField(
                   controller: _cvvController,
-                  decoration: InputDecoration(
-                    labelText: 'CVV',
-                    hintText: '123',
-                    prefixIcon: const Icon(Icons.lock),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: Colors.blue, width: 2),
-                    ),
-                  ),
+                  label: 'CVV',
+                  hint: '123',
                   keyboardType: TextInputType.number,
-                  inputFormatters: [
+                  obscureText: true,
+                  formatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(4),
                   ],
-                  obscureText: true,
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
                       return 'Required';
@@ -874,87 +934,32 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
 
           const SizedBox(height: 24),
 
-          // Security note
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.shield, color: Colors.green.shade600, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Demo Payment Mode',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'This is a demo payment system. All card details will be approved automatically.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green.shade700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Test Cards: 4242 4242 4242 4242 (Visa), 5555 5555 5555 4444 (Mastercard)',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.green.shade600,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Pay button
+          // Payment Button
           SizedBox(
             width: double.infinity,
+            height: 50,
             child: ElevatedButton(
               onPressed: _isProcessing ? null : _processCardPayment,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: const Color(0xFF4285F4),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
               ),
               child: _isProcessing
-                  ? const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text('Processing Payment...'),
-                      ],
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2,
+                      ),
                     )
-                  : Text(
-                      'Pay ${PaymentGatewayService.instance.formatAmount(widget.amount, widget.currency)}',
-                      style: const TextStyle(
+                  : const Text(
+                      'Pay Now',
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -966,167 +971,434 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
     );
   }
 
-  Widget _buildManualPaymentInstructions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildCardTypeSelection() {
+    return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orange.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.orange.shade700),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Payment Instructions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange.shade700,
-                    ),
-                  ),
-                ],
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedCardType = 'debit';
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: _selectedCardType == 'debit'
+                    ? const Color(0xFF4285F4)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _selectedCardType == 'debit'
+                      ? const Color(0xFF4285F4)
+                      : Colors.grey[300]!,
+                ),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Please complete the payment using the details below and then confirm your payment.',
-                style: TextStyle(fontSize: 14),
+              child: Text(
+                'Debit Card',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _selectedCardType == 'debit'
+                      ? Colors.white
+                      : Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedCardType = 'credit';
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: _selectedCardType == 'credit'
+                    ? const Color(0xFF4285F4)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _selectedCardType == 'credit'
+                      ? const Color(0xFF4285F4)
+                      : Colors.grey[300]!,
+                ),
+              ),
+              child: Text(
+                'Credit Card',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _selectedCardType == 'credit'
+                      ? Colors.white
+                      : Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUPIPaymentForm(String upiApp) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pay with $upiApp',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'You will be redirected to $upiApp to complete the payment.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isProcessing ? null : () => _handleUPIPayment(upiApp),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: _isProcessing
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text('Pay with $upiApp'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleUPIPayment(String upiApp) {
+    // Handle UPI payment logic here
+    print('Processing UPI payment with $upiApp');
+    _confirmPayment();
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? formatters,
+    String? Function(String?)? validator,
+    Widget? suffixWidget,
+    bool obscureText = false,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GlassTheme.bodyMedium.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: formatters,
+          validator: validator,
+          obscureText: obscureText,
+          textCapitalization: textCapitalization,
+          style: GlassTheme.bodyLarge,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            suffixIcon: suffixWidget,
+            filled: true,
+            fillColor: Colors.grey[50],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF4285F4), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: GlassTheme.colors.errorColor),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          onChanged: (value) {
+            setState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCardBrandIcon() {
+    String cardType = _getCardType(_cardNumberController.text);
+    Color color = const Color(0xFF4285F4);
+
+    if (cardType.toLowerCase().contains('visa')) {
+      color = const Color(0xFF1A1F71);
+    } else if (cardType.toLowerCase().contains('master')) {
+      color = const Color(0xFFEB001B);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        cardType,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualPaymentInstructions() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: GlassTheme.glassContainer,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.account_balance, color: GlassTheme.colors.primaryBlue),
+              const SizedBox(width: 12),
+              Text(
+                'Bank Transfer',
+                style: GlassTheme.titleMedium,
               ),
             ],
           ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Payment details - get from gateway configuration if manual payment
-        if (widget.paymentGateway.requiresManualVerification) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Complete your payment via bank transfer using the details below',
+            style: GlassTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
+          _buildBankDetail('Bank Name', 'Commercial Bank'),
+          const SizedBox(height: 12),
+          _buildBankDetail('Account Number', '1234567890'),
+          const SizedBox(height: 12),
+          _buildBankDetail('Account Name', 'Your Company Ltd'),
+          const SizedBox(height: 12),
+          _buildBankDetail(
+              'Amount',
+              PaymentGatewayService.instance
+                  .formatAmount(widget.amount, widget.currency)),
+          const SizedBox(height: 12),
+          _buildBankDetail('Reference', _paymentSession?.id ?? 'N/A'),
+          const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: GlassTheme.colors.infoColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(
+                color: GlassTheme.colors.infoColor.withOpacity(0.3),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Payment Details',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                Text(
+                  'Important Notes:',
+                  style: GlassTheme.labelLarge.copyWith(
+                    color: GlassTheme.colors.infoColor,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
-                  PaymentGatewayService.instance.getPaymentInstructions(
-                    widget.paymentGateway,
-                    null, // Could fetch config here if needed
+                  '• Please include the reference number in your transfer\n'
+                  '• Payment processing may take 1-2 business days\n'
+                  '• Keep your payment receipt for verification',
+                  style: GlassTheme.bodySmall.copyWith(
+                    color: GlassTheme.colors.infoColor,
                   ),
-                  style: const TextStyle(fontSize: 14),
                 ),
               ],
             ),
           ),
-        ],
-
-        const SizedBox(height: 24),
-
-        // Reference ID
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Reference ID (Important)',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isProcessing ? null : _processManualPayment,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4285F4),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _paymentSession!.id,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () =>
-                        _copyToClipboard(_paymentSession!.id, 'Reference ID'),
-                    icon: const Icon(Icons.copy),
-                    tooltip: 'Copy Reference ID',
-                  ),
-                ],
-              ),
-              const Text(
-                'Please include this reference ID when making the payment.',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Confirm payment button
-        ElevatedButton(
-          onPressed: _isProcessing ? null : _confirmPayment,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: _isProcessing
-              ? const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
+              child: _isProcessing
+                  ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         strokeWidth: 2,
                       ),
+                    )
+                  : const Text(
+                      'I have completed the transfer',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    SizedBox(width: 12),
-                    Text('Verifying Payment...'),
-                  ],
-                )
-              : const Text(
-                  'I have completed the payment',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankDetail(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GlassTheme.bodyMedium,
+        ),
+        Row(
+          children: [
+            Text(
+              value,
+              style: GlassTheme.bodyLarge.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _copyToClipboard(value, label),
+              child: Icon(
+                Icons.copy,
+                size: 16,
+                color: GlassTheme.colors.primaryBlue,
+              ),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  // Card validation methods
+  bool _isValidExpiry(String expiry) {
+    if (expiry.length != 5) return false;
+    final parts = expiry.split('/');
+    if (parts.length != 2) return false;
+
+    final month = int.tryParse(parts[0]);
+    final year = int.tryParse(parts[1]);
+
+    if (month == null || year == null) return false;
+    if (month < 1 || month > 12) return false;
+
+    final now = DateTime.now();
+    final currentYear = now.year % 100;
+    final currentMonth = now.month;
+
+    if (year < currentYear) return false;
+    if (year == currentYear && month < currentMonth) return false;
+
+    return true;
+  }
+
+  Future<void> _processManualPayment() async {
+    if (_paymentSession == null) return;
+
+    try {
+      setState(() {
+        _isProcessing = true;
+        _error = null;
+      });
+
+      final result = await PaymentGatewayService.instance.confirmPayment(
+        paymentId: _paymentSession!.id,
+        transactionId: 'MANUAL_TXN_${DateTime.now().millisecondsSinceEpoch}',
+        metadata: {
+          'plan_code': widget.planCode,
+          'user_id': widget.userId,
+          'amount': widget.amount,
+          'currency': widget.currency,
+          'payment_method': 'manual',
+        },
+      );
+
+      if (result) {
+        setState(() {
+          _isProcessing = false;
+          _successMessage =
+              'Payment verification submitted! Your subscription will be activated once payment is confirmed.';
+        });
+
+        // Navigate back with success result
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          Navigator.of(context)
+              .pop({'success': true, 'paymentId': _paymentSession!.id});
+        }
+      } else {
+        setState(() {
+          _isProcessing = false;
+          _error = 'Payment verification failed. Please try again.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isProcessing = false;
+        _error = 'Payment verification failed: $e';
+      });
+    }
   }
 }
