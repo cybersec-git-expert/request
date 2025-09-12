@@ -8,7 +8,6 @@ import '../models/enhanced_user_model.dart' as enhanced;
 import 'rest_request_service.dart'
     show RestRequestService, RequestModel, RequestsResponse;
 import 'country_service.dart';
-import 'user_registration_service.dart';
 
 /// Provides country-scoped data streams for all app content
 /// Ensures users only see content from their selected country
@@ -18,8 +17,6 @@ class CountryFilteredDataService {
       CountryFilteredDataService._();
 
   final RestRequestService _requests = RestRequestService.instance;
-  final UserRegistrationService _registrationService =
-      UserRegistrationService.instance;
 
   /// Get the current user's country filter
   String? get currentCountry => CountryService.instance.countryCode;
@@ -73,19 +70,16 @@ class CountryFilteredDataService {
     }
 
     try {
-      // Check user's registration status and allowed request types
-      final allowedTypes = await _registrationService.getAllowedRequestTypes();
+      // Show all request types - removed business type filtering
 
       if (kDebugMode) {
-        print(
-            '🔐 CountryFilteredDataService: User allowed request types: $allowedTypes');
         print('🎯 CountryFilteredDataService: Requested type filter: $type');
       }
 
       // Convert type parameter for backend filtering
       String? requestTypeFilter;
       if (type != null) {
-        // Only allow filtering for types the user is allowed to see
+        // Allow all types
         final normalizedType = type.toLowerCase();
         String backendType;
         switch (normalizedType) {
@@ -111,15 +105,7 @@ class CountryFilteredDataService {
             backendType = normalizedType;
         }
 
-        // Check if user is allowed to see this type
-        if (allowedTypes.contains(backendType)) {
-          requestTypeFilter = backendType;
-        } else {
-          if (kDebugMode)
-            print('🚫 User not allowed to see $backendType requests');
-          yield <models.RequestModel>[];
-          return;
-        }
+        requestTypeFilter = backendType;
       }
 
       // Use backend filtering with request_type parameter
@@ -137,13 +123,7 @@ class CountryFilteredDataService {
         // Apply additional client-side filters
         var filtered = result.requests;
 
-        // Filter by user's allowed request types
-        filtered = filtered.where((r) {
-          final requestType = r.requestType ??
-              r.metadata?['request_type']?.toString() ??
-              'item';
-          return allowedTypes.contains(requestType);
-        }).toList();
+        // Show all request types - removed business type filtering
 
         if (status != null) {
           filtered = filtered
