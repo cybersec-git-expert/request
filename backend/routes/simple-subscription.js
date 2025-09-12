@@ -22,6 +22,9 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
       LEFT JOIN simple_subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
+        AND us.status IN ('active', 'trial')
+      ORDER BY us.created_at DESC
+      LIMIT 1
     `, [userId, req.user.country_code || 'LK']);
     
     if (!subscription) {
@@ -44,6 +47,9 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
         LEFT JOIN simple_subscription_country_pricing scp ON ssp.code = scp.plan_code 
           AND scp.country_code = $2 AND scp.is_active = true
         WHERE us.user_id = $1
+          AND us.status IN ('active', 'trial')
+        ORDER BY us.created_at DESC
+        LIMIT 1
       `, [userId, req.user.country_code || 'LK']);
     }
     
