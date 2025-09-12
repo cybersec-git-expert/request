@@ -110,7 +110,7 @@ class _PaymentMethodSelectionWidgetState
 
           const SizedBox(height: 16),
 
-          // Plan details
+          // Plan details (simplified - no amount)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -122,7 +122,7 @@ class _PaymentMethodSelectionWidgetState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Subscription Plan: ${widget.planCode}',
+                  'Subscription Plan:',
                   style: GlassTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
@@ -130,7 +130,7 @@ class _PaymentMethodSelectionWidgetState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Amount: ${PaymentGatewayService.instance.formatAmount(widget.amount, widget.currency)}',
+                  'Amount: Rs. 0.00',
                   style: GlassTheme.bodyLarge.copyWith(
                     color: GlassTheme.colors.successColor,
                     fontWeight: FontWeight.w600,
@@ -224,9 +224,9 @@ class _PaymentMethodSelectionWidgetState
                 ),
                 const SizedBox(height: 12),
 
-                // Payment methods list
+                // Payment methods list (clean design)
                 ...(_paymentGateways
-                    .map((gateway) => _buildPaymentMethodTile(gateway))),
+                    .map((gateway) => _buildCleanPaymentMethodTile(gateway))),
 
                 const SizedBox(height: 24),
 
@@ -261,7 +261,7 @@ class _PaymentMethodSelectionWidgetState
     );
   }
 
-  Widget _buildPaymentMethodTile(PaymentGateway gateway) {
+  Widget _buildCleanPaymentMethodTile(PaymentGateway gateway) {
     final isSelected = _selectedGateway?.id == gateway.id;
 
     return Container(
@@ -273,7 +273,7 @@ class _PaymentMethodSelectionWidgetState
           });
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
             border: Border.all(
               color: isSelected
@@ -297,9 +297,7 @@ class _PaymentMethodSelectionWidgetState
                 ),
                 child: Center(
                   child: Icon(
-                    gateway.name.contains('Bank')
-                        ? Icons.account_balance
-                        : Icons.credit_card,
+                    _getPaymentMethodIcon(gateway),
                     color: Colors.grey.shade600,
                     size: 24,
                   ),
@@ -314,38 +312,21 @@ class _PaymentMethodSelectionWidgetState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      gateway.name,
-                      style: GlassTheme.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w600,
+                      _getDisplayName(gateway),
+                      style: const TextStyle(
                         fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      gateway.userDescription,
-                      style: GlassTheme.bodyMedium.copyWith(
-                        color: GlassTheme.colors.textSecondary,
+                      _getDisplaySubtitle(gateway),
+                      style: TextStyle(
                         fontSize: 14,
+                        color: Colors.grey.shade600,
                       ),
                     ),
-                    if (gateway.isPrimary)
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: GlassTheme.colors.primaryBlue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Recommended',
-                          style: GlassTheme.bodySmall.copyWith(
-                            color: GlassTheme.colors.primaryBlue,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -366,5 +347,53 @@ class _PaymentMethodSelectionWidgetState
         ),
       ),
     );
+  }
+
+  IconData _getPaymentMethodIcon(PaymentGateway gateway) {
+    switch (gateway.code.toLowerCase()) {
+      case 'stripe':
+      case 'payhere':
+        return Icons.credit_card;
+      case 'bank_transfer':
+        return Icons.account_balance;
+      case 'gpay':
+        return Icons.payment;
+      case 'phonepe':
+        return Icons.phone_android;
+      default:
+        return Icons.payment;
+    }
+  }
+
+  String _getDisplayName(PaymentGateway gateway) {
+    switch (gateway.code.toLowerCase()) {
+      case 'stripe':
+      case 'payhere':
+        return 'PayHere';
+      case 'bank_transfer':
+        return 'Internet Banking';
+      case 'gpay':
+        return 'G Pay';
+      case 'phonepe':
+        return 'PhonePe';
+      default:
+        return gateway.name;
+    }
+  }
+
+  String _getDisplaySubtitle(PaymentGateway gateway) {
+    switch (gateway.code.toLowerCase()) {
+      case 'stripe':
+      case 'payhere':
+        return 'PayHere (Local Cards & Banking)';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'gpay':
+        return 'UPI Payment';
+      case 'phonepe':
+        return 'UPI Payment';
+      default:
+        return gateway.description;
+    }
   }
 }

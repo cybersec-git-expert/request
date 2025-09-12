@@ -5,7 +5,6 @@ import '../../src/services/simple_subscription_service.dart';
 import '../../services/payment_gateway_service.dart';
 import '../../models/payment_gateway.dart';
 import '../../screens/payment_processing_screen.dart';
-import '../../widgets/payment_method_selection_widget.dart';
 import '../../src/services/enhanced_user_service.dart';
 
 class SimpleSubscriptionPage extends StatefulWidget {
@@ -572,45 +571,36 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         return;
       }
 
-      // Show payment method selection
-      print('🚀 [Payment Flow] Showing payment method selection...');
-      final selectedGateway = await showModalBottomSheet<PaymentGateway>(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (context) => DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          maxChildSize: 0.9,
-          minChildSize: 0.5,
-          expand: false,
-          builder: (context, scrollController) => PaymentMethodSelectionWidget(
-            planCode: selectedPlan.code,
-            amount: selectedPlan.price,
-            currency: selectedPlan.currency,
-            onPaymentMethodSelected: (gateway) {
-              print('🚀 [Payment Flow] Gateway selected: ${gateway.name}');
-              Navigator.of(context).pop(gateway);
-            },
-            onCancel: () {
-              print('🚀 [Payment Flow] Payment selection cancelled');
-              Navigator.of(context).pop();
-            },
-          ),
-        ),
-      );
+      // Skip payment method selection modal and go directly to payment processing screen
+      print('🚀 [Payment Flow] Going directly to payment processing...');
 
-      print(
-          '🚀 [Payment Flow] Gateway selection result: ${selectedGateway?.name ?? "null"}');
+      // Get the first available payment gateway or create a default one
+      final gatewayResponse =
+          await PaymentGatewayService.instance.getConfiguredPaymentGateways();
+      PaymentGateway selectedGateway;
 
-      if (selectedGateway == null) {
-        // User cancelled payment method selection
-        print('🚀 [Payment Flow] User cancelled payment selection');
-        return;
+      if (gatewayResponse.isNotEmpty) {
+        // Use the first available gateway or primary gateway
+        selectedGateway = gatewayResponse.firstWhere(
+          (gateway) => gateway.isPrimary,
+          orElse: () => gatewayResponse.first,
+        );
+      } else {
+        // Create a default gateway if none available
+        selectedGateway = PaymentGateway(
+          id: 1,
+          name: 'PayHere',
+          code: 'payhere',
+          description: 'PayHere Payment Gateway',
+          configurationFields: {},
+          configured: true,
+          isPrimary: true,
+        );
       }
 
-      // Navigate to payment processing screen
+      print('🚀 [Payment Flow] Using gateway: ${selectedGateway.name}');
+
+      // Navigate directly to payment processing screen
       print('🚀 [Payment Flow] Navigating to payment processing screen...');
       final paymentResult =
           await Navigator.of(context).push<Map<String, dynamic>>(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/payment_gateway.dart';
 import '../services/payment_gateway_service.dart';
+import 'card_payment_screen.dart';
 
 class PaymentProcessingScreen extends StatefulWidget {
   final PaymentGateway paymentGateway;
@@ -335,14 +336,27 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
       _selectedPaymentMethod = gateway.code;
     });
 
-    // Navigate to actual payment processing for this gateway
-    // You can implement the specific payment flow here
-    print('Selected payment method: ${gateway.code}');
-
-    // For now, just show a simple success message
-    setState(() {
-      _successMessage = 'Payment method ${gateway.name} selected successfully!';
-    });
+    // Navigate to card payment screen for card-based gateways
+    if (gateway.code.toLowerCase() == 'stripe' ||
+        gateway.code.toLowerCase() == 'payhere') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CardPaymentScreen(
+            paymentGateway: gateway,
+            planCode: widget.planCode,
+            amount: widget.amount,
+            currency: widget.currency,
+            userId: widget.userId,
+          ),
+        ),
+      );
+    } else {
+      // For other payment methods, show success message for now
+      setState(() {
+        _successMessage =
+            'Payment method ${gateway.name} selected successfully!';
+      });
+    }
   }
 
   IconData _getPaymentMethodIcon(String gatewayCode) {
