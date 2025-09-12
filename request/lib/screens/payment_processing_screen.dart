@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../src/theme/glass_theme.dart';
 import '../models/payment_gateway.dart';
 import '../services/payment_gateway_service.dart';
 import 'card_payment_screen.dart';
@@ -61,7 +62,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: GlassTheme.backgroundColor,
       body: SafeArea(
         child: _buildBody(),
       ),
@@ -184,44 +185,37 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
       children: [
         // Header with back button
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back,
-                  color: Colors.black,
+                  color: GlassTheme.colors.textPrimary,
                   size: 24,
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 12),
 
         // Title
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Choose Payment',
+              Text(
+                'Choose Payment\noption',
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  color: GlassTheme.colors.textPrimary,
+                  height: 1.2,
                 ),
               ),
-              const Text(
-                'option',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -255,7 +249,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
               final paymentGateways = snapshot.data!;
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 itemCount: paymentGateways.length,
                 itemBuilder: (context, index) {
                   final gateway = paymentGateways[index];
@@ -298,10 +292,10 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
             Expanded(
               child: Text(
                 _getPaymentMethodDisplayName(gateway.code),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: GlassTheme.colors.textPrimary,
                 ),
               ),
             ),
