@@ -12,14 +12,14 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
     let subscription = await db.queryOne(`
       SELECT 
         us.*,
-        spt.name as plan_name,
-        spt.features,
+        ssp.name as plan_name,
+        ssp.features,
         COALESCE(scp.response_limit, 3) as response_limit,
         COALESCE(scp.price, 0) as price,
         COALESCE(scp.currency, 'USD') as currency
       FROM user_simple_subscriptions us
-      JOIN subscription_plan_templates spt ON us.plan_code = spt.code
-      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+      JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
+      LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
     `, [userId, req.user.country_code || 'LK']);
@@ -34,14 +34,14 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
       subscription = await db.queryOne(`
         SELECT 
           us.*,
-          spt.name as plan_name,
-          spt.features,
+          ssp.name as plan_name,
+          ssp.features,
           COALESCE(scp.response_limit, 3) as response_limit,
           COALESCE(scp.price, 0) as price,
           COALESCE(scp.currency, 'USD') as currency
         FROM user_simple_subscriptions us
-        JOIN subscription_plan_templates spt ON us.plan_code = spt.code
-        LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
+        LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
           AND scp.country_code = $2 AND scp.is_active = true
         WHERE us.user_id = $1
       `, [userId, req.user.country_code || 'LK']);
@@ -100,8 +100,8 @@ router.get('/can-respond', auth.authMiddleware(), async (req, res) => {
         us.*,
         COALESCE(scp.response_limit, 3) as response_limit
       FROM user_simple_subscriptions us
-      JOIN subscription_plan_templates spt ON us.plan_code = spt.code
-      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+      JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
+      LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
     `, [userId, req.user.country_code || 'LK']);
@@ -156,8 +156,8 @@ router.post('/record-response', auth.authMiddleware(), async (req, res) => {
         us.*,
         COALESCE(scp.response_limit, 3) as response_limit
       FROM user_simple_subscriptions us
-      JOIN subscription_plan_templates spt ON us.plan_code = spt.code
-      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+      JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
+      LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
     `, [userId, req.user.country_code || 'LK']);
@@ -220,21 +220,21 @@ router.get('/plans', async (req, res) => {
       // Get plan templates with country-specific pricing (only approved/active ones)
       plans = await db.query(`
         SELECT 
-          spt.code,
-          spt.name,
-          spt.description,
-          spt.features,
+          ssp.code,
+          ssp.name,
+          ssp.description,
+          ssp.features,
           scp.price,
           scp.currency,
           scp.response_limit,
           scp.is_active as country_pricing_active,
           scp.created_at as pricing_created_at
-        FROM subscription_plan_templates spt
+        FROM simple_subscription_plans ssp
         INNER JOIN subscription_country_pricing scp 
-          ON spt.code = scp.plan_code 
-          AND scp.country_code = $1 
+          ON ssp.code = scp.plan_code 
+        WHERE scp.country_code = $1 
           AND scp.is_active = true
-        WHERE spt.is_active = true 
+          AND ssp.is_active = true 
         ORDER BY scp.price ASC
       `, [country]);
       
@@ -252,7 +252,7 @@ router.get('/plans', async (req, res) => {
             false as country_pricing_active,
             created_at as pricing_created_at,
             'No pricing available for this country' as note
-          FROM subscription_plan_templates 
+          FROM simple_subscription_plans 
           WHERE is_active = true 
           ORDER BY name ASC
         `);
@@ -298,7 +298,7 @@ router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
     
     // Verify plan template exists
     const plan = await db.queryOne(`
-      SELECT * FROM subscription_plan_templates 
+      SELECT * FROM simple_subscription_plans 
       WHERE code = $1 AND is_active = true
     `, [plan_code]);
     
