@@ -47,6 +47,10 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GlassTheme.backgroundColor,
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: _buildActionButtons(),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -69,17 +73,18 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
 
             // Title
             Padding(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30),
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 56),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Debit / Credit\nCard',
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
                     color: GlassTheme.colors.textPrimary,
                     height: 1.2,
                   ),
@@ -119,11 +124,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
                       // Save card checkbox
                       _buildSaveCardCheckbox(),
-                      const SizedBox(height: 35),
-
-                      // Action buttons
-                      _buildActionButtons(),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -136,71 +137,97 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   }
 
   Widget _buildCardTypeTabs() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedCardType = 'debit'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedCardType == 'debit'
-                        ? GlassTheme.colors.primaryBlue
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Debit Card',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: _selectedCardType == 'debit'
-                      ? FontWeight.w600
-                      : FontWeight.normal,
-                  color: _selectedCardType == 'debit'
-                      ? GlassTheme.colors.textPrimary
-                      : GlassTheme.colors.textSecondary,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedCardType = 'credit'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedCardType == 'credit'
-                        ? GlassTheme.colors.primaryBlue
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Credit Card',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: _selectedCardType == 'credit'
-                      ? FontWeight.w600
-                      : FontWeight.normal,
-                  color: _selectedCardType == 'credit'
-                      ? GlassTheme.colors.textPrimary
-                      : GlassTheme.colors.textSecondary,
+    // Glass pill container with two tabs and an accent underline for the selected tab
+    return Container(
+      decoration: GlassTheme.glassContainerSubtle,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedCardType = 'debit'),
+              child: SizedBox(
+                height: 36,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Text(
+                        'Debit Card',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: _selectedCardType == 'debit'
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: _selectedCardType == 'debit'
+                              ? GlassTheme.colors.textPrimary
+                              : GlassTheme.colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    // Accent underline indicator
+                    Positioned(
+                      left: 10,
+                      right: 10,
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: _selectedCardType == 'debit'
+                              ? GlassTheme.colors.primaryBlue
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ),
-      ],
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedCardType = 'credit'),
+              child: SizedBox(
+                height: 36,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Text(
+                        'Credit Card',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: _selectedCardType == 'credit'
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: _selectedCardType == 'credit'
+                              ? GlassTheme.colors.textPrimary
+                              : GlassTheme.colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 10,
+                      right: 10,
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: _selectedCardType == 'credit'
+                              ? GlassTheme.colors.primaryBlue
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -216,12 +243,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
             color: GlassTheme.colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             children: [
@@ -232,13 +260,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                     hintText: '5534  2834  8857  5370',
                     hintStyle: TextStyle(
                       color: GlassTheme.colors.textTertiary,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                   ),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: GlassTheme.colors.textPrimary,
                   ),
                   keyboardType: TextInputType.number,
@@ -254,10 +282,10 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Container(
-                width: 32,
-                height: 20,
+                width: 28,
+                height: 18,
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF5F00),
                   borderRadius: BorderRadius.circular(4),
@@ -289,12 +317,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
             color: GlassTheme.colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: TextFormField(
             controller: _expiryController,
@@ -302,13 +331,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
               hintText: 'Jan • 2023',
               hintStyle: TextStyle(
                 color: GlassTheme.colors.textTertiary,
-                fontSize: 14,
+                fontSize: 13,
               ),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: GlassTheme.colors.textPrimary,
             ),
             keyboardType: TextInputType.number,
@@ -340,12 +369,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
             color: GlassTheme.colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: TextFormField(
             controller: _cvvController,
@@ -353,13 +383,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
               hintText: '• • •',
               hintStyle: TextStyle(
                 color: GlassTheme.colors.textTertiary,
-                fontSize: 14,
+                fontSize: 13,
               ),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: GlassTheme.colors.textPrimary,
             ),
             keyboardType: TextInputType.number,
@@ -392,12 +422,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
             color: GlassTheme.colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: TextFormField(
             controller: _holderNameController,
@@ -405,13 +436,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
               hintText: 'ADDISON NELSON',
               hintStyle: TextStyle(
                 color: GlassTheme.colors.textTertiary,
-                fontSize: 14,
+                fontSize: 13,
               ),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: GlassTheme.colors.textPrimary,
             ),
             textCapitalization: TextCapitalization.characters,
@@ -430,36 +461,24 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   Widget _buildSaveCardCheckbox() {
     return Row(
       children: [
-        GestureDetector(
-          onTap: () => setState(() => _saveCard = !_saveCard),
-          child: Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: _saveCard ? GlassTheme.colors.primaryBlue : Colors.white,
-              border: Border.all(
-                color: _saveCard
-                    ? GlassTheme.colors.primaryBlue
-                    : Colors.grey.shade300,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: _saveCard
-                ? const Icon(
-                    Icons.check,
-                    size: 14,
-                    color: Colors.white,
-                  )
-                : null,
-          ),
+        Checkbox(
+          value: _saveCard,
+          onChanged: (v) => setState(() => _saveCard = v ?? false),
+          activeColor: GlassTheme.colors.textAccent,
+          checkColor: Colors.white,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          side: BorderSide(color: Colors.transparent),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
-        const SizedBox(width: 12),
-        Text(
-          'Save card for future checkouts',
-          style: TextStyle(
-            fontSize: 14,
-            color: GlassTheme.colors.textSecondary,
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            'Save card for future checkouts',
+            style: TextStyle(
+              fontSize: 13,
+              color: GlassTheme.colors.textSecondary,
+            ),
           ),
         ),
       ],
@@ -470,20 +489,15 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     return Row(
       children: [
         Expanded(
-          child: TextButton(
+          child: ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            style: GlassTheme.secondaryButton,
             child: Text(
               'Cancel payment',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: GlassTheme.colors.textSecondary,
+                color: GlassTheme.colors.textPrimary,
               ),
             ),
           ),
@@ -492,15 +506,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
         Expanded(
           child: ElevatedButton(
             onPressed: _isProcessing ? null : _processPayment,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: GlassTheme.colors.primaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
+            style: GlassTheme.primaryButton,
             child: _isProcessing
                 ? const SizedBox(
                     height: 20,
@@ -510,9 +516,9 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : Text(
+                : const Text(
                     'Pay Now',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
