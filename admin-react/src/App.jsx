@@ -43,6 +43,7 @@ import SMSConfigurationModule from './pages/SMSConfigurationModule';
 import SuperAdminSMSManagement from './pages/SuperAdminSMSManagement';
 import DebugAuth from './components/DebugAuth';
 import SimpleSubscriptionAdmin from './components/SimpleSubscriptionAdmin.jsx';
+import PaymentGatewayManager from './components/PaymentGatewayManager.jsx';
 // Removed: SubscriptionPlansNew, SubscriptionAdmin
 import BusinessPriceManagement from './pages/BusinessPriceManagement';
 import PriceComparisonPage from './pages/PriceComparisonPage';
@@ -126,6 +127,9 @@ function App() {
               {/* Add more protected routes here */}
               {/* Simple Subscription Management */}
               <Route path="subscription-management" element={<SimpleSubscriptionAdmin />} />
+              
+              {/* Payment Gateway Management */}
+              <Route path="payment-gateways" element={<PaymentGatewayManager />} />
               
               {/* Price Management Routes */}
               <Route path="business-price-management" element={<BusinessPriceManagement />} />

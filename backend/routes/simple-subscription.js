@@ -308,7 +308,7 @@ router.get('/plans', async (req, res) => {
 });
 
 // Subscribe to a plan
-router.post('/subscribe', authenticateToken, async (req, res) => {
+router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
     try {
         const { planCode } = req.body;
         const userId = req.user.userId;
@@ -440,7 +440,7 @@ router.post('/verify-business', auth.authMiddleware(), auth.roleMiddleware(['adm
 });
 
 // Confirm payment and activate subscription
-router.post('/confirm-payment', authenticateToken, async (req, res) => {
+router.post('/confirm-payment', auth.authMiddleware(), async (req, res) => {
     try {
         const { paymentId, transactionId } = req.body;
         const userId = req.user.userId;
@@ -502,7 +502,7 @@ router.post('/confirm-payment', authenticateToken, async (req, res) => {
 });
 
 // Check for expired subscriptions and handle renewals
-router.post('/check-renewals', authenticateToken, async (req, res) => {
+router.post('/check-renewals', auth.authMiddleware(), async (req, res) => {
     try {
         // This endpoint would be called by a cron job or scheduler
         const expiredSubscriptions = await db.query(`
