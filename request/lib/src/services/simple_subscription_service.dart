@@ -11,7 +11,7 @@ class SimpleSubscriptionService {
   Future<SimpleSubscriptionStatus?> getSubscriptionStatus() async {
     try {
       final response = await ApiClient.instance
-          .get<Map<String, dynamic>>('/simple-subscription/status');
+          .get<Map<String, dynamic>>('/api/simple-subscription/status');
 
       if (response.isSuccess && response.data != null) {
         final subscription =
@@ -31,7 +31,7 @@ class SimpleSubscriptionService {
   Future<ResponseEligibility> canRespond() async {
     try {
       final response = await ApiClient.instance
-          .get<Map<String, dynamic>>('/simple-subscription/can-respond');
+          .get<Map<String, dynamic>>('/api/simple-subscription/can-respond');
 
       if (response.isSuccess && response.data != null) {
         return ResponseEligibility.fromJson(response.data!);
@@ -55,7 +55,7 @@ class SimpleSubscriptionService {
   Future<bool> recordResponse(String requestId) async {
     try {
       final response = await ApiClient.instance.post<Map<String, dynamic>>(
-        '/simple-subscription/record-response',
+        '/api/simple-subscription/record-response',
         data: {'request_id': requestId},
       );
       return response.isSuccess;
@@ -76,7 +76,7 @@ class SimpleSubscriptionService {
       print('DEBUG: Getting plans for country: $countryCode');
 
       final response = await ApiClient.instance.get<Map<String, dynamic>>(
-          '/simple-subscription/plans',
+          '/api/simple-subscription/plans',
           queryParameters: {'country': countryCode});
 
       print('DEBUG: API Response success: ${response.isSuccess}');
@@ -108,7 +108,7 @@ class SimpleSubscriptionService {
   Future<bool> subscribeToPlan(String planCode) async {
     try {
       final response = await ApiClient.instance.post<Map<String, dynamic>>(
-        '/simple-subscription/subscribe',
+        '/api/simple-subscription/subscribe',
         data: {'plan_code': planCode},
       );
       return response.isSuccess;
