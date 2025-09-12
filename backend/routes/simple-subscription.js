@@ -71,15 +71,36 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
     const responsesRemaining = responseLimit ? Math.max(0, responseLimit - responsesUsed) : null;
     const canRespond = responseLimit === null || responsesUsed < responseLimit;
     
+    // Check subscription status and expiry
+    let isActive = true;
+    let daysRemaining = null;
+    let renewalRequired = false;
+    
+    if (subscription.subscription_end_date) {
+      const endDate = new Date(subscription.subscription_end_date);
+      isActive = endDate > now || (subscription.grace_period_end && new Date(subscription.grace_period_end) > now);
+      daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+      renewalRequired = daysRemaining <= 7 && daysRemaining > 0;
+    }
+    
     res.json({
       success: true,
       subscription: {
         plan_code: subscription.plan_code,
         plan_name: subscription.plan_name,
+        status: subscription.status,
+        payment_status: subscription.payment_status,
+        subscription_start_date: subscription.subscription_start_date,
+        subscription_end_date: subscription.subscription_end_date,
+        days_remaining: daysRemaining,
+        is_active: isActive,
+        renewal_required: renewalRequired,
+        auto_renew: subscription.auto_renew,
+        grace_period_end: subscription.grace_period_end,
         responses_used: responsesUsed,
         responses_limit: responseLimit,
         responses_remaining: responsesRemaining,
-        can_respond: canRespond,
+        can_respond: canRespond && isActive,
         is_verified_business: subscription.is_verified_business,
         features: subscription.features || []
       }
@@ -287,50 +308,112 @@ router.get('/plans', async (req, res) => {
 });
 
 // Subscribe to a plan
-router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { plan_code } = req.body;
-    
-    if (!plan_code) {
-      return res.status(400).json({ success: false, error: 'Plan code is required' });
-    }
-    
-    // Verify plan template exists
-    const plan = await db.queryOne(`
-      SELECT * FROM simple_subscription_plans 
-      WHERE code = $1 AND is_active = true
-    `, [plan_code]);
-    
-    if (!plan) {
-      return res.status(404).json({ success: false, error: 'Plan not found' });
-    }
-    
-    // Update user subscription
-    await db.query(`
-      INSERT INTO user_simple_subscriptions (user_id, plan_code)
-      VALUES ($1, $2)
-      ON CONFLICT (user_id) 
-      DO UPDATE SET 
-        plan_code = $2,
-        updated_at = CURRENT_TIMESTAMP
-    `, [userId, plan_code]);
-    
-    // For paid plans, you would integrate payment processing here
-    // For now, we'll just activate it immediately
-    
-    res.json({
-      success: true,
-      message: 'Subscription updated successfully',
-      plan_code: plan_code
-    });
-  } catch (error) {
-    console.error('Subscribe error:', error);
-    res.status(500).json({ success: false, error: 'Failed to subscribe' });
-  }
-});
+router.post('/subscribe', authenticateToken, async (req, res) => {
+    try {
+        const { planCode } = req.body;
+        const userId = req.user.userId;
 
-// Mark user as verified business (admin only)
+        if (!planCode) {
+            return res.status(400).json({
+                success: false,
+                error: 'Plan code is required'
+            });
+        }
+
+        // Get plan details with country-specific pricing
+        const countryCode = req.user.countryCode || 'LK';
+        const planQuery = `
+            SELECT 
+                ssp.*,
+                sscp.price,
+                sscp.currency,
+                sscp.response_limit
+            FROM simple_subscription_plans ssp
+            LEFT JOIN simple_subscription_country_pricing sscp ON ssp.code = sscp.plan_code 
+                AND sscp.country_code = $2
+            WHERE ssp.code = $1 AND ssp.is_active = true
+        `;
+        
+        const planResult = await db.query(planQuery, [planCode, countryCode]);
+        
+        if (planResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Plan not found'
+            });
+        }
+
+        const plan = planResult.rows[0];
+        const price = parseFloat(plan.price) || 0;
+
+        // For free plans, activate immediately
+        if (price === 0) {
+            const subscriptionStart = new Date();
+            const subscriptionEnd = new Date(subscriptionStart.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+
+            const insertQuery = `
+                INSERT INTO user_simple_subscriptions 
+                (user_id, plan_code, plan_name, status, subscription_start_date, subscription_end_date, payment_status, created_at, updated_at)
+                VALUES ($1, $2, $3, 'active', $4, $5, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (user_id) 
+                DO UPDATE SET 
+                    plan_code = EXCLUDED.plan_code,
+                    plan_name = EXCLUDED.plan_name,
+                    status = EXCLUDED.status,
+                    subscription_start_date = EXCLUDED.subscription_start_date,
+                    subscription_end_date = EXCLUDED.subscription_end_date,
+                    payment_status = EXCLUDED.payment_status,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING *
+            `;
+
+            const subscriptionResult = await db.query(insertQuery, [
+                userId, planCode, plan.name, subscriptionStart, subscriptionEnd
+            ]);
+
+            return res.json({
+                success: true,
+                message: 'Successfully subscribed to free plan',
+                subscription: subscriptionResult.rows[0]
+            });
+        }
+
+        // For paid plans, create pending subscription and redirect to payment
+        const pendingSubscription = await db.query(`
+            INSERT INTO user_simple_subscriptions 
+            (user_id, plan_code, plan_name, status, payment_status, created_at, updated_at)
+            VALUES ($1, $2, $3, 'pending', 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+                plan_code = EXCLUDED.plan_code,
+                plan_name = EXCLUDED.plan_name,
+                status = EXCLUDED.status,
+                payment_status = EXCLUDED.payment_status,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `, [userId, planCode, plan.name]);
+
+        res.json({
+            success: true,
+            requiresPayment: true,
+            subscription: pendingSubscription.rows[0],
+            plan: {
+                code: planCode,
+                name: plan.name,
+                price: price,
+                currency: plan.currency || 'LKR'
+            },
+            message: 'Subscription created. Payment required to activate.'
+        });
+
+    } catch (error) {
+        console.error('Subscription error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process subscription'
+        });
+    }
+});// Mark user as verified business (admin only)
 router.post('/verify-business', auth.authMiddleware(), auth.roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   try {
     const { user_id } = req.body;
@@ -354,6 +437,169 @@ router.post('/verify-business', auth.authMiddleware(), auth.roleMiddleware(['adm
     console.error('Verify business error:', error);
     res.status(500).json({ success: false, error: 'Failed to verify business' });
   }
+});
+
+// Confirm payment and activate subscription
+router.post('/confirm-payment', authenticateToken, async (req, res) => {
+    try {
+        const { paymentId, transactionId } = req.body;
+        const userId = req.user.userId;
+
+        if (!paymentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Payment ID is required'
+            });
+        }
+
+        // Get pending subscription
+        const subscription = await db.query(`
+            SELECT * FROM user_simple_subscriptions 
+            WHERE user_id = $1 AND payment_status = 'pending'
+        `, [userId]);
+
+        if (subscription.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'No pending subscription found'
+            });
+        }
+
+        // Activate subscription with 30-day period
+        const subscriptionStart = new Date();
+        const subscriptionEnd = new Date(subscriptionStart.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+
+        const updateQuery = `
+            UPDATE user_simple_subscriptions 
+            SET 
+                status = 'active',
+                payment_status = 'completed',
+                payment_id = $1,
+                subscription_start_date = $2,
+                subscription_end_date = $3,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $4
+            RETURNING *
+        `;
+
+        const updatedSubscription = await db.query(updateQuery, [
+            paymentId, subscriptionStart, subscriptionEnd, userId
+        ]);
+
+        res.json({
+            success: true,
+            message: 'Subscription activated successfully',
+            subscription: updatedSubscription.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Payment confirmation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to confirm payment'
+        });
+    }
+});
+
+// Check for expired subscriptions and handle renewals
+router.post('/check-renewals', authenticateToken, async (req, res) => {
+    try {
+        // This endpoint would be called by a cron job or scheduler
+        const expiredSubscriptions = await db.query(`
+            SELECT * FROM user_simple_subscriptions 
+            WHERE subscription_end_date < CURRENT_TIMESTAMP 
+            AND status = 'active'
+            AND plan_code != 'Free'
+        `);
+
+        const results = [];
+
+        for (const subscription of expiredSubscriptions.rows) {
+            if (subscription.auto_renew) {
+                // Try to charge the user again
+                // For now, we'll set a grace period
+                const gracePeriodEnd = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days grace
+
+                await db.query(`
+                    UPDATE user_simple_subscriptions 
+                    SET 
+                        status = 'grace_period',
+                        grace_period_end = $1,
+                        payment_failure_count = payment_failure_count + 1,
+                        last_payment_attempt = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = $2
+                `, [gracePeriodEnd, subscription.id]);
+
+                results.push({
+                    userId: subscription.user_id,
+                    action: 'grace_period_started',
+                    gracePeriodEnd
+                });
+            } else {
+                // Downgrade to free plan
+                await db.query(`
+                    UPDATE user_simple_subscriptions 
+                    SET 
+                        plan_code = 'Free',
+                        plan_name = 'Free Plan',
+                        status = 'active',
+                        payment_status = 'completed',
+                        subscription_start_date = CURRENT_TIMESTAMP,
+                        subscription_end_date = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = $1
+                `, [subscription.id]);
+
+                results.push({
+                    userId: subscription.user_id,
+                    action: 'downgraded_to_free'
+                });
+            }
+        }
+
+        // Handle expired grace periods
+        const expiredGracePeriods = await db.query(`
+            SELECT * FROM user_simple_subscriptions 
+            WHERE grace_period_end < CURRENT_TIMESTAMP 
+            AND status = 'grace_period'
+        `);
+
+        for (const subscription of expiredGracePeriods.rows) {
+            // Downgrade to free plan after grace period
+            await db.query(`
+                UPDATE user_simple_subscriptions 
+                SET 
+                    plan_code = 'Free',
+                    plan_name = 'Free Plan',
+                    status = 'active',
+                    payment_status = 'completed',
+                    subscription_start_date = CURRENT_TIMESTAMP,
+                    subscription_end_date = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    grace_period_end = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $1
+            `, [subscription.id]);
+
+            results.push({
+                userId: subscription.user_id,
+                action: 'downgraded_after_grace_period'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `Processed ${results.length} subscription renewals`,
+            results
+        });
+
+    } catch (error) {
+        console.error('Renewal check error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to check renewals'
+        });
+    }
 });
 
 module.exports = router;

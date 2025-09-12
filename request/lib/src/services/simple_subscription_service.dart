@@ -105,18 +105,80 @@ class SimpleSubscriptionService {
   }
 
   /// Subscribe to a plan
-  Future<bool> subscribeToPlan(String planCode) async {
+  Future<SubscriptionResult> subscribeToPlan(String planCode) async {
     try {
       final response = await ApiClient.instance.post<Map<String, dynamic>>(
         '/api/simple-subscription/subscribe',
-        data: {'plan_code': planCode},
+        data: {'planCode': planCode},
       );
-      return response.isSuccess;
+
+      if (response.isSuccess && response.data != null) {
+        final data = response.data!;
+
+        if (data['requiresPayment'] == true) {
+          return SubscriptionResult(
+            success: true,
+            requiresPayment: true,
+            subscription: data['subscription'],
+            plan: data['plan'],
+            message: data['message'],
+          );
+        } else {
+          return SubscriptionResult(
+            success: true,
+            requiresPayment: false,
+            subscription: data['subscription'],
+            message: data['message'],
+          );
+        }
+      }
+
+      return SubscriptionResult(
+        success: false,
+        message: response.error ?? 'Failed to subscribe',
+      );
     } catch (e) {
       print('Error subscribing to plan: $e');
+      return SubscriptionResult(
+        success: false,
+        message: 'Failed to subscribe to plan',
+      );
+    }
+  }
+
+  /// Confirm payment for subscription
+  Future<bool> confirmPayment(String paymentId, {String? transactionId}) async {
+    try {
+      final response = await ApiClient.instance.post<Map<String, dynamic>>(
+        '/api/simple-subscription/confirm-payment',
+        data: {
+          'paymentId': paymentId,
+          if (transactionId != null) 'transactionId': transactionId,
+        },
+      );
+
+      return response.isSuccess;
+    } catch (e) {
+      print('Error confirming payment: $e');
       return false;
     }
   }
+}
+
+class SubscriptionResult {
+  final bool success;
+  final bool requiresPayment;
+  final Map<String, dynamic>? subscription;
+  final Map<String, dynamic>? plan;
+  final String? message;
+
+  SubscriptionResult({
+    required this.success,
+    this.requiresPayment = false,
+    this.subscription,
+    this.plan,
+    this.message,
+  });
 }
 
 class SimpleSubscriptionStatus {
