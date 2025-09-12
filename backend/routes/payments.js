@@ -115,6 +115,42 @@ router.post('/webhook/generic', async (req, res) => {
   }
 });
 
+// Create payment session (for mobile app compatibility)
+router.post('/create-session', auth.authMiddleware(), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { subscription_id, gateway_code, country_code } = req.body || {};
+    
+    if (!subscription_id || !gateway_code) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'subscription_id and gateway_code required' 
+      });
+    }
+
+    // For now, return a simple session object that the mobile app can use
+    // In a real implementation, this would create actual payment sessions with Stripe, PayHere, etc.
+    const sessionId = `sess_${Date.now()}_${userId.substring(0, 8)}`;
+    
+    res.json({
+      success: true,
+      session: {
+        id: sessionId,
+        subscription_id: subscription_id,
+        gateway_code: gateway_code,
+        status: 'created',
+        created_at: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Create payment session error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create payment session'
+    });
+  }
+});
+
 // List my transactions
 router.get('/transactions/me', auth.authMiddleware(), async (req, res) => {
   try {
