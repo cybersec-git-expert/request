@@ -66,7 +66,10 @@ const COUNTRY_CURRENCY_MAP = {
 
 // Function to get currency for a country code
 const getCurrencyForCountry = (countryCode) => {
-  return COUNTRY_CURRENCY_MAP[countryCode] || 'USD';
+  if (!countryCode || countryCode === '') {
+    return 'USD'; // Default fallback
+  }
+  return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || 'USD';
 };
 
 // API service for subscription management
@@ -141,7 +144,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 export default function SimpleSubscriptionAdmin() {
-  const { user, isSuperAdmin, isCountryAdmin, isAuthenticated } = useAuth();
+  const { user, isSuperAdmin, isCountryAdmin, isAuthenticated, userCountry } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -331,13 +334,23 @@ export default function SimpleSubscriptionAdmin() {
   const openCountryPricingDialog = (plan) => {
     setSelectedPlan(plan);
     
+    // Debug: Log user object to see available fields
+    console.log('User object in openCountryPricingDialog:', user);
+    console.log('User country_code:', user?.country_code);
+    console.log('User country:', user?.country);
+    
     // For country admins, auto-set country code and currency, for super admins allow editing
     if (isCountryAdmin) {
-      const userCountryCode = user?.country_code || '';
+      // Try multiple sources for country code, with LK as fallback for testing
+      const userCountryCode = user?.country_code || user?.country || userCountry || 'LK';
+      console.log('Using country code:', userCountryCode);
+      const currency = getCurrencyForCountry(userCountryCode);
+      console.log('Mapped currency:', currency);
+      
       setPricingForm({
         country_code: userCountryCode,
         price: 0,
-        currency: getCurrencyForCountry(userCountryCode), // Use the mapping function
+        currency: currency, // Use the mapping function
         response_limit: 3
       });
     } else {
