@@ -80,80 +80,88 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: GlassTheme.backgroundColor,
       body: NotificationListener<ScrollNotification>(
         onNotification: _onScrollNotification,
         child: _navigationItems[_currentIndex].screen,
       ),
-      bottomNavigationBar: AnimatedSlide(
+      bottomNavigationBar: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-        offset: _navVisible ? Offset.zero : const Offset(0, 1),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 180),
-          opacity: _navVisible ? 1 : 0,
-          child: GlassBottomNavBar(
-            // Uniform mode: one row, no center circle
-            items: [
-              GlassBottomNavItem(
-                icon: _currentIndex == 0
-                    ? _navigationItems[0].activeIcon
-                    : _navigationItems[0].icon,
-                label: _navigationItems[0].label,
-                selected: _currentIndex == 0,
-                onTap: () {
-                  setState(() => _currentIndex = 0);
-                  _persistIndex(0);
-                },
-              ),
-              GlassBottomNavItem(
-                icon: _currentIndex == 1
-                    ? _navigationItems[1].activeIcon
-                    : _navigationItems[1].icon,
-                label: _navigationItems[1].label,
-                selected: _currentIndex == 1,
-                onTap: () {
-                  setState(() => _currentIndex = 1);
-                  _persistIndex(1);
-                },
-              ),
-              GlassBottomNavItem(
-                icon: _currentIndex == 2
-                    ? _navigationItems[2].activeIcon
-                    : _navigationItems[2].icon,
-                label: _navigationItems[2].label,
-                selected: _currentIndex == 2,
-                onTap: () {
-                  setState(() => _currentIndex = 2);
-                  _persistIndex(2);
-                },
-              ),
-              GlassBottomNavItem(
-                icon: _currentIndex == 3
-                    ? _navigationItems[3].activeIcon
-                    : _navigationItems[3].icon,
-                label: _navigationItems[3].label,
-                selected: _currentIndex == 3,
-                badgeCount: _unreadMessages,
-                onTap: () {
-                  setState(() => _currentIndex = 3);
-                  _persistIndex(3);
-                },
-              ),
-              GlassBottomNavItem(
-                icon: _currentIndex == 4
-                    ? _navigationItems[4].activeIcon
-                    : _navigationItems[4].icon,
-                label: _navigationItems[4].label,
-                selected: _currentIndex == 4,
-                onTap: () {
-                  setState(() => _currentIndex = 4);
-                  _persistIndex(4);
-                },
-              ),
-            ],
-          ),
-        ),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: _navVisible
+            ? AnimatedSlide(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                offset: Offset.zero,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: 1,
+                  child: GlassBottomNavBar(
+                    // Uniform mode: one row, no center circle
+                    items: [
+                      GlassBottomNavItem(
+                        icon: _currentIndex == 0
+                            ? _navigationItems[0].activeIcon
+                            : _navigationItems[0].icon,
+                        label: _navigationItems[0].label,
+                        selected: _currentIndex == 0,
+                        onTap: () {
+                          setState(() => _currentIndex = 0);
+                          _persistIndex(0);
+                        },
+                      ),
+                      GlassBottomNavItem(
+                        icon: _currentIndex == 1
+                            ? _navigationItems[1].activeIcon
+                            : _navigationItems[1].icon,
+                        label: _navigationItems[1].label,
+                        selected: _currentIndex == 1,
+                        onTap: () {
+                          setState(() => _currentIndex = 1);
+                          _persistIndex(1);
+                        },
+                      ),
+                      GlassBottomNavItem(
+                        icon: _currentIndex == 2
+                            ? _navigationItems[2].activeIcon
+                            : _navigationItems[2].icon,
+                        label: _navigationItems[2].label,
+                        selected: _currentIndex == 2,
+                        onTap: () {
+                          setState(() => _currentIndex = 2);
+                          _persistIndex(2);
+                        },
+                      ),
+                      GlassBottomNavItem(
+                        icon: _currentIndex == 3
+                            ? _navigationItems[3].activeIcon
+                            : _navigationItems[3].icon,
+                        label: _navigationItems[3].label,
+                        selected: _currentIndex == 3,
+                        badgeCount: _unreadMessages,
+                        onTap: () {
+                          setState(() => _currentIndex = 3);
+                          _persistIndex(3);
+                        },
+                      ),
+                      GlassBottomNavItem(
+                        icon: _currentIndex == 4
+                            ? _navigationItems[4].activeIcon
+                            : _navigationItems[4].icon,
+                        label: _navigationItems[4].label,
+                        selected: _currentIndex == 4,
+                        onTap: () {
+                          setState(() => _currentIndex = 4);
+                          _persistIndex(4);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }
