@@ -17,10 +17,32 @@ class PaymentGatewayService {
           countryCode ?? await CountryService.instance.getCurrentCountryCode();
 
       final response = await ApiClient.instance.get<Map<String, dynamic>>(
-          '/api/admin/payment-gateways/gateways/$country');
+          '/api/country-payment-gateways?country=$country');
 
       if (response.isSuccess && response.data != null) {
-        return PaymentGatewayResponse.fromJson(response.data!);
+        // Parse the response data which has a different structure
+        final data = response.data!;
+        if (data['success'] == true && data['data'] is List) {
+          final List<dynamic> gatewayList = data['data'];
+          final List<PaymentGateway> gateways = gatewayList.map((gatewayData) {
+            // Transform the country_payment_gateways format to PaymentGateway format
+            return PaymentGateway(
+              id: gatewayData['id'] as int,
+              name: gatewayData['display_name'] as String,
+              code: gatewayData['provider'] as String,
+              description: gatewayData['display_name'] as String,
+              configurationFields:
+                  gatewayData['public_config'] as Map<String, dynamic>? ?? {},
+              configured: true, // If it's in the list, it's configured
+              isPrimary: false, // We'll handle primary separately
+            );
+          }).toList();
+
+          return PaymentGatewayResponse(
+            success: true,
+            gateways: gateways,
+          );
+        }
       }
 
       return PaymentGatewayResponse(

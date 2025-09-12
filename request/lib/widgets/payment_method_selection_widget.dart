@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/payment_gateway.dart';
 import '../services/payment_gateway_service.dart';
+import '../src/theme/glass_theme.dart';
 
 class PaymentMethodSelectionWidget extends StatefulWidget {
   final String planCode;
@@ -85,13 +86,6 @@ class _PaymentMethodSelectionWidgetState
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -100,19 +94,16 @@ class _PaymentMethodSelectionWidgetState
           // Header
           Row(
             children: [
-              const Icon(Icons.payment, color: Colors.blue),
+              Icon(Icons.payment, color: GlassTheme.colors.textSecondary),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Select Payment Method',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GlassTheme.titleMedium,
               ),
               const Spacer(),
               IconButton(
                 onPressed: widget.onCancel,
-                icon: const Icon(Icons.close),
+                icon: Icon(Icons.close, color: GlassTheme.colors.textSecondary),
               ),
             ],
           ),
@@ -123,27 +114,26 @@ class _PaymentMethodSelectionWidgetState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
+              border: Border.all(color: Colors.grey.shade200),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Subscription Plan: ${widget.planCode}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
+                    color: Colors.grey.shade700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Amount: ${PaymentGatewayService.instance.formatAmount(widget.amount, widget.currency)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                  style: GlassTheme.titleMedium.copyWith(
+                    color: GlassTheme.colors.successColor,
                   ),
                 ),
               ],
@@ -163,22 +153,31 @@ class _PaymentMethodSelectionWidgetState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(
+                    color: GlassTheme.colors.errorColor.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.error, color: Colors.red.shade600),
+                  Icon(Icons.error, color: GlassTheme.colors.errorColor),
                   const SizedBox(height: 8),
                   Text(
                     _error!,
-                    style: TextStyle(color: Colors.red.shade700),
+                    style: GlassTheme.bodyMedium
+                        .copyWith(color: GlassTheme.colors.errorColor),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _loadPaymentGateways,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: GlassTheme.colors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -188,27 +187,27 @@ class _PaymentMethodSelectionWidgetState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: GlassTheme.colors.warningColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(
+                    color: GlassTheme.colors.warningColor.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
                   Icon(Icons.payment_outlined,
-                      color: Colors.orange.shade600, size: 48),
+                      color: GlassTheme.colors.warningColor, size: 48),
                   const SizedBox(height: 8),
                   Text(
                     'No Payment Methods Available',
-                    style: TextStyle(
-                      color: Colors.orange.shade700,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                    style: GlassTheme.titleSmall.copyWith(
+                      color: GlassTheme.colors.warningColor,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Payment methods are not configured for your region yet. Please contact support.',
-                    style: TextStyle(color: Colors.orange.shade600),
+                    style: GlassTheme.bodyMedium
+                        .copyWith(color: GlassTheme.colors.warningColor),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -218,12 +217,9 @@ class _PaymentMethodSelectionWidgetState
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'Choose your preferred payment method:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: GlassTheme.titleSmall,
                 ),
                 const SizedBox(height: 12),
 
@@ -239,7 +235,7 @@ class _PaymentMethodSelectionWidgetState
                       ? () => widget.onPaymentMethodSelected(_selectedGateway!)
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: GlassTheme.colors.primaryBlue,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -250,9 +246,10 @@ class _PaymentMethodSelectionWidgetState
                     _selectedGateway?.requiresManualVerification == true
                         ? 'Get Payment Details'
                         : 'Continue to Payment',
-                    style: const TextStyle(
+                    style: GlassTheme.bodyLarge.copyWith(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -278,11 +275,13 @@ class _PaymentMethodSelectionWidgetState
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isSelected ? Colors.blue : Colors.grey.shade300,
+              color: isSelected
+                  ? GlassTheme.colors.primaryBlue
+                  : Colors.grey.shade300,
               width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(8),
-            color: isSelected ? Colors.blue.shade50 : Colors.white,
+            color: Colors.white,
           ),
           child: Row(
             children: [
@@ -291,13 +290,17 @@ class _PaymentMethodSelectionWidgetState
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Center(
-                  child: Text(
-                    gateway.icon,
-                    style: const TextStyle(fontSize: 24),
+                  child: Icon(
+                    gateway.name.contains('Bank')
+                        ? Icons.account_balance
+                        : Icons.credit_card,
+                    color: Colors.grey.shade600,
+                    size: 24,
                   ),
                 ),
               ),
@@ -311,7 +314,7 @@ class _PaymentMethodSelectionWidgetState
                   children: [
                     Text(
                       gateway.name,
-                      style: const TextStyle(
+                      style: GlassTheme.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -319,8 +322,8 @@ class _PaymentMethodSelectionWidgetState
                     const SizedBox(height: 2),
                     Text(
                       gateway.userDescription,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
+                      style: GlassTheme.bodyMedium.copyWith(
+                        color: GlassTheme.colors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -330,13 +333,13 @@ class _PaymentMethodSelectionWidgetState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade100,
+                          color: GlassTheme.colors.primaryBlue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           'Recommended',
-                          style: TextStyle(
-                            color: Colors.green.shade700,
+                          style: GlassTheme.bodySmall.copyWith(
+                            color: GlassTheme.colors.primaryBlue,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -355,7 +358,7 @@ class _PaymentMethodSelectionWidgetState
                     _selectedGateway = value;
                   });
                 },
-                activeColor: Colors.blue,
+                activeColor: GlassTheme.colors.primaryBlue,
               ),
             ],
           ),

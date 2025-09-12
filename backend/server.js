@@ -69,6 +69,7 @@ const subscriptionRoutes = require('./routes/subscription');
 const simpleSubscriptionRoutes = require('./routes/simple-subscription');
 const simpleSubscriptionAdminRoutes = require('./routes/simple-subscription-admin');
 const paymentGatewayRoutes = require('./routes/payment-gateways');
+const countryPaymentGatewaysRoutes = require('./routes/country-payment-gateways');
 // Removed: subscription plan routes
 
 // Removed: subscription plan routes
@@ -399,6 +400,7 @@ app.use('/api/subscription', subscriptionRoutes); // Simple subscription system
 app.use('/api/simple-subscription', simpleSubscriptionRoutes); // Simple subscription user endpoints
 app.use('/api/admin/subscription', simpleSubscriptionAdminRoutes); // Simple subscription admin endpoints
 app.use('/api/admin/payment-gateways', paymentGatewayRoutes); // Payment gateway management for country admins
+app.use('/api/country-payment-gateways', countryPaymentGatewaysRoutes); // Public payment gateways for mobile app
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
 // Entitlements API endpoints will be added at the end of the file
 
