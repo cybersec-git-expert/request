@@ -482,7 +482,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      _paymentSession!.sessionId,
+                      _paymentSession!.paymentId,
                       style: const TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 16,
@@ -492,7 +492,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                   ),
                   IconButton(
                     onPressed: () => _copyToClipboard(
-                        _paymentSession!.sessionId, 'Reference ID'),
+                        _paymentSession!.paymentId, 'Reference ID'),
                     icon: const Icon(Icons.copy),
                     tooltip: 'Copy Reference ID',
                   ),
@@ -625,47 +625,6 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
                 ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPaymentDetailItem(String label, String value) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () => _copyToClipboard(value, label),
-            icon: const Icon(Icons.copy, size: 20),
-            tooltip: 'Copy $label',
-          ),
-        ],
-      ),
     );
   }
 }
