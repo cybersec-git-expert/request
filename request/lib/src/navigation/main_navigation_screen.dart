@@ -99,7 +99,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   duration: const Duration(milliseconds: 180),
                   opacity: 1,
                   child: GlassBottomNavBar(
-                    // Uniform mode: one row, no center circle
+                    // Uniform: five items, no center action
                     items: [
                       GlassBottomNavItem(
                         icon: _currentIndex == 0

@@ -26,14 +26,25 @@ class GlassBottomNavBar extends StatelessWidget {
   final List<GlassBottomNavItem>? items;
   final double height;
   final EdgeInsetsGeometry margin;
+  // Center action (e.g., a big + button) shown when using left/right mode
+  final IconData? centerIcon;
+  final VoidCallback? onCenterTap;
+  final Color? centerBackgroundColor;
+  final Color? centerIconColor;
+  final double centerSize;
 
   const GlassBottomNavBar({
     super.key,
     this.leftItems = const [],
     this.rightItems = const [],
     this.items,
-    this.height = 60,
-    this.margin = const EdgeInsets.fromLTRB(16, 0, 16, 8),
+    this.height = 64,
+    this.margin = const EdgeInsets.fromLTRB(0, 0, 0, 0),
+    this.centerIcon,
+    this.onCenterTap,
+    this.centerBackgroundColor,
+    this.centerIconColor,
+    this.centerSize = 52,
   });
 
   @override
@@ -41,50 +52,85 @@ class GlassBottomNavBar extends StatelessWidget {
     final useUniformItems = items != null && items!.isNotEmpty;
     return SafeArea(
       top: false,
-      child: Container(
-        margin: margin,
-        decoration: GlassTheme.glassContainerSubtle,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BottomAppBar(
-            color: Colors.transparent,
-            elevation: 0,
-            // Only use a notched shape when using left/right mode (legacy with center circle)
-            shape: useUniformItems ? null : const CircularNotchedRectangle(),
-            notchMargin: useUniformItems ? 0 : 8,
-            child: SizedBox(
-              height: height,
-              child: useUniformItems
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        for (int i = 0; i < items!.length; i++)
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal:
-                                    i == 0 || i == items!.length - 1 ? 8 : 6),
-                            child: _NavButton(
-                              item: items![i],
-                              hideSelectedIcon: false,
-                            ),
-                          ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _NavItems(items: leftItems, hideSelectedIcon: true),
-                        // Spacer for the center notch / FAB
-                        const SizedBox(width: 66),
-                        _NavItems(
-                            items: rightItems,
-                            alignEnd: true,
-                            hideSelectedIcon: true),
-                      ],
-                    ),
+      bottom: true,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          Container(
+            margin: margin,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: useUniformItems
+                  ? BorderRadius.circular(24)
+                  : const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: useUniformItems
+                  ? BorderRadius.circular(24)
+                  : const BorderRadius.vertical(top: Radius.circular(24)),
+              child: BottomAppBar(
+                color: Colors.transparent,
+                elevation: 0,
+                shape: null,
+                notchMargin: 0,
+                child: SizedBox(
+                  height: height,
+                  child: useUniformItems
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            for (int i = 0; i < items!.length; i++)
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: i == 0 || i == items!.length - 1
+                                        ? 12
+                                        : 10),
+                                child: _NavButton(
+                                  item: items![i],
+                                  hideSelectedIcon: false,
+                                ),
+                              ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _NavItems(
+                                items: leftItems, hideSelectedIcon: false),
+                            SizedBox(
+                                width: centerIcon != null ? centerSize : 0),
+                            _NavItems(
+                                items: rightItems,
+                                alignEnd: true,
+                                hideSelectedIcon: false),
+                          ],
+                        ),
+                ),
+              ),
             ),
           ),
-        ),
+          if (!useUniformItems && centerIcon != null)
+            Positioned(
+              bottom: height - (centerSize / 2) - 4,
+              child: _CenterActionButton(
+                size: centerSize - 6,
+                backgroundColor:
+                    centerBackgroundColor ?? Colors.black.withOpacity(0.85),
+                iconColor: centerIconColor ?? Colors.white,
+                icon: centerIcon!,
+                onTap: onCenterTap,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -110,8 +156,8 @@ class _NavItems extends StatelessWidget {
           for (int i = 0; i < items.length; i++)
             Padding(
               padding: EdgeInsets.only(
-                left: alignEnd || i > 0 ? 16 : 12,
-                right: alignEnd && i == items.length - 1 ? 16 : 0,
+                left: alignEnd || i > 0 ? 12 : 8,
+                right: alignEnd && i == items.length - 1 ? 12 : 0,
               ),
               child: _NavButton(
                 item: items[i],
@@ -134,14 +180,14 @@ class _NavButton extends StatelessWidget {
     final color = item.selected
         ? GlassTheme.colors.textPrimary
         : GlassTheme.colors.textSecondary;
-    final icon = Icon(item.icon, size: 24, color: color);
+    final icon = Icon(item.icon, size: 26, color: color);
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: item.onTap,
       child: SizedBox(
-        height: 40,
+        height: 44,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -179,14 +225,14 @@ class _NavButton extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 item.label,
                 maxLines: 1,
                 overflow: TextOverflow.fade,
                 softWrap: false,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   height: 1.0,
                   color: color,
                   fontWeight: item.selected ? FontWeight.w600 : FontWeight.w500,
@@ -258,6 +304,48 @@ class GlassCenterFab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CenterActionButton extends StatelessWidget {
+  final double size;
+  final Color backgroundColor;
+  final Color iconColor;
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _CenterActionButton({
+    required this.size,
+    required this.backgroundColor,
+    required this.iconColor,
+    required this.icon,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: iconColor, size: size * 0.44),
+        ),
       ),
     );
   }
