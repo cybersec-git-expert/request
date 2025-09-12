@@ -310,6 +310,12 @@ router.get('/plans', async (req, res) => {
 // Subscribe to a plan
 router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
     try {
+        console.log('Subscription request received:', {
+            body: req.body,
+            userId: req.user?.id,
+            countryCode: req.user?.country_code
+        });
+        
         const { planCode } = req.body;
         const userId = req.user.id;
 
@@ -408,6 +414,13 @@ router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
 
     } catch (error) {
         console.error('Subscription error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            userId: req.user?.id,
+            planCode: req.body?.planCode,
+            countryCode: req.user?.country_code
+        });
         res.status(500).json({
             success: false,
             error: 'Failed to process subscription'
