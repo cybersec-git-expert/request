@@ -52,11 +52,28 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/apiClient';
 
+// Country to currency mapping
+const COUNTRY_CURRENCY_MAP = {
+  US: 'USD', CA: 'CAD', GB: 'GBP', LK: 'LKR', IN: 'INR', EU: 'EUR', AU: 'AUD', NZ: 'NZD',
+  SG: 'SGD', MY: 'MYR', TH: 'THB', PH: 'PHP', PK: 'PKR', CN: 'CNY', JP: 'JPY', KR: 'KRW',
+  AE: 'AED', SA: 'SAR', KW: 'KWD', QA: 'QAR', BH: 'BHD', OM: 'OMR', ZA: 'ZAR', NG: 'NGN',
+  KE: 'KES', UG: 'UGX', TZ: 'TZS', RW: 'RWF', BI: 'BIF', GH: 'GHS', ET: 'ETB', EG: 'EGP',
+  BR: 'BRL', AR: 'ARS', MX: 'MXN', CL: 'CLP', CO: 'COP', PE: 'PEN', VE: 'VES',
+  FR: 'EUR', DE: 'EUR', ES: 'EUR', IT: 'EUR', IE: 'EUR', NL: 'EUR', BE: 'EUR', PT: 'EUR',
+  SE: 'SEK', NO: 'NOK', DK: 'DKK', FI: 'EUR', IS: 'ISK', CH: 'CHF', PL: 'PLN', CZ: 'CZK',
+  HU: 'HUF', RO: 'RON', BG: 'BGN', GR: 'EUR', TR: 'TRY', RU: 'RUB', UA: 'UAH',
+};
+
+// Function to get currency for a country code
+const getCurrencyForCountry = (countryCode) => {
+  return COUNTRY_CURRENCY_MAP[countryCode] || 'USD';
+};
+
 // API service for subscription management
 class SubscriptionAdminService {
   static async getPlans(country = null) {
     const params = country ? `?country=${country}` : '';
-    const response = await api.get(`/simple-subscription/plans${params}`);
+    const response = await api.get(`/admin/subscription/plans${params}`);
     return response.data;
   }
 
@@ -166,15 +183,19 @@ export default function SimpleSubscriptionAdmin() {
   const loadPlansCallback = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('Loading plans for user:', { role: user?.role, isSuperAdmin, isCountryAdmin });
       const country = isCountryAdmin ? user?.country_code : null;
+      console.log('Calling getPlans with country:', country);
       const result = await SubscriptionAdminService.getPlans(country);
+      console.log('Plans loaded successfully:', result);
       setPlans(result.data || []);
     } catch (err) {
+      console.error('Failed to load plans:', err);
       setError('Failed to load plans: ' + err.message);
     } finally {
       setLoading(false);
     }
-  }, [isCountryAdmin, user?.country_code]);
+  }, [isCountryAdmin, user?.country_code, isSuperAdmin, user?.role]);
 
   const loadPendingApprovalsCallback = useCallback(async () => {
     try {
@@ -309,12 +330,24 @@ export default function SimpleSubscriptionAdmin() {
 
   const openCountryPricingDialog = (plan) => {
     setSelectedPlan(plan);
-    setPricingForm({
-      country_code: isCountryAdmin ? user?.country_code : '',
-      price: 0,
-      currency: 'USD',
-      response_limit: 3
-    });
+    
+    // For country admins, auto-set country code and currency, for super admins allow editing
+    if (isCountryAdmin) {
+      const userCountryCode = user?.country_code || '';
+      setPricingForm({
+        country_code: userCountryCode,
+        price: 0,
+        currency: getCurrencyForCountry(userCountryCode), // Use the mapping function
+        response_limit: 3
+      });
+    } else {
+      setPricingForm({
+        country_code: '',
+        price: 0,
+        currency: 'USD',
+        response_limit: 3
+      });
+    }
     setCountryPricingDialog(true);
   };
 
@@ -342,6 +375,14 @@ export default function SimpleSubscriptionAdmin() {
       <Typography variant="h4" gutterBottom>
         Subscription Management
       </Typography>
+      
+      {/* Debug Info */}
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          Debug Info - User: {user?.email || 'Not logged in'} | Role: {user?.role || 'None'} | 
+          Is Super Admin: {isSuperAdmin ? 'Yes' : 'No'} | Is Country Admin: {isCountryAdmin ? 'Yes' : 'No'}
+        </Typography>
+      </Alert>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -679,7 +720,10 @@ export default function SimpleSubscriptionAdmin() {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Set the price, currency, and response limits for your country. This will be submitted for super admin approval.
+            {isCountryAdmin 
+              ? `Set the price and response limits for ${selectedPlan?.name} in your country (${user?.country_code}). Your country code and currency are automatically set.`
+              : 'Set the price, currency, and response limits for any country. This will be submitted for super admin approval.'
+            }
           </Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
@@ -687,9 +731,17 @@ export default function SimpleSubscriptionAdmin() {
                 fullWidth
                 label="Country Code"
                 value={pricingForm.country_code}
-                onChange={(e) => setPricingForm({...pricingForm, country_code: e.target.value.toUpperCase()})}
-                disabled={isCountryAdmin}
-                helperText="2-letter ISO country code (e.g., LK, US, GB)"
+                onChange={(e) => {
+                  const newCountryCode = e.target.value.toUpperCase();
+                  setPricingForm({
+                    ...pricingForm, 
+                    country_code: newCountryCode,
+                    // Auto-update currency for super admins when country changes
+                    currency: !isCountryAdmin ? getCurrencyForCountry(newCountryCode) : pricingForm.currency
+                  });
+                }}
+                disabled={isCountryAdmin} // Country admins cannot change their country
+                helperText={isCountryAdmin ? "Your country code (auto-set)" : "2-letter ISO country code (e.g., LK, US, GB)"}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -708,15 +760,32 @@ export default function SimpleSubscriptionAdmin() {
                 <Select
                   value={pricingForm.currency}
                   onChange={(e) => setPricingForm({...pricingForm, currency: e.target.value})}
+                  disabled={isCountryAdmin} // Country admins use their country's currency
                 >
-                  <MenuItem value="USD">USD</MenuItem>
-                  <MenuItem value="LKR">LKR</MenuItem>
-                  <MenuItem value="EUR">EUR</MenuItem>
-                  <MenuItem value="GBP">GBP</MenuItem>
-                  <MenuItem value="INR">INR</MenuItem>
-                  <MenuItem value="AUD">AUD</MenuItem>
-                  <MenuItem value="CAD">CAD</MenuItem>
+                  <MenuItem value="USD">USD - US Dollar</MenuItem>
+                  <MenuItem value="EUR">EUR - Euro</MenuItem>
+                  <MenuItem value="GBP">GBP - British Pound</MenuItem>
+                  <MenuItem value="LKR">LKR - Sri Lankan Rupee</MenuItem>
+                  <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+                  <MenuItem value="AUD">AUD - Australian Dollar</MenuItem>
+                  <MenuItem value="CAD">CAD - Canadian Dollar</MenuItem>
+                  <MenuItem value="SGD">SGD - Singapore Dollar</MenuItem>
+                  <MenuItem value="MYR">MYR - Malaysian Ringgit</MenuItem>
+                  <MenuItem value="THB">THB - Thai Baht</MenuItem>
+                  <MenuItem value="PHP">PHP - Philippine Peso</MenuItem>
+                  <MenuItem value="AED">AED - UAE Dirham</MenuItem>
+                  <MenuItem value="SAR">SAR - Saudi Riyal</MenuItem>
+                  <MenuItem value="PKR">PKR - Pakistani Rupee</MenuItem>
+                  <MenuItem value="BRL">BRL - Brazilian Real</MenuItem>
+                  <MenuItem value="JPY">JPY - Japanese Yen</MenuItem>
+                  <MenuItem value="CNY">CNY - Chinese Yuan</MenuItem>
+                  <MenuItem value="ZAR">ZAR - South African Rand</MenuItem>
                 </Select>
+                {isCountryAdmin && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Your country's currency (auto-set)
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
             <Grid item xs={12}>

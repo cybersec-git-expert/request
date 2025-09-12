@@ -172,6 +172,14 @@ router.post('/plans/:code/pricing', auth.authMiddleware(), auth.roleMiddleware([
       });
     }
     
+    // Country admins can only set pricing for their own country
+    if (req.user.role === 'country_admin' && req.user.country_code !== country_code) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Country admins can only set pricing for their own country' 
+      });
+    }
+    
     // Country admin submissions are pending approval (is_active = false)
     const isActive = req.user.role === 'super_admin';
     
@@ -302,46 +310,57 @@ router.get('/analytics', auth.authMiddleware(), auth.roleMiddleware(['super_admi
       params.push(country);
     }
     
-    // Total subscriptions by plan
+    // Total subscriptions by plan using new template-based structure
     const planStats = await db.query(`
       SELECT 
         uss.plan_code,
-        ssp.name as plan_name,
-        ssp.price,
+        spt.name as plan_name,
+        COALESCE(scp.price, 0) as price,
+        COALESCE(scp.currency, 'USD') as currency,
         COUNT(*) as total_users,
         SUM(CASE WHEN uss.is_verified_business THEN 1 ELSE 0 END) as verified_users
       FROM user_simple_subscriptions uss
-      JOIN simple_subscription_plans ssp ON uss.plan_code = ssp.code
+      JOIN subscription_plan_templates spt ON uss.plan_code = spt.code
+      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        AND scp.is_active = true
+        ${role === 'country_admin' ? 'AND scp.country_code = $' + (params.length + 1) : ''}
       LEFT JOIN users u ON uss.user_id = u.id
       ${whereClause}
-      GROUP BY uss.plan_code, ssp.name, ssp.price
-      ORDER BY ssp.price ASC
-    `, params);
+      GROUP BY uss.plan_code, spt.name, scp.price, scp.currency
+      ORDER BY COALESCE(scp.price, 0) ASC
+    `, role === 'country_admin' && req.user.country_code ? [...params, req.user.country_code] : params);
     
-    // Monthly revenue (estimated)
+    // Monthly revenue (estimated) using new template-based structure
     const revenueStats = await db.query(`
       SELECT 
         DATE_TRUNC('month', uss.created_at) as month,
-        SUM(ssp.price) as estimated_revenue
+        SUM(COALESCE(scp.price, 0)) as estimated_revenue,
+        string_agg(DISTINCT scp.currency, ', ') as currencies
       FROM user_simple_subscriptions uss
-      JOIN simple_subscription_plans ssp ON uss.plan_code = ssp.code
+      JOIN subscription_plan_templates spt ON uss.plan_code = spt.code
+      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        AND scp.is_active = true
+        ${role === 'country_admin' ? 'AND scp.country_code = $' + (params.length + 1) : ''}
       LEFT JOIN users u ON uss.user_id = u.id
       ${whereClause}
       WHERE uss.created_at >= CURRENT_DATE - INTERVAL '12 months'
       GROUP BY DATE_TRUNC('month', uss.created_at)
       ORDER BY month DESC
-    `, params);
+    `, role === 'country_admin' && req.user.country_code ? [...params, req.user.country_code] : params);
     
-    // Usage statistics
+    // Usage statistics using new template-based structure
     const usageStats = await db.query(`
       SELECT 
         AVG(uss.responses_used_this_month) as avg_responses_used,
-        COUNT(CASE WHEN uss.responses_used_this_month >= ssp.response_limit AND ssp.response_limit > 0 THEN 1 END) as users_at_limit
+        COUNT(CASE WHEN uss.responses_used_this_month >= COALESCE(scp.response_limit, 0) AND COALESCE(scp.response_limit, 0) > 0 THEN 1 END) as users_at_limit
       FROM user_simple_subscriptions uss
-      JOIN simple_subscription_plans ssp ON uss.plan_code = ssp.code
+      JOIN subscription_plan_templates spt ON uss.plan_code = spt.code
+      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        AND scp.is_active = true
+        ${role === 'country_admin' ? 'AND scp.country_code = $' + (params.length + 1) : ''}
       LEFT JOIN users u ON uss.user_id = u.id
       ${whereClause}
-    `, params);
+    `, role === 'country_admin' && req.user.country_code ? [...params, req.user.country_code] : params);
     
     res.json({ 
       success: true, 
