@@ -10,7 +10,7 @@ class SimpleSubscriptionService {
      */
     getCurrentMonth() {
         const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
     }
 
     /**
@@ -21,22 +21,22 @@ class SimpleSubscriptionService {
             const currentMonth = this.getCurrentMonth();
             
             const result = await dbService.query(`
-                SELECT responses_used 
-                FROM user_usage 
-                WHERE user_id = $1 AND month_year = $2
+                SELECT response_count 
+                FROM usage_monthly 
+                WHERE user_id = $1 AND year_month = $2
             `, [userId, currentMonth]);
 
             if (result.rows.length === 0) {
                 // Create new record for this user/month
                 await dbService.query(`
-                    INSERT INTO user_usage (user_id, month_year, responses_used)
+                    INSERT INTO usage_monthly (user_id, year_month, response_count)
                     VALUES ($1, $2, 0)
-                    ON CONFLICT (user_id, month_year) DO NOTHING
+                    ON CONFLICT (user_id, year_month) DO NOTHING
                 `, [userId, currentMonth]);
                 return 0;
             }
 
-            return result.rows[0].responses_used;
+            return result.rows[0].response_count;
         } catch (error) {
             console.error('Error getting user usage:', error);
             throw error;
@@ -64,11 +64,11 @@ class SimpleSubscriptionService {
             const currentMonth = this.getCurrentMonth();
             
             await dbService.query(`
-                INSERT INTO user_usage (user_id, month_year, responses_used)
+                INSERT INTO usage_monthly (user_id, year_month, response_count)
                 VALUES ($1, $2, 1)
-                ON CONFLICT (user_id, month_year) 
+                ON CONFLICT (user_id, year_month) 
                 DO UPDATE SET 
-                    responses_used = user_usage.responses_used + 1,
+                    response_count = usage_monthly.response_count + 1,
                     updated_at = CURRENT_TIMESTAMP
             `, [userId, currentMonth]);
 
@@ -113,11 +113,11 @@ class SimpleSubscriptionService {
             // But we can clean up old records (older than 6 months)
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-            const cleanupMonth = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
+            const cleanupMonth = `${sixMonthsAgo.getFullYear()}${String(sixMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
             
             await dbService.query(`
-                DELETE FROM user_usage 
-                WHERE month_year < $1
+                DELETE FROM usage_monthly 
+                WHERE year_month < $1
             `, [cleanupMonth]);
             
             console.log(`✅ Cleaned up usage records older than ${cleanupMonth}`);
