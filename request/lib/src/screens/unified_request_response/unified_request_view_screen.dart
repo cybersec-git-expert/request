@@ -972,32 +972,15 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         }
       }
 
-      // Edge case: backend hides responses to others; if viewer_context indicates
-      // the user has responded but list is empty, fetch that response directly
-      if (myResponse == null && _request?.viewerContext?.hasResponded == true) {
-        final respId = _request?.viewerContext?.responseId;
-        if (respId != null && respId.isNotEmpty) {
-          // Try to fetch the response by id
-          _service.getResponseById(_request!.id, respId).then((r) {
-            if (!mounted) return;
-            if (r != null) {
-              setState(() {
-                _responses = [r];
-              });
-            }
-          });
-        }
-      }
-
-      // If user has a response, show edit button
-      if (myResponse == null && _request?.viewerContext?.hasResponded == true) {
-        // Create a lightweight placeholder ResponseModel for navigation while we fetch full details
+      // If user has responded (according to viewer context) but we don't have the response locally,
+      // create a placeholder for the edit button
+      if (myResponse == null && _hasResponded) {
         final respId = _request?.viewerContext?.responseId;
         if (respId != null && respId.isNotEmpty) {
           myResponse = rest.ResponseModel(
             id: respId,
             requestId: _request!.id,
-            userId: RestAuthService.instance.currentUser?.uid ?? '',
+            userId: currentUserId ?? '',
             message: '...',
             price: null,
             currency: null,
@@ -1009,6 +992,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           );
         }
       }
+
+      // If user has a response, show edit button
       if (myResponse != null) {
         return FloatingActionButton.extended(
           onPressed: () => _navigateToResponseEdit(myResponse!),
@@ -1348,9 +1333,12 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                             ),
                         ]),
                         const SizedBox(height: 8),
-                        // Contact details: show if owner, already responded, or backend allowed contactVisible
+                        // Contact details: show if owner OR already responded;
+                        // For new requests, hide if user is at limit regardless of backend contactVisible
                         if ((r.userPhone?.isNotEmpty == true) &&
-                            (_isOwner || _hasResponded || r.contactVisible))
+                            (_isOwner ||
+                                _hasResponded ||
+                                (!_reachedLimit && r.contactVisible)))
                           Row(children: [
                             Icon(Icons.phone,
                                 size: 16, color: Colors.grey[600]),
@@ -1968,21 +1956,34 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
               ),
             ),
           if (!_responsesLoading) ...[
-            if (_responses.isEmpty)
+            if (_responses.isEmpty && !_hasResponded)
               Text(
                 _canRespondSimplified
                     ? 'Be the first to respond.'
                     : 'No responses yet.',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
-            if (_responses.isNotEmpty)
+            // Show response count when there are responses OR when user has responded (even if list is empty due to privacy)
+            if (_responses.isNotEmpty || _hasResponded)
               Row(
                 children: [
                   _infoChip(
                     label: 'Total',
-                    value: _responses.length.toString(),
+                    value: _responses.isNotEmpty
+                        ? _responses.length.toString()
+                        : (_hasResponded
+                            ? '1+'
+                            : '0'), // Show at least 1+ when user has responded
                     color: typeColor,
                   ),
+                  if (_hasResponded) ...[
+                    const SizedBox(width: 8),
+                    _infoChip(
+                      label: 'You responded',
+                      value: '✓',
+                      color: Colors.green,
+                    ),
+                  ],
                 ],
               ),
           ],
