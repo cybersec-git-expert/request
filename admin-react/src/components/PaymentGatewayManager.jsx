@@ -35,7 +35,8 @@ import {
   Add as AddIcon,
   Edit as EditIcon
 } from '@mui/icons-material';
-import { authService } from '../services/authService';
+import authService from '../services/authService';
+import api from '../services/apiClient';
 
 const PaymentGatewayManager = () => {
   const [gateways, setGateways] = useState([]);
@@ -60,8 +61,19 @@ const PaymentGatewayManager = () => {
 
   const loadUserInfo = async () => {
     try {
-      const userInfo = await authService.getCurrentUser();
-      setUserCountry(userInfo.country_code || 'LK');
+      // Check if user is already loaded
+      if (authService.user) {
+        setUserCountry(authService.user.country || 'LK');
+        return;
+      }
+      
+      // Fetch fresh profile data
+      const userInfo = await authService.fetchProfile();
+      if (userInfo) {
+        setUserCountry(userInfo.country || 'LK');
+      } else {
+        setError('Failed to load user information');
+      }
     } catch (error) {
       console.error('Error loading user info:', error);
       setError('Failed to load user information');
@@ -71,18 +83,12 @@ const PaymentGatewayManager = () => {
   const loadGateways = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/admin/payment-gateways/gateways/${userCountry}`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setGateways(data.gateways);
+      const response = await api.get(`/admin/payment-gateways/gateways/${userCountry}`);
+      
+      if (response.data.success) {
+        setGateways(response.data.gateways);
       } else {
-        setError(data.error || 'Failed to load payment gateways');
+        setError(response.data.error || 'Failed to load payment gateways');
       }
     } catch (error) {
       console.error('Error loading gateways:', error);
@@ -111,23 +117,14 @@ const PaymentGatewayManager = () => {
 
   const handleEditGateway = async (gateway) => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/admin/payment-gateways/gateways/${userCountry}/${gateway.id}/config`,
-        {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await api.get(`/admin/payment-gateways/gateways/${userCountry}/${gateway.id}/config`);
 
-      const data = await response.json();
-      if (data.success) {
+      if (response.data.success) {
         setSelectedGateway(gateway);
-        setConfiguration(data.gateway.configuration);
+        setConfiguration(response.data.gateway.configuration);
         setConfigDialog(true);
       } else {
-        setError(data.error || 'Failed to load gateway configuration');
+        setError(response.data.error || 'Failed to load gateway configuration');
       }
     } catch (error) {
       console.error('Error loading gateway config:', error);
@@ -137,29 +134,18 @@ const PaymentGatewayManager = () => {
 
   const handleSaveConfiguration = async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/admin/payment-gateways/gateways/${userCountry}/configure`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            gatewayId: selectedGateway.id,
-            configuration: configuration,
-            isPrimary: selectedGateway.is_primary
-          })
-        }
-      );
+      const response = await api.post(`/admin/payment-gateways/gateways/${userCountry}/configure`, {
+        gatewayId: selectedGateway.id,
+        configuration: configuration,
+        isPrimary: selectedGateway.is_primary
+      });
 
-      const data = await response.json();
-      if (data.success) {
+      if (response.data.success) {
         setSuccess('Payment gateway configured successfully');
         setConfigDialog(false);
         loadGateways();
       } else {
-        setError(data.error || 'Failed to configure payment gateway');
+        setError(response.data.error || 'Failed to configure payment gateway');
       }
     } catch (error) {
       console.error('Error saving configuration:', error);
@@ -169,24 +155,15 @@ const PaymentGatewayManager = () => {
 
   const handleToggleGateway = async (gateway, isActive) => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/admin/payment-gateways/gateways/${userCountry}/${gateway.id}/toggle`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ isActive })
-        }
-      );
+      const response = await api.patch(`/admin/payment-gateways/gateways/${userCountry}/${gateway.id}/toggle`, {
+        isActive
+      });
 
-      const data = await response.json();
-      if (data.success) {
+      if (response.data.success) {
         setSuccess(`Gateway ${isActive ? 'activated' : 'deactivated'} successfully`);
         loadGateways();
       } else {
-        setError(data.error || 'Failed to update gateway status');
+        setError(response.data.error || 'Failed to update gateway status');
       }
     } catch (error) {
       console.error('Error toggling gateway:', error);

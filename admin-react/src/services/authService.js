@@ -60,6 +60,7 @@ class AuthService {
   isAuthenticated() { return !!this.user; }
   isSuperAdmin() { return this.user?.role === 'super_admin'; }
   isCountryAdmin() { return this.user?.role === 'country_admin'; }
+  getToken() { return localStorage.getItem('accessToken'); }
 }
 
 const authService = new AuthService();

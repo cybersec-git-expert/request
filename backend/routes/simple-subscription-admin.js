@@ -314,33 +314,33 @@ router.get('/analytics', auth.authMiddleware(), auth.roleMiddleware(['super_admi
     const planStats = await db.query(`
       SELECT 
         uss.plan_code,
-        spt.name as plan_name,
-        COALESCE(scp.price, 0) as price,
-        COALESCE(scp.currency, 'USD') as currency,
+        ssp.name as plan_name,
+        COALESCE(sscp.price, 0) as price,
+        COALESCE(sscp.currency, 'USD') as currency,
         COUNT(*) as total_users,
-        SUM(CASE WHEN uss.is_verified_business THEN 1 ELSE 0 END) as verified_users
+        SUM(CASE WHEN uss.status = 'active' THEN 1 ELSE 0 END) as active_users
       FROM user_simple_subscriptions uss
-      JOIN subscription_plan_templates spt ON uss.plan_code = spt.code
-      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
-        AND scp.is_active = true
-        ${role === 'country_admin' ? 'AND scp.country_code = $' + (params.length + 1) : ''}
+      JOIN simple_subscription_plans ssp ON uss.plan_code = ssp.code
+      LEFT JOIN simple_subscription_country_pricing sscp ON ssp.code = sscp.plan_code 
+        AND sscp.is_active = true
+        ${role === 'country_admin' ? 'AND sscp.country_code = $' + (params.length + 1) : ''}
       LEFT JOIN users u ON uss.user_id = u.id
       ${whereClause}
-      GROUP BY uss.plan_code, spt.name, scp.price, scp.currency
-      ORDER BY COALESCE(scp.price, 0) ASC
+      GROUP BY uss.plan_code, ssp.name, sscp.price, sscp.currency
+      ORDER BY COALESCE(sscp.price, 0) ASC
     `, role === 'country_admin' && req.user.country_code ? [...params, req.user.country_code] : params);
     
     // Monthly revenue (estimated) using new template-based structure
     const revenueStats = await db.query(`
       SELECT 
         DATE_TRUNC('month', uss.created_at) as month,
-        SUM(COALESCE(scp.price, 0)) as estimated_revenue,
-        string_agg(DISTINCT scp.currency, ', ') as currencies
+        SUM(COALESCE(sscp.price, 0)) as estimated_revenue,
+        string_agg(DISTINCT sscp.currency, ', ') as currencies
       FROM user_simple_subscriptions uss
-      JOIN subscription_plan_templates spt ON uss.plan_code = spt.code
-      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
-        AND scp.is_active = true
-        ${role === 'country_admin' ? 'AND scp.country_code = $' + (params.length + 1) : ''}
+      JOIN simple_subscription_plans ssp ON uss.plan_code = ssp.code
+      LEFT JOIN simple_subscription_country_pricing sscp ON ssp.code = sscp.plan_code 
+        AND sscp.is_active = true
+        ${role === 'country_admin' ? 'AND sscp.country_code = $' + (params.length + 1) : ''}
       LEFT JOIN users u ON uss.user_id = u.id
       ${whereClause}
       WHERE uss.created_at >= CURRENT_DATE - INTERVAL '12 months'
@@ -351,15 +351,17 @@ router.get('/analytics', auth.authMiddleware(), auth.roleMiddleware(['super_admi
     // Usage statistics using new template-based structure
     const usageStats = await db.query(`
       SELECT 
-        AVG(uss.responses_used_this_month) as avg_responses_used,
-        COUNT(CASE WHEN uss.responses_used_this_month >= COALESCE(scp.response_limit, 0) AND COALESCE(scp.response_limit, 0) > 0 THEN 1 END) as users_at_limit
+        COUNT(*) as total_active_subscriptions,
+        COUNT(CASE WHEN uss.plan_code = 'Free' THEN 1 END) as free_users,
+        COUNT(CASE WHEN uss.plan_code != 'Free' THEN 1 END) as paid_users
       FROM user_simple_subscriptions uss
-      JOIN subscription_plan_templates spt ON uss.plan_code = spt.code
-      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
-        AND scp.is_active = true
-        ${role === 'country_admin' ? 'AND scp.country_code = $' + (params.length + 1) : ''}
+      JOIN simple_subscription_plans ssp ON uss.plan_code = ssp.code
+      LEFT JOIN simple_subscription_country_pricing sscp ON ssp.code = sscp.plan_code 
+        AND sscp.is_active = true
+        ${role === 'country_admin' ? 'AND sscp.country_code = $' + (params.length + 1) : ''}
       LEFT JOIN users u ON uss.user_id = u.id
       ${whereClause}
+      WHERE uss.status = 'active'
     `, role === 'country_admin' && req.user.country_code ? [...params, req.user.country_code] : params);
     
     res.json({ 
