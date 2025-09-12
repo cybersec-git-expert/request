@@ -74,10 +74,10 @@ router.post('/plans', auth.authMiddleware(), auth.roleMiddleware(['super_admin']
       });
     }
     
-    // Create template with default values (will be overridden by country pricing)
+    // Create template with null values for pricing (will be set by country pricing)
     const plan = await db.queryOne(`
       INSERT INTO simple_subscription_plans (code, name, description, price, currency, response_limit, features)
-      VALUES ($1, $2, $3, 0, 'USD', 0, $4::jsonb) 
+      VALUES ($1, $2, $3, NULL, NULL, NULL, $4::jsonb) 
       RETURNING *
     `, [code, name, description || '', JSON.stringify(features || [])]);
     

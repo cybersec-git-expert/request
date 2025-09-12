@@ -61,7 +61,14 @@ class SubscriptionAdminService {
   }
 
   static async createPlan(plan) {
-    const response = await api.post('/admin/subscription/plans', plan);
+    // Only send template data (no pricing fields)
+    const templateData = {
+      code: plan.code,
+      name: plan.name,
+      description: plan.description,
+      features: plan.features || []
+    };
+    const response = await api.post('/admin/subscription/plans', templateData);
     return response.data;
   }
 
