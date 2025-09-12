@@ -160,7 +160,12 @@ router.get('/', optionalAuth(async (req, res) => {
     // Compute viewer entitlements once (if logged in)
     let ent = null;
     if (req.user && req.user.id) {
-      try { ent = await entitlements.getEntitlements(req.user.id, req.user.role); } catch (e) { console.warn('[requests] entitlements failed', e?.message || e); }
+      try { 
+        ent = await entitlements.getEntitlements(req.user.id, req.user.role); 
+      } catch (e) { 
+        console.warn('[requests] entitlements failed', e?.message || e);
+        // No fallback - ent remains null
+      }
     }
     const viewer = { id: req.user?.id || req.user?.userId || null, entitlements: ent };
     const gatedRows = requests.rows.map(r => applyContactGating(r, viewer));
@@ -288,7 +293,12 @@ router.get('/search', optionalAuth(async (req, res) => {
     // Compute viewer entitlements once (if logged in)
     let ent = null;
     if (req.user && req.user.id) {
-      try { ent = await entitlements.getEntitlements(req.user.id, req.user.role); } catch (e) { console.warn('[requests][search] entitlements failed', e?.message || e); }
+      try { 
+        ent = await entitlements.getEntitlements(req.user.id, req.user.role); 
+      } catch (e) { 
+        console.warn('[requests][search] entitlements failed', e?.message || e);
+        // No fallback - ent remains null
+      }
     }
     const viewer = { id: req.user?.id || req.user?.userId || null, entitlements: ent };
     const gatedRows = requests.rows.map(r => applyContactGating(r, viewer));
@@ -372,7 +382,12 @@ router.get('/:id', optionalAuth(async (req, res) => {
     // Entitlements (if we have a viewer)
     let ent = null;
     if (viewerId) {
-      try { ent = await entitlements.getEntitlements(viewerId, req.user?.role); } catch (e) { console.warn('[requests][detail] entitlements failed', e?.message || e); }
+      try { 
+        ent = await entitlements.getEntitlements(viewerId, req.user?.role); 
+      } catch (e) { 
+        console.warn('[requests][detail] entitlements failed', e?.message || e);
+        // No fallback - ent remains null
+      }
     }
 
     // Has the viewer already responded to this request?

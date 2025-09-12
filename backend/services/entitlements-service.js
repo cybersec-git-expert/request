@@ -34,9 +34,10 @@ async function getEntitlements(userId, role) {
     const remainingResponses = Math.max(0, freeMonthlyLimit - responseCountThisMonth);
     const canRespond = remainingResponses > 0;
     
-  // Hide contact details if user has reached limit (note: request detail endpoint may override when user hasResponded)
-  const canSeeContactDetails = remainingResponses > 0;
-  const canSendMessages = remainingResponses > 0;
+    // Contact details and messaging are NOT gated by entitlements alone
+    // The request detail endpoint will handle gating based on ownership and hasResponded
+    const canSeeContactDetails = true; // Always allow, request endpoint will gate
+    const canSendMessages = true; // Always allow, request endpoint will gate
     
     return {
       canSeeContactDetails,
@@ -52,19 +53,8 @@ async function getEntitlements(userId, role) {
     };
   } catch (error) {
     console.error('[entitlements] Error in getEntitlements:', error);
-    // Return restrictive defaults on error
-    return {
-      canSeeContactDetails: false,
-      canSendMessages: false,
-      canRespond: false,
-      responseCount: 3,
-      responseCountThisMonth: 3,
-      remainingResponses: 0,
-      subscriptionType: 'free',
-      planName: 'Free Plan',
-      canViewContact: false,
-      canMessage: false
-    };
+    // No fallback - throw error so caller can handle appropriately
+    throw error;
   }
 }
 
