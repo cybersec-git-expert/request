@@ -19,7 +19,7 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
         COALESCE(scp.currency, 'USD') as currency
       FROM user_simple_subscriptions us
       JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
-      LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
+      LEFT JOIN simple_subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
     `, [userId, req.user.country_code || 'LK']);
@@ -41,7 +41,7 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
           COALESCE(scp.currency, 'USD') as currency
         FROM user_simple_subscriptions us
         JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
-        LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
+        LEFT JOIN simple_subscription_country_pricing scp ON ssp.code = scp.plan_code 
           AND scp.country_code = $2 AND scp.is_active = true
         WHERE us.user_id = $1
       `, [userId, req.user.country_code || 'LK']);
@@ -101,7 +101,7 @@ router.get('/can-respond', auth.authMiddleware(), async (req, res) => {
         COALESCE(scp.response_limit, 3) as response_limit
       FROM user_simple_subscriptions us
       JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
-      LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
+      LEFT JOIN simple_subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
     `, [userId, req.user.country_code || 'LK']);
@@ -157,7 +157,7 @@ router.post('/record-response', auth.authMiddleware(), async (req, res) => {
         COALESCE(scp.response_limit, 3) as response_limit
       FROM user_simple_subscriptions us
       JOIN simple_subscription_plans ssp ON us.plan_code = ssp.code
-      LEFT JOIN subscription_country_pricing scp ON ssp.code = scp.plan_code 
+      LEFT JOIN simple_subscription_country_pricing scp ON ssp.code = scp.plan_code 
         AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
     `, [userId, req.user.country_code || 'LK']);
@@ -230,7 +230,7 @@ router.get('/plans', async (req, res) => {
           scp.is_active as country_pricing_active,
           scp.created_at as pricing_created_at
         FROM simple_subscription_plans ssp
-        INNER JOIN subscription_country_pricing scp 
+        INNER JOIN simple_subscription_country_pricing scp 
           ON ssp.code = scp.plan_code 
         WHERE scp.country_code = $1 
           AND scp.is_active = true

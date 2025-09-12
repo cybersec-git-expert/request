@@ -6,21 +6,21 @@ async function testPlansQuery() {
     
     const result = await db.query(`
       SELECT 
-        spt.code,
-        spt.name,
-        spt.description,
-        spt.features,
+        ssp.code,
+        ssp.name,
+        ssp.description,
+        ssp.features,
         scp.price,
         scp.currency,
         scp.response_limit,
         scp.is_active as country_pricing_active,
         scp.created_at as pricing_created_at
-      FROM subscription_plan_templates spt
+      FROM simple_subscription_plans ssp
       INNER JOIN subscription_country_pricing scp 
-        ON spt.code = scp.plan_code 
-        WHERE scp.country_code = $1 
+        ON ssp.code = scp.plan_code 
+      WHERE scp.country_code = $1 
         AND scp.is_active = true
-        AND spt.is_active = true 
+        AND ssp.is_active = true 
       ORDER BY scp.price ASC
     `, ['LK']);
     
