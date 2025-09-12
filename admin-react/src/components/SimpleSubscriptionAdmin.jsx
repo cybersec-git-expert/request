@@ -53,7 +53,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 // API service for subscription management
 class SubscriptionAdminService {
-  static baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  static baseUrl = import.meta.env.VITE_API_BASE_URL + '/api' || 'http://3.92.216.149:3001/api';
 
   static async getPlans(country = null) {
     const params = country ? `?country=${country}` : '';
