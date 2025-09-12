@@ -8,13 +8,21 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Get or create user subscription
+    // Get or create user subscription with country-specific details
     let subscription = await db.queryOne(`
-      SELECT us.*, sp.name as plan_name, sp.response_limit, sp.features
+      SELECT 
+        us.*,
+        spt.name as plan_name,
+        spt.features,
+        COALESCE(scp.response_limit, 3) as response_limit,
+        COALESCE(scp.price, 0) as price,
+        COALESCE(scp.currency, 'USD') as currency
       FROM user_simple_subscriptions us
-      JOIN simple_subscription_plans sp ON us.plan_code = sp.code
+      JOIN subscription_plan_templates spt ON us.plan_code = spt.code
+      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
-    `, [userId]);
+    `, [userId, req.user.country_code || 'LK']);
     
     if (!subscription) {
       // Create default free subscription
@@ -24,11 +32,19 @@ router.get('/status', auth.authMiddleware(), async (req, res) => {
       `, [userId]);
       
       subscription = await db.queryOne(`
-        SELECT us.*, sp.name as plan_name, sp.response_limit, sp.features
+        SELECT 
+          us.*,
+          spt.name as plan_name,
+          spt.features,
+          COALESCE(scp.response_limit, 3) as response_limit,
+          COALESCE(scp.price, 0) as price,
+          COALESCE(scp.currency, 'USD') as currency
         FROM user_simple_subscriptions us
-        JOIN simple_subscription_plans sp ON us.plan_code = sp.code
+        JOIN subscription_plan_templates spt ON us.plan_code = spt.code
+        LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+          AND scp.country_code = $2 AND scp.is_active = true
         WHERE us.user_id = $1
-      `, [userId]);
+      `, [userId, req.user.country_code || 'LK']);
     }
     
     // Check if month has changed and reset if needed
@@ -80,11 +96,15 @@ router.get('/can-respond', auth.authMiddleware(), async (req, res) => {
     const userId = req.user.id;
     
     const subscription = await db.queryOne(`
-      SELECT us.*, sp.response_limit
+      SELECT 
+        us.*,
+        COALESCE(scp.response_limit, 3) as response_limit
       FROM user_simple_subscriptions us
-      JOIN simple_subscription_plans sp ON us.plan_code = sp.code
+      JOIN subscription_plan_templates spt ON us.plan_code = spt.code
+      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
-    `, [userId]);
+    `, [userId, req.user.country_code || 'LK']);
     
     if (!subscription) {
       return res.json({
@@ -132,11 +152,15 @@ router.post('/record-response', auth.authMiddleware(), async (req, res) => {
     
     // Check if user can respond
     const subscription = await db.queryOne(`
-      SELECT us.*, sp.response_limit
+      SELECT 
+        us.*,
+        COALESCE(scp.response_limit, 3) as response_limit
       FROM user_simple_subscriptions us
-      JOIN simple_subscription_plans sp ON us.plan_code = sp.code
+      JOIN subscription_plan_templates spt ON us.plan_code = spt.code
+      LEFT JOIN subscription_country_pricing scp ON spt.code = scp.plan_code 
+        AND scp.country_code = $2 AND scp.is_active = true
       WHERE us.user_id = $1
-    `, [userId]);
+    `, [userId, req.user.country_code || 'LK']);
     
     if (!subscription) {
       return res.status(400).json({ success: false, error: 'No subscription found' });
@@ -193,27 +217,42 @@ router.get('/plans', async (req, res) => {
     let plans;
     
     if (country) {
-      // Get plans with country-specific pricing
+      // Get plan templates with country-specific pricing (only approved/active ones)
       plans = await db.query(`
         SELECT 
-          ssp.*,
-          COALESCE(sscp.price, ssp.price) as price,
-          COALESCE(sscp.currency, ssp.currency) as currency,
-          sscp.is_active as country_pricing_active
-        FROM simple_subscription_plans ssp
-        LEFT JOIN simple_subscription_country_pricing sscp 
-          ON ssp.code = sscp.plan_code 
-          AND sscp.country_code = $1 
-          AND sscp.is_active = true
-        WHERE ssp.is_active = true 
-        ORDER BY COALESCE(sscp.price, ssp.price) ASC
+          spt.code,
+          spt.name,
+          spt.description,
+          spt.features,
+          scp.price,
+          scp.currency,
+          scp.response_limit,
+          scp.is_active as country_pricing_active,
+          scp.created_at as pricing_created_at
+        FROM subscription_plan_templates spt
+        INNER JOIN subscription_country_pricing scp 
+          ON spt.code = scp.plan_code 
+          AND scp.country_code = $1 
+          AND scp.is_active = true
+        WHERE spt.is_active = true 
+        ORDER BY scp.price ASC
       `, [country]);
     } else {
-      // Get default plans
+      // Get plan templates without pricing (fallback for no country specified)
       plans = await db.query(`
-        SELECT * FROM simple_subscription_plans 
+        SELECT 
+          code,
+          name,
+          description,
+          features,
+          NULL as price,
+          'USD' as currency,
+          3 as response_limit,
+          false as country_pricing_active,
+          created_at as pricing_created_at
+        FROM subscription_plan_templates 
         WHERE is_active = true 
-        ORDER BY price ASC
+        ORDER BY name ASC
       `);
     }
     
@@ -237,9 +276,9 @@ router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
       return res.status(400).json({ success: false, error: 'Plan code is required' });
     }
     
-    // Verify plan exists
+    // Verify plan template exists
     const plan = await db.queryOne(`
-      SELECT * FROM simple_subscription_plans 
+      SELECT * FROM subscription_plan_templates 
       WHERE code = $1 AND is_active = true
     `, [plan_code]);
     
