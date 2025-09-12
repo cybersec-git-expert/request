@@ -311,7 +311,7 @@ router.get('/plans', async (req, res) => {
 router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
     try {
         const { planCode } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user.id;
 
         if (!planCode) {
             return res.status(400).json({
@@ -321,7 +321,7 @@ router.post('/subscribe', auth.authMiddleware(), async (req, res) => {
         }
 
         // Get plan details with country-specific pricing
-        const countryCode = req.user.countryCode || 'LK';
+        const countryCode = req.user.country_code || 'LK';
         const planQuery = `
             SELECT 
                 ssp.*,
@@ -443,7 +443,7 @@ router.post('/verify-business', auth.authMiddleware(), auth.roleMiddleware(['adm
 router.post('/confirm-payment', auth.authMiddleware(), async (req, res) => {
     try {
         const { paymentId, transactionId } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user.id;
 
         if (!paymentId) {
             return res.status(400).json({
