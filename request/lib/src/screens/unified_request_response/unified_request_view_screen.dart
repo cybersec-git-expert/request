@@ -167,6 +167,15 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           _isOwner = r?.viewerContext?.isOwner ?? owner;
           _responses = responses;
           _loading = false;
+          // Prefer remainingResponses from viewer_context.entitlements when present
+          final ent = r?.viewerContext?.entitlements;
+          final rem = ent is Map<String, dynamic>
+              ? (ent['remainingResponses'] as int?)
+              : null;
+          if (rem != null) {
+            _remainingResponses = rem;
+            _loadingRemaining = false;
+          }
         });
         // Lazy fetch requester avatar after first frame
         if (r != null && (r.userId).isNotEmpty) {
