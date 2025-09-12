@@ -8,9 +8,23 @@ router.get('/', async (req, res) => {
   try {
     const { country } = req.query;
     const params = [];
-    let where = 'is_active = true';
-    if (country) { where += ' AND country_code = $1'; params.push(country); }
-    const r = await db.query(`SELECT id, country_code, provider, display_name, public_config, is_active, updated_at FROM country_payment_gateways WHERE ${where} ORDER BY display_name`, params);
+    let where = 'cpg.is_active = true';
+    if (country) { where += ' AND cpg.country_code = $1'; params.push(country); }
+    const r = await db.query(`
+      SELECT 
+        cpg.id, 
+        cpg.country_code, 
+        pg.code as provider, 
+        pg.name as display_name, 
+        cpg.configuration as public_config, 
+        cpg.is_active, 
+        cpg.is_primary,
+        cpg.updated_at 
+      FROM country_payment_gateways cpg
+      JOIN payment_gateways pg ON cpg.payment_gateway_id = pg.id
+      WHERE ${where} 
+      ORDER BY pg.name
+    `, params);
     res.json({ success:true, data:r.rows });
   } catch (e) { console.error('List gateways failed', e); res.status(500).json({ success:false, error:'Failed to load gateways' }); }
 });
