@@ -104,7 +104,9 @@ const PaymentGatewayManager = () => {
     
     // Initialize configuration with empty values based on gateway fields
     if (gateway.configuration_fields) {
-      const fields = JSON.parse(gateway.configuration_fields);
+      const fields = typeof gateway.configuration_fields === 'string' 
+        ? JSON.parse(gateway.configuration_fields) 
+        : gateway.configuration_fields;
       const initialConfig = {};
       Object.keys(fields).forEach(key => {
         initialConfig[key] = '';
@@ -181,7 +183,9 @@ const PaymentGatewayManager = () => {
   const renderConfigurationFields = () => {
     if (!selectedGateway?.configuration_fields) return null;
 
-    const fields = JSON.parse(selectedGateway.configuration_fields);
+    const fields = typeof selectedGateway.configuration_fields === 'string' 
+      ? JSON.parse(selectedGateway.configuration_fields) 
+      : selectedGateway.configuration_fields;
     
     return Object.entries(fields).map(([fieldKey, fieldConfig]) => {
       if (fieldConfig.type === 'select') {
