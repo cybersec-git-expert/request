@@ -73,19 +73,30 @@ class SimpleSubscriptionService {
       final countryCode =
           countryService.countryCode ?? 'LK'; // Default to Sri Lanka
 
+      print('DEBUG: Getting plans for country: $countryCode');
+
       final response = await ApiClient.instance.get<Map<String, dynamic>>(
           '/simple-subscription/plans',
           queryParameters: {'country': countryCode});
 
+      print('DEBUG: API Response success: ${response.isSuccess}');
+      print('DEBUG: API Response data: ${response.data}');
+      print('DEBUG: API Response error: ${response.error}');
+
       if (response.isSuccess && response.data != null) {
         final plans = response.data!['plans'] as List?;
+        print('DEBUG: Plans list: $plans');
         if (plans != null) {
-          return plans
+          final subscriptionPlans = plans
               .map((plan) =>
                   SubscriptionPlan.fromJson(Map<String, dynamic>.from(plan)))
               .toList();
+          print(
+              'DEBUG: Converted to SubscriptionPlan objects: ${subscriptionPlans.length} plans');
+          return subscriptionPlans;
         }
       }
+      print('DEBUG: Returning empty list');
       return [];
     } catch (e) {
       print('Error getting subscription plans: $e');
