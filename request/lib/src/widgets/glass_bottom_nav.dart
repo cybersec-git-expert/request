@@ -134,12 +134,12 @@ class _NavButton extends StatelessWidget {
     final color = item.selected
         ? GlassTheme.colors.textPrimary
         : GlassTheme.colors.textSecondary;
-    final icon = Icon(item.icon, size: 22, color: color);
+    final icon = Icon(item.icon, size: 24, color: color);
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: item.onTap,
       child: SizedBox(
-        height: 38,
+        height: 40,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Column(
