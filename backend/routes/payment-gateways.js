@@ -241,7 +241,10 @@ router.get('/gateways/:countryCode/:gatewayId/config',
       
       // Decrypt configuration for editing (but mask sensitive values)
       const decryptedConfig = {};
-      const config = JSON.parse(gateway.configuration);
+      // Handle configuration - it might already be parsed as object by PostgreSQL driver
+      const config = typeof gateway.configuration === 'string' 
+        ? JSON.parse(gateway.configuration) 
+        : gateway.configuration;
       
       for (const [key, value] of Object.entries(config)) {
         if (key.includes('secret') || key.includes('key') || key.includes('password')) {
