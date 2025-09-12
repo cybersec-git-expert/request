@@ -218,6 +218,7 @@ router.get('/plans', async (req, res) => {
     
     if (country) {
       // Get plan templates with country-specific pricing (only approved/active ones)
+      // If no country pricing exists, return empty result instead of error
       plans = await db.query(`
         SELECT 
           spt.code,
@@ -237,6 +238,26 @@ router.get('/plans', async (req, res) => {
         WHERE spt.is_active = true 
         ORDER BY scp.price ASC
       `, [country]);
+      
+      // If no country-specific plans found, return template info with a note
+      if (plans.rows.length === 0) {
+        plans = await db.query(`
+          SELECT 
+            code,
+            name,
+            description,
+            features,
+            NULL as price,
+            'USD' as currency,
+            NULL as response_limit,
+            false as country_pricing_active,
+            created_at as pricing_created_at,
+            'No pricing available for this country' as note
+          FROM subscription_plan_templates 
+          WHERE is_active = true 
+          ORDER BY name ASC
+        `);
+      }
     } else {
       // Get plan templates without pricing (fallback for no country specified)
       plans = await db.query(`
