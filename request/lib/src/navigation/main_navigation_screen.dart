@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/glass_theme.dart';
+import '../widgets/glass_bottom_nav.dart';
 import '../services/rest_notification_service.dart';
 import '../home/screens/home_screen.dart';
 import '../home/screens/browse_requests_screen.dart';
@@ -79,44 +80,68 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: GlassTheme.backgroundColor,
       body: _navigationItems[_currentIndex].screen,
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            // Opaque to match Home background
-            color: GlassTheme.backgroundColor,
-            border: const Border(
-              top: BorderSide(
-                color: Color.fromARGB(64, 148, 147, 147), // subtle divider
-                width: 0.2,
-              ),
-            ),
-          ),
-          child: NavigationBar(
-            backgroundColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            height: 64,
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() => _currentIndex = index);
-              _persistIndex(index);
+      bottomNavigationBar: GlassBottomNavBar(
+        // Uniform mode: one row, no center circle
+        items: [
+          GlassBottomNavItem(
+            icon: _currentIndex == 0
+                ? _navigationItems[0].activeIcon
+                : _navigationItems[0].icon,
+            label: _navigationItems[0].label,
+            selected: _currentIndex == 0,
+            onTap: () {
+              setState(() => _currentIndex = 0);
+              _persistIndex(0);
             },
-            indicatorColor:
-                Theme.of(context).colorScheme.primary.withOpacity(0.15),
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: _navigationItems.map((item) {
-              final isMessages = item.label.toLowerCase() == 'messages';
-              final hasBadge = isMessages && _unreadMessages > 0;
-              return NavigationDestination(
-                icon: _buildIcon(item.icon, hasBadge ? _unreadMessages : null),
-                selectedIcon: _buildIcon(
-                    item.activeIcon, hasBadge ? _unreadMessages : null),
-                label: item.label,
-              );
-            }).toList(),
           ),
-        ),
+          GlassBottomNavItem(
+            icon: _currentIndex == 1
+                ? _navigationItems[1].activeIcon
+                : _navigationItems[1].icon,
+            label: _navigationItems[1].label,
+            selected: _currentIndex == 1,
+            onTap: () {
+              setState(() => _currentIndex = 1);
+              _persistIndex(1);
+            },
+          ),
+          GlassBottomNavItem(
+            icon: _currentIndex == 2
+                ? _navigationItems[2].activeIcon
+                : _navigationItems[2].icon,
+            label: _navigationItems[2].label,
+            selected: _currentIndex == 2,
+            onTap: () {
+              setState(() => _currentIndex = 2);
+              _persistIndex(2);
+            },
+          ),
+          GlassBottomNavItem(
+            icon: _currentIndex == 3
+                ? _navigationItems[3].activeIcon
+                : _navigationItems[3].icon,
+            label: _navigationItems[3].label,
+            selected: _currentIndex == 3,
+            badgeCount: _unreadMessages,
+            onTap: () {
+              setState(() => _currentIndex = 3);
+              _persistIndex(3);
+            },
+          ),
+          GlassBottomNavItem(
+            icon: _currentIndex == 4
+                ? _navigationItems[4].activeIcon
+                : _navigationItems[4].icon,
+            label: _navigationItems[4].label,
+            selected: _currentIndex == 4,
+            onTap: () {
+              setState(() => _currentIndex = 4);
+              _persistIndex(4);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -137,36 +162,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
-  Widget _buildIcon(IconData icon, [int? badge]) {
-    final iconWidget = Icon(icon, size: 26);
-    if (badge == null || badge <= 0) return iconWidget;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        iconWidget,
-        Positioned(
-          right: -6,
-          top: -6,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            constraints: const BoxConstraints(minWidth: 16),
-            child: Text(
-              badge > 99 ? '99+' : '$badge',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // Note: badge support can be added into GlassBottomNavBar if needed.
 }
 
 class _NavigationItem {
