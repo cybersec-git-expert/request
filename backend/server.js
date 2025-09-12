@@ -587,26 +587,6 @@ app.get('/api/ping', (req, res) => {
 
 
 
-// 404 handler LAST
-
-app.use('*', (req, res) => {
-
-  res.status(404).json({
-
-    success: false,
-
-    error: 'Endpoint not found',
-
-    path: req.originalUrl,
-
-    method: req.method
-
-  });
-
-});
-
-
-
 // Start server
 
 const PORT = process.env.PORT || 3001;
@@ -680,6 +660,16 @@ app.get('/api/entitlements/me', async (req, res) => {
       error: 'Failed to get entitlements'
     });
   }
+});
+
+// 404 handler LAST - must be after all route definitions
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint not found',
+    path: req.originalUrl,
+    method: req.method
+  });
 });
 
 module.exports = app;
