@@ -1,377 +1,436 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../src/theme/glass_theme.dart';
+import '../../src/services/simple_subscription_service.dart';
 
-/// Simple subscription page to replace complex multi-tier subscription screen
-/// Fixes "Something went wrong" error by providing a clean two-tier model
-class SimpleSubscriptionPage extends StatelessWidget {
-  const SimpleSubscriptionPage({super.key});
+class SimpleSubscriptionPage extends StatefulWidget {
+  const SimpleSubscriptionPage({Key? key}) : super(key: key);
+
+  @override
+  State<SimpleSubscriptionPage> createState() => _SimpleSubscriptionPageState();
+}
+
+class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
+  String selectedPlanId = '';
+  bool isLoading = true;
+  List<SubscriptionPlan> plans = [];
+  SimpleSubscriptionStatus? currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSubscriptionData();
+  }
+
+  Future<void> _loadSubscriptionData() async {
+    try {
+      final service = SimpleSubscriptionService.instance;
+      final statusResult = await service.getSubscriptionStatus();
+      final plansResult = await service.getAvailablePlans();
+
+      setState(() {
+        currentStatus = statusResult;
+        plans = plansResult;
+        selectedPlanId = currentStatus?.planCode ?? '';
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading subscription data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choose Your Plan'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            const SizedBox(height: 20),
-            const Text(
-              'Simple. Clear. Affordable.',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+    return Container(
+      decoration: GlassTheme.backgroundGradient,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                GlassTheme.isDarkMode ? Brightness.light : Brightness.dark,
+          ),
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: GlassTheme.colors.textPrimary,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Choose the plan that works best for your business',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-
-            // Free Plan Card
-            _buildPlanCard(
-              context: context,
-              title: 'Free Plan',
-              price: '₹0',
-              period: '/month',
-              features: [
-                '3 responses per month',
-                'Respond to any request',
-                'Basic profile',
-                'Standard support',
-              ],
-              buttonText: 'Current Plan',
-              isActive: true,
-              onPressed: null, // Current plan, no action needed
-            ),
-
-            const SizedBox(height: 20),
-
-            // Pro Plan Card
-            _buildPlanCard(
-              context: context,
-              title: 'Pro Plan',
-              price: '₹299',
-              period: '/month',
-              features: [
-                'Unlimited responses',
-                'Verification badge*',
-                'Product pricing access*',
-                'Priority support',
-                'Advanced analytics',
-              ],
-              buttonText: 'Upgrade Now',
-              isActive: false,
-              onPressed: () => _handleUpgrade(context),
-              isRecommended: true,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Info text
-            const Text(
-              '*Verification badge and product pricing require business verification',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 40),
-
-            // Benefits section
-            _buildBenefitsSection(),
-          ],
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Choose Your Plan',
+            style: GlassTheme.titleMedium,
+          ),
+          centerTitle: true,
         ),
+        body: isLoading
+            ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      GlassTheme.colors.primaryBlue),
+                ),
+              )
+            : SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Current status header
+                      if (currentStatus != null) ...[
+                        GlassTheme.glassCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.verified_user,
+                                    color: GlassTheme.colors.primaryBlue,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Current Plan: ${currentStatus!.planName}',
+                                    style: GlassTheme.titleSmall,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              if (currentStatus!.responsesLimit != null) ...[
+                                Text(
+                                  'Responses Used: ${currentStatus!.responsesUsed}/${currentStatus!.responsesLimit}',
+                                  style: GlassTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                LinearProgressIndicator(
+                                  value: currentStatus!.responsesUsed /
+                                      (currentStatus!.responsesLimit ?? 1),
+                                  backgroundColor:
+                                      GlassTheme.colors.glassBorder,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    currentStatus!.canRespond
+                                        ? GlassTheme.colors.successColor
+                                        : GlassTheme.colors.errorColor,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  'Unlimited Responses',
+                                  style: GlassTheme.bodyMedium.copyWith(
+                                    color: GlassTheme.colors.successColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Plans section
+                      Text(
+                        'Available Plans',
+                        style: GlassTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Plans list
+                      ...plans.map((plan) => _buildPlanCard(plan)),
+
+                      const SizedBox(height: 24),
+
+                      // Subscribe button
+                      if (selectedPlanId.isNotEmpty &&
+                          selectedPlanId != currentStatus?.planCode)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _subscribeToPlan,
+                            style: GlassTheme.primaryButton,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                'Subscribe to ${plans.firstWhere((p) => p.code == selectedPlanId).name}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
       ),
     );
   }
 
-  Widget _buildPlanCard({
-    required BuildContext context,
-    required String title,
-    required String price,
-    required String period,
-    required List<String> features,
-    required String buttonText,
-    required bool isActive,
-    required VoidCallback? onPressed,
-    bool isRecommended = false,
-  }) {
+  Widget _buildPlanCard(SubscriptionPlan plan) {
+    final isSelected = selectedPlanId == plan.code;
+    final isCurrent = currentStatus?.planCode == plan.code;
+
     return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: isRecommended ? Colors.blue : Colors.grey.shade300,
-          width: isRecommended ? 2 : 1,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        color: isActive ? Colors.blue.shade50 : Colors.white,
-      ),
-      child: Column(
-        children: [
-          // Recommended badge
-          if (isRecommended)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(11),
-                  topRight: Radius.circular(11),
-                ),
-              ),
-              child: const Text(
-                'RECOMMENDED',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
+      margin: const EdgeInsets.only(bottom: 16),
+      child: GlassTheme.glassCard(
+        child: InkWell(
+          onTap: () {
+            if (!isCurrent) {
+              setState(() {
+                selectedPlanId = plan.code;
+              });
+            }
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: isSelected || isCurrent
+                  ? Border.all(
+                      color: isCurrent
+                          ? GlassTheme.colors.successColor
+                          : GlassTheme.colors.primaryBlue,
+                      width: 2,
+                    )
+                  : null,
             ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Title
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Price
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      price,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    Text(
-                      period,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Features
-                ...features.map((feature) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              feature,
-                              style: const TextStyle(fontSize: 14),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  plan.name,
+                                  style: GlassTheme.titleSmall,
+                                ),
+                                if (isCurrent) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: GlassTheme.colors.successColor,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      'CURRENT',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
+                            const SizedBox(height: 4),
+                            if (plan.description?.isNotEmpty == true)
+                              Text(
+                                plan.description!,
+                                style: GlassTheme.bodyMedium,
+                              ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${plan.currency} ${plan.price.toStringAsFixed(0)}',
+                            style: GlassTheme.titleMedium.copyWith(
+                              color: GlassTheme.colors.primaryBlue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            plan.price == 0 ? 'Free' : '/month',
+                            style: GlassTheme.bodySmall,
                           ),
                         ],
                       ),
-                    )),
+                    ],
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                // Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isActive
-                          ? Colors.grey
-                          : (isRecommended
-                              ? Colors.blue
-                              : Colors.grey.shade600),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
+                  // Response limit info
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: GlassTheme.colors.glassBorder.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          plan.responseLimit == -1
+                              ? Icons.all_inclusive
+                              : Icons.reply,
+                          color: GlassTheme.colors.primaryBlue,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          plan.responseLimit == -1
+                              ? 'Unlimited responses per month'
+                              : '${plan.responseLimit} responses per month',
+                          style: GlassTheme.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Features list
+                  if (plan.features.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    ...plan.features.map((feature) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: GlassTheme.colors.successColor,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  feature,
+                                  style: GlassTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
+
+                  // Selection indicator
+                  if (isSelected && !isCurrent) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: GlassTheme.colors.primaryBlue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: GlassTheme.colors.primaryBlue.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        'Selected - Tap Subscribe below',
+                        textAlign: TextAlign.center,
+                        style: GlassTheme.bodyMedium.copyWith(
+                          color: GlassTheme.colors.primaryBlue,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      buttonText,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  ],
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildBenefitsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Why Choose Pro?',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildBenefitItem(
-          icon: Icons.all_inclusive,
-          title: 'Unlimited Responses',
-          description:
-              'Respond to as many requests as you want, no monthly limits',
-        ),
-        _buildBenefitItem(
-          icon: Icons.verified,
-          title: 'Trust Badge',
-          description:
-              'Get verified badge to build customer trust and credibility',
-        ),
-        _buildBenefitItem(
-          icon: Icons.price_check,
-          title: 'Product Pricing',
-          description:
-              'Set and display your product/service prices to customers',
-        ),
-        _buildBenefitItem(
-          icon: Icons.support_agent,
-          title: 'Priority Support',
-          description: 'Get faster response times and dedicated support',
-        ),
-      ],
-    );
-  }
+  Future<void> _subscribeToPlan() async {
+    if (selectedPlanId.isEmpty) return;
 
-  Widget _buildBenefitItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.blue,
-              size: 20,
-            ),
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    GlassTheme.colors.primaryBlue),
+              ),
+              const SizedBox(width: 16),
+              const Text('Updating subscription...'),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
 
-  void _handleUpgrade(BuildContext context) {
-    // Show upgrade dialog or navigate to payment
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Upgrade to Pro'),
-          content: const Text(
-            'Ready to unlock unlimited responses and premium features?\n\n'
-            'Pro plan includes:\n'
-            '• Unlimited responses\n'
-            '• Verification badge (after business verification)\n'
-            '• Product pricing access\n'
-            '• Priority support\n\n'
-            'Only ₹299/month',
+      final service = SimpleSubscriptionService.instance;
+      final success = await service.subscribeToPlan(selectedPlanId);
+
+      Navigator.pop(context); // Close loading dialog
+
+      if (success) {
+        // Reload data to reflect changes
+        await _loadSubscriptionData();
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Successfully subscribed!',
+              style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: GlassTheme.colors.successColor,
+            behavior: SnackBarBehavior.floating,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Maybe Later'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _processUpgrade(context);
-              },
-              child: const Text('Upgrade Now'),
-            ),
-          ],
         );
-      },
-    );
-  }
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to subscribe. Please try again.',
+              style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: GlassTheme.colors.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      print('Error subscribing: $e');
 
-  void _processUpgrade(BuildContext context) {
-    // TODO: Integrate with payment gateway
-    // For now, show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-            'Payment integration coming soon! Your upgrade request has been noted.'),
-        backgroundColor: Colors.green,
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'An error occurred. Please try again.',
+            style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
+          ),
+          backgroundColor: GlassTheme.colors.errorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }

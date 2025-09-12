@@ -66,6 +66,8 @@ const productSyncRoutes = require('./routes/product-sync');
 
 const entityActivationRoutes = require('./routes/entity-activations');
 const subscriptionRoutes = require('./routes/subscription');
+const simpleSubscriptionRoutes = require('./routes/simple-subscription');
+const simpleSubscriptionAdminRoutes = require('./routes/simple-subscription-admin');
 // Removed: subscription plan routes
 
 // Removed: subscription plan routes
@@ -393,6 +395,8 @@ app.use('/api/upload', uploadRoutes); // Image upload endpoint
 
 app.use('/api/s3', uploadS3Routes); // S3 upload endpoints
 app.use('/api/subscription', subscriptionRoutes); // Simple subscription system
+app.use('/api/simple-subscription', simpleSubscriptionRoutes); // Simple subscription user endpoints
+app.use('/api/admin/subscription', simpleSubscriptionAdminRoutes); // Simple subscription admin endpoints
 app.use('/api/promo-codes', promoCodesRoutes); // NEW - Promo codes admin endpoints
 // Entitlements API endpoints will be added at the end of the file
 
