@@ -9,12 +9,17 @@ const path = require('path');
 // Migration endpoint for setting up payment gateway tables
 router.post('/migrate', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
   try {
-    // Read the migration file
+    // Read the payment gateway migration file
     const migrationPath = path.join(__dirname, '../database/migrations/create_payment_gateways.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
     
-    // Execute the migration
+    // Read the payment transactions migration file
+    const transactionsMigrationPath = path.join(__dirname, '../database/migrations/create_payment_transactions.sql');
+    const transactionsMigrationSQL = fs.readFileSync(transactionsMigrationPath, 'utf8');
+    
+    // Execute the migrations
     await db.query(migrationSQL);
+    await db.query(transactionsMigrationSQL);
     
     // Insert default payment gateways
     const defaultGateways = `
@@ -41,7 +46,7 @@ router.post('/migrate', auth.authMiddleware(), auth.roleMiddleware(['super_admin
     
     res.json({
       success: true,
-      message: 'Payment gateway tables and default gateways created successfully'
+      message: 'Payment gateway tables, transactions table and default gateways created successfully'
     });
   } catch (error) {
     console.error('Migration error:', error);
