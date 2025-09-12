@@ -42,9 +42,8 @@ import CountryVariableTypeManagement from './pages/CountryVariableTypeManagement
 import SMSConfigurationModule from './pages/SMSConfigurationModule';
 import SuperAdminSMSManagement from './pages/SuperAdminSMSManagement';
 import DebugAuth from './components/DebugAuth';
-import SubscriptionAdmin from './components/subscriptions/SubscriptionAdmin.jsx';
 import SimpleSubscriptionAdmin from './components/SimpleSubscriptionAdmin.jsx';
-// Removed: SubscriptionPlansNew
+// Removed: SubscriptionPlansNew, SubscriptionAdmin
 import BusinessPriceManagement from './pages/BusinessPriceManagement';
 import PriceComparisonPage from './pages/PriceComparisonPage';
 import BannersModule from './pages/BannersModule.jsx';
@@ -125,9 +124,8 @@ function App() {
               <Route path="sms-management" element={<SuperAdminSMSManagement />} />
               
               {/* Add more protected routes here */}
-              {/* Subscriptions admin */}
-              <Route path="subscription-management" element={<SubscriptionAdmin />} />
-              <Route path="simple-subscription-admin" element={<SimpleSubscriptionAdmin />} />
+              {/* Simple Subscription Management */}
+              <Route path="subscription-management" element={<SimpleSubscriptionAdmin />} />
               
               {/* Price Management Routes */}
               <Route path="business-price-management" element={<BusinessPriceManagement />} />

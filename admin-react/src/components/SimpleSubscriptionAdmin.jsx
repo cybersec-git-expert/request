@@ -50,96 +50,51 @@ import {
   Approval as ApprovalIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/apiClient';
 
 // API service for subscription management
 class SubscriptionAdminService {
-  static baseUrl = import.meta.env.VITE_API_BASE_URL + '/api' || 'http://3.92.216.149:3001/api';
-
   static async getPlans(country = null) {
     const params = country ? `?country=${country}` : '';
-    const response = await fetch(`${this.baseUrl}/admin/subscription/plans${params}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch plans');
-    return response.json();
+    const response = await api.get(`/simple-subscription/plans${params}`);
+    return response.data;
   }
 
   static async createPlan(plan) {
-    const response = await fetch(`${this.baseUrl}/admin/subscription/plans`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify(plan)
-    });
-    if (!response.ok) throw new Error('Failed to create plan');
-    return response.json();
+    const response = await api.post('/admin/subscription/plans', plan);
+    return response.data;
   }
 
   static async updatePlan(code, plan) {
-    const response = await fetch(`${this.baseUrl}/admin/subscription/plans/${code}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify(plan)
-    });
-    if (!response.ok) throw new Error('Failed to update plan');
-    return response.json();
+    const response = await api.put(`/admin/subscription/plans/${code}`, plan);
+    return response.data;
   }
 
   static async setCountryPricing(code, pricing) {
-    const response = await fetch(`${this.baseUrl}/admin/subscription/plans/${code}/pricing`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify(pricing)
-    });
-    if (!response.ok) throw new Error('Failed to set pricing');
-    return response.json();
+    const response = await api.post(`/admin/subscription/plans/${code}/pricing`, pricing);
+    return response.data;
   }
 
   static async approvePricing(code, country, active) {
-    const response = await fetch(`${this.baseUrl}/admin/subscription/plans/${code}/pricing/${country}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ is_active: active })
-    });
-    if (!response.ok) throw new Error('Failed to approve pricing');
-    return response.json();
+    const response = await api.put(`/admin/subscription/plans/${code}/pricing/${country}`, { is_active: active });
+    return response.data;
   }
 
   static async getPendingApprovals() {
-    const response = await fetch(`${this.baseUrl}/admin/subscription/pending-approvals`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch pending approvals');
-    return response.json();
+    const response = await api.get('/admin/subscription/pending-approvals');
+    return response.data;
   }
 
   static async getAnalytics(country = null) {
     const params = country ? `?country=${country}` : '';
-    const response = await fetch(`${this.baseUrl}/admin/subscription/analytics${params}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch analytics');
-    return response.json();
+    const response = await api.get(`/admin/subscription/analytics${params}`);
+    return response.data;
   }
 
   static async getUserSubscriptions(filters = {}) {
     const params = new URLSearchParams(filters).toString();
-    const response = await fetch(`${this.baseUrl}/admin/subscription/users?${params}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch user subscriptions');
-    return response.json();
+    const response = await api.get(`/admin/subscription/users?${params}`);
+    return response.data;
   }
 }
 
@@ -162,7 +117,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 export default function SimpleSubscriptionAdmin() {
-  const { user, isSuperAdmin, isCountryAdmin } = useAuth();
+  const { user, isSuperAdmin, isCountryAdmin, isAuthenticated } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -187,7 +142,9 @@ export default function SimpleSubscriptionAdmin() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [pricingForm, setPricingForm] = useState({
     country_code: '',
-    price: 0
+    price: 0,
+    currency: 'USD',
+    response_limit: 3
   });
 
   // Pending approvals
@@ -241,6 +198,27 @@ export default function SimpleSubscriptionAdmin() {
     }
   }, [isSuperAdmin, isCountryAdmin, loadPlansCallback, loadPendingApprovalsCallback, loadAnalyticsCallback]);
 
+  // Check authentication and permissions
+  if (!isAuthenticated) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Please log in to access the subscription management system.
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (!isSuperAdmin && !isCountryAdmin) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          You don't have permission to access the subscription management system.
+        </Alert>
+      </Box>
+    );
+  }
+
   const loadUserSubscriptions = async () => {
     try {
       setLoading(true);
@@ -283,7 +261,7 @@ export default function SimpleSubscriptionAdmin() {
       setSuccess('Pricing submitted for approval');
       setCountryPricingDialog(false);
       setSelectedPlan(null);
-      setPricingForm({ country_code: '', price: 0 });
+      setPricingForm({ country_code: '', price: 0, currency: 'USD', response_limit: 3 });
       loadPlansCallback();
     } catch (err) {
       setError('Failed to set pricing: ' + err.message);
@@ -326,7 +304,9 @@ export default function SimpleSubscriptionAdmin() {
     setSelectedPlan(plan);
     setPricingForm({
       country_code: isCountryAdmin ? user?.country_code : '',
-      price: plan.price
+      price: 0,
+      currency: 'USD',
+      response_limit: 3
     });
     setCountryPricingDialog(true);
   };
@@ -633,9 +613,12 @@ export default function SimpleSubscriptionAdmin() {
       {/* Plan Creation/Edit Dialog */}
       <Dialog open={planDialog} onClose={() => setPlanDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
+          {editingPlan ? 'Edit Plan Template' : 'Create Plan Template'}
         </DialogTitle>
         <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Create a plan template that country admins can customize with local pricing and limits.
+          </Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} md={6}>
               <TextField
@@ -644,6 +627,7 @@ export default function SimpleSubscriptionAdmin() {
                 value={planForm.code}
                 onChange={(e) => setPlanForm({...planForm, code: e.target.value})}
                 disabled={!!editingPlan}
+                helperText="Unique identifier (e.g., basic, pro, enterprise)"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -652,6 +636,7 @@ export default function SimpleSubscriptionAdmin() {
                 label="Plan Name"
                 value={planForm.name}
                 onChange={(e) => setPlanForm({...planForm, name: e.target.value})}
+                helperText="Display name for the plan"
               />
             </Grid>
             <Grid item xs={12}>
@@ -659,49 +644,23 @@ export default function SimpleSubscriptionAdmin() {
                 fullWidth
                 label="Description"
                 multiline
-                rows={2}
+                rows={3}
                 value={planForm.description}
                 onChange={(e) => setPlanForm({...planForm, description: e.target.value})}
+                helperText="Brief description of what this plan offers"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Price"
-                type="number"
-                value={planForm.price}
-                onChange={(e) => setPlanForm({...planForm, price: parseFloat(e.target.value) || 0})}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Currency</InputLabel>
-                <Select
-                  value={planForm.currency}
-                  onChange={(e) => setPlanForm({...planForm, currency: e.target.value})}
-                >
-                  <MenuItem value="USD">USD</MenuItem>
-                  <MenuItem value="LKR">LKR</MenuItem>
-                  <MenuItem value="EUR">EUR</MenuItem>
-                  <MenuItem value="GBP">GBP</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Response Limit (-1 for unlimited)"
-                type="number"
-                value={planForm.response_limit}
-                onChange={(e) => setPlanForm({...planForm, response_limit: parseInt(e.target.value) || 0})}
-              />
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Note: Pricing, currency, and response limits will be set by country admins and require approval.
+              </Typography>
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPlanDialog(false)}>Cancel</Button>
           <Button onClick={handleCreatePlan} variant="contained" disabled={loading}>
-            {editingPlan ? 'Update' : 'Create'}
+            {editingPlan ? 'Update Template' : 'Create Template'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -712,6 +671,9 @@ export default function SimpleSubscriptionAdmin() {
           Set Country Pricing for {selectedPlan?.name}
         </DialogTitle>
         <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Set the price, currency, and response limits for your country. This will be submitted for super admin approval.
+          </Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
@@ -723,13 +685,41 @@ export default function SimpleSubscriptionAdmin() {
                 helperText="2-letter ISO country code (e.g., LK, US, GB)"
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Local Price"
                 type="number"
                 value={pricingForm.price}
                 onChange={(e) => setPricingForm({...pricingForm, price: parseFloat(e.target.value) || 0})}
+                helperText="Price in local currency"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Currency</InputLabel>
+                <Select
+                  value={pricingForm.currency}
+                  onChange={(e) => setPricingForm({...pricingForm, currency: e.target.value})}
+                >
+                  <MenuItem value="USD">USD</MenuItem>
+                  <MenuItem value="LKR">LKR</MenuItem>
+                  <MenuItem value="EUR">EUR</MenuItem>
+                  <MenuItem value="GBP">GBP</MenuItem>
+                  <MenuItem value="INR">INR</MenuItem>
+                  <MenuItem value="AUD">AUD</MenuItem>
+                  <MenuItem value="CAD">CAD</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Response Limit"
+                type="number"
+                value={pricingForm.response_limit}
+                onChange={(e) => setPricingForm({...pricingForm, response_limit: parseInt(e.target.value) || 0})}
+                helperText="Number of responses per month (-1 for unlimited)"
               />
             </Grid>
           </Grid>

@@ -62,30 +62,32 @@ router.get('/plans', auth.authMiddleware(), auth.roleMiddleware(['super_admin', 
 });
 
 // Create new subscription plan (super admin only)
+// Create subscription plan template (super admin only)
 router.post('/plans', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
   try {
-    const { code, name, description, price, currency, response_limit, features } = req.body;
+    const { code, name, description, features } = req.body;
     
-    if (!code || !name || price === undefined || !currency || response_limit === undefined) {
+    if (!code || !name) {
       return res.status(400).json({ 
         success: false, 
-        error: 'code, name, price, currency, and response_limit are required' 
+        error: 'code and name are required for plan template' 
       });
     }
     
+    // Create template with default values (will be overridden by country pricing)
     const plan = await db.queryOne(`
       INSERT INTO simple_subscription_plans (code, name, description, price, currency, response_limit, features)
-      VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb) 
+      VALUES ($1, $2, $3, 0, 'USD', 0, $4::jsonb) 
       RETURNING *
-    `, [code, name, description, price, currency, response_limit, JSON.stringify(features || [])]);
+    `, [code, name, description || '', JSON.stringify(features || [])]);
     
     res.status(201).json({ success: true, data: plan });
   } catch (e) {
-    console.error('Create subscription plan failed', e);
+    console.error('Create subscription plan template failed', e);
     if (e.code === '23505') { // Unique constraint violation
       res.status(400).json({ success: false, error: 'Plan code already exists' });
     } else {
-      res.status(500).json({ success: false, error: 'Failed to create plan' });
+      res.status(500).json({ success: false, error: 'Failed to create plan template' });
     }
   }
 });
@@ -157,36 +159,40 @@ router.delete('/plans/:code', auth.authMiddleware(), auth.roleMiddleware(['super
 // ===========================================
 
 // Set country-specific pricing (country admin creates, super admin approves)
+// Set country pricing (country admin or super admin)
 router.post('/plans/:code/pricing', auth.authMiddleware(), auth.roleMiddleware(['super_admin', 'country_admin']), async (req, res) => {
   try {
     const { code } = req.params;
-    const { country_code, price } = req.body;
+    const { country_code, price, currency, response_limit } = req.body;
     
-    if (!country_code || price === undefined) {
-      return res.status(400).json({ success: false, error: 'country_code and price are required' });
+    if (!country_code || price === undefined || !currency || response_limit === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'country_code, price, currency, and response_limit are required' 
+      });
     }
-    
-    // Get currency for this country
-    let currency = 'USD';
-    try {
-      const countryRow = await db.queryOne('SELECT default_currency FROM countries WHERE code = $1', [country_code]);
-      if (countryRow?.default_currency) currency = countryRow.default_currency;
-    } catch {}
     
     // Country admin submissions are pending approval (is_active = false)
     const isActive = req.user.role === 'super_admin';
     
+    // First check if the plan exists
+    const planExists = await db.queryOne('SELECT code FROM simple_subscription_plans WHERE code = $1', [code]);
+    if (!planExists) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    
     const pricing = await db.queryOne(`
-      INSERT INTO simple_subscription_country_pricing (plan_code, country_code, price, currency, is_active)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO simple_subscription_country_pricing (plan_code, country_code, price, currency, response_limit, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (plan_code, country_code)
       DO UPDATE SET 
         price = EXCLUDED.price,
         currency = EXCLUDED.currency,
-        is_active = CASE WHEN $6 = 'super_admin' THEN EXCLUDED.is_active ELSE simple_subscription_country_pricing.is_active END,
+        response_limit = EXCLUDED.response_limit,
+        is_active = CASE WHEN $7 = 'super_admin' THEN EXCLUDED.is_active ELSE false END,
         updated_at = CURRENT_TIMESTAMP
       RETURNING *
-    `, [code, country_code, price, currency, isActive, req.user.role]);
+    `, [code, country_code, price, currency, response_limit, isActive, req.user.role]);
     
     res.status(201).json({ success: true, data: pricing });
   } catch (e) {
