@@ -50,88 +50,74 @@ class GlassBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final useUniformItems = items != null && items!.isNotEmpty;
-    return SafeArea(
-      top: false,
-      bottom: true,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.bottomCenter,
-        children: [
-          Container(
-            margin: margin,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: useUniformItems
-                  ? BorderRadius.circular(24)
-                  : const BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: useUniformItems
-                  ? BorderRadius.circular(24)
-                  : const BorderRadius.vertical(top: Radius.circular(24)),
-              child: BottomAppBar(
-                color: Colors.transparent,
-                elevation: 0,
-                shape: null,
-                notchMargin: 0,
-                child: SizedBox(
-                  height: height,
-                  child: useUniformItems
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            for (int i = 0; i < items!.length; i++)
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: i == 0 || i == items!.length - 1
-                                        ? 12
-                                        : 10),
-                                child: _NavButton(
-                                  item: items![i],
-                                  hideSelectedIcon: false,
-                                ),
-                              ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _NavItems(
-                                items: leftItems, hideSelectedIcon: false),
-                            SizedBox(
-                                width: centerIcon != null ? centerSize : 0),
-                            _NavItems(
-                                items: rightItems,
-                                alignEnd: true,
-                                hideSelectedIcon: false),
-                          ],
-                        ),
-                ),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.bottomCenter,
+      children: [
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: GlassTheme.backgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 12,
+                spreadRadius: 1,
+                offset: const Offset(0, -2),
               ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: height,
+              child: useUniformItems
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        for (int i = 0; i < items!.length; i++)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: i == 0 || i == items!.length - 1
+                                    ? 12
+                                    : 10),
+                            child: _NavButton(
+                              item: items![i],
+                              hideSelectedIcon: false,
+                            ),
+                          ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _NavItems(
+                            items: leftItems, hideSelectedIcon: false),
+                        SizedBox(
+                            width: centerIcon != null ? centerSize : 0),
+                        _NavItems(
+                            items: rightItems,
+                            alignEnd: true,
+                            hideSelectedIcon: false),
+                      ],
+                    ),
             ),
           ),
-          if (!useUniformItems && centerIcon != null)
-            Positioned(
-              bottom: height - (centerSize / 2) - 4,
-              child: _CenterActionButton(
-                size: centerSize - 6,
-                backgroundColor:
-                    centerBackgroundColor ?? Colors.black.withOpacity(0.85),
-                iconColor: centerIconColor ?? Colors.white,
-                icon: centerIcon!,
-                onTap: onCenterTap,
-              ),
+        ),
+        if (!useUniformItems && centerIcon != null)
+          Positioned(
+            bottom: height - (centerSize / 2) - 4,
+            child: _CenterActionButton(
+              size: centerSize - 6,
+              backgroundColor:
+                  centerBackgroundColor ?? Colors.black.withOpacity(0.85),
+              iconColor: centerIconColor ?? Colors.white,
+              icon: centerIcon!,
+              onTap: onCenterTap,
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
