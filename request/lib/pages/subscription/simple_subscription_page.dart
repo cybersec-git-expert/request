@@ -79,86 +79,117 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                 ),
               )
             : SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Current status header
-                      if (currentStatus != null) ...[
-                        GlassTheme.glassCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.verified_user,
-                                    color: GlassTheme.colors.primaryBlue,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Current Plan: ${currentStatus!.planName}',
-                                    style: GlassTheme.titleSmall,
-                                  ),
-                                ],
+                child: Column(
+                  children: [
+                    // Scrollable content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Current status header
+                            if (currentStatus != null) ...[
+                              GlassTheme.glassCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.verified_user,
+                                          color: GlassTheme.colors.primaryBlue,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Current Plan: ${currentStatus!.planName}',
+                                          style: GlassTheme.titleSmall,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    if (currentStatus!.responsesLimit !=
+                                        null) ...[
+                                      Text(
+                                        'Responses Used: ${currentStatus!.responsesUsed}/${currentStatus!.responsesLimit}',
+                                        style: GlassTheme.bodyMedium,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      LinearProgressIndicator(
+                                        value: currentStatus!.responsesUsed /
+                                            (currentStatus!.responsesLimit ??
+                                                1),
+                                        backgroundColor:
+                                            GlassTheme.colors.glassBorder,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          currentStatus!.canRespond
+                                              ? GlassTheme.colors.successColor
+                                              : GlassTheme.colors.errorColor,
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      Text(
+                                        'Unlimited Responses',
+                                        style: GlassTheme.bodyMedium.copyWith(
+                                          color: GlassTheme.colors.successColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 8),
-                              if (currentStatus!.responsesLimit != null) ...[
-                                Text(
-                                  'Responses Used: ${currentStatus!.responsesUsed}/${currentStatus!.responsesLimit}',
-                                  style: GlassTheme.bodyMedium,
-                                ),
-                                const SizedBox(height: 4),
-                                LinearProgressIndicator(
-                                  value: currentStatus!.responsesUsed /
-                                      (currentStatus!.responsesLimit ?? 1),
-                                  backgroundColor:
-                                      GlassTheme.colors.glassBorder,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    currentStatus!.canRespond
-                                        ? GlassTheme.colors.successColor
-                                        : GlassTheme.colors.errorColor,
-                                  ),
-                                ),
-                              ] else ...[
-                                Text(
-                                  'Unlimited Responses',
-                                  style: GlassTheme.bodyMedium.copyWith(
-                                    color: GlassTheme.colors.successColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                              const SizedBox(height: 24),
                             ],
-                          ),
+
+                            // Plans section
+                            Text(
+                              'Available Plans',
+                              style: GlassTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Plans list
+                            ...plans.map((plan) => _buildPlanCard(plan)),
+
+                            const SizedBox(
+                                height: 100), // Extra space for button
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
-
-                      // Plans section
-                      Text(
-                        'Available Plans',
-                        style: GlassTheme.titleMedium,
                       ),
-                      const SizedBox(height: 16),
+                    ),
 
-                      // Plans list
-                      ...plans.map((plan) => _buildPlanCard(plan)),
-
-                      const SizedBox(height: 24),
-
-                      // Subscribe button
-                      if (selectedPlanId.isNotEmpty &&
-                          selectedPlanId != currentStatus?.planCode)
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _subscribeToPlan,
-                            style: GlassTheme.primaryButton,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                    // Fixed bottom button
+                    if (selectedPlanId.isNotEmpty &&
+                        selectedPlanId != currentStatus?.planCode)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, -2),
+                            ),
+                          ],
+                        ),
+                        child: SafeArea(
+                          top: false,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 50, // Smaller button height
+                            child: ElevatedButton(
+                              onPressed: _subscribeToPlan,
+                              style: GlassTheme.primaryButton.copyWith(
+                                shape: MaterialStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                               child: Text(
                                 'Subscribe to ${plans.firstWhere((p) => p.code == selectedPlanId).name}',
                                 style: const TextStyle(
@@ -169,8 +200,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
       ),
