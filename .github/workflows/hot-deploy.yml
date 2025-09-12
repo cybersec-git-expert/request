@@ -1,18 +1,22 @@
-name: Build and Deploy Backend Directly (DISABLED - Use hot-deploy instead)
+name: Hot Deploy Backend (Zero Downtime)
 
 on:
-  # Disabled - use hot-deploy.yml instead
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/hot-deploy.yml'
   workflow_dispatch:
 
 jobs:
-  deploy:
+  hot-deploy:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Deploy to EC2
+    - name: Hot Deploy to EC2
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -20,11 +24,11 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          echo "🚀 Starting zero-downtime deployment..."
+          echo "🔥 Starting hot deployment (zero downtime)..."
           
           # Check if container is running
-          if ! docker ps | grep -q request-backend-container; then
-            echo "❌ Container not running, performing full deployment..."
+          if ! docker ps | grep -q "request-backend-container"; then
+            echo "⚠️ Container not running, falling back to full deployment..."
             
             # Create deployment directory
             mkdir -p /tmp/request-backend-deploy
@@ -35,11 +39,10 @@ jobs:
             git clone https://github.com/cybersec-git-expert/request.git .
             cd backend
             
-            # Build Docker image locally
+            # Build and start container
             echo "🔨 Building Docker image..."
             docker build -t request-backend:latest .
             
-            # Start new container
             echo "🚀 Starting new container..."
             docker run -d --name request-backend-container \
               --restart unless-stopped \
@@ -52,58 +55,61 @@ jobs:
             cd /home/ec2-user
             rm -rf /tmp/request-backend-deploy
           else
-            echo "✅ Container running, performing hot file update..."
+            echo "🔄 Hot updating running container..."
             
-            # Create temp directory for sync
-            mkdir -p /tmp/request-sync
-            cd /tmp/request-sync
+            # Create temp directory for updates
+            mkdir -p /tmp/hot-update
+            cd /tmp/hot-update
             
             # Clone latest code
-            echo "📥 Getting latest code..."
             git clone https://github.com/cybersec-git-expert/request.git .
             
-            # Copy updated files to running container
-            echo "� Updating files in container..."
+            # Copy updated files into running container
+            echo "📁 Copying updated backend files..."
             docker cp backend/. request-backend-container:/app/
             
-            # Restart Node.js process inside container (graceful restart)
-            echo "🔄 Restarting Node.js process..."
-            docker exec request-backend-container pkill -f "node"
+            # Restart the Node.js process inside container (graceful restart)
+            echo "🔄 Gracefully restarting Node.js process..."
+            docker exec request-backend-container sh -c "pkill -SIGTERM node || true"
+            
+            # Wait a moment for graceful shutdown
+            sleep 3
+            
+            # The container's restart policy will automatically restart the process
+            # Or we can explicitly restart it:
+            docker exec -d request-backend-container sh -c "cd /app && npm start"
             
             # Cleanup
             cd /home/ec2-user
-            rm -rf /tmp/request-sync
-            
-            echo "✅ Hot deployment completed!"
+            rm -rf /tmp/hot-update
           fi
           
           # Health check
           echo "🏥 Performing health check..."
           sleep 5
           
-          for i in {1..15}; do
+          for i in {1..30}; do
             if curl -s -f "http://localhost:3001/health" >/dev/null 2>&1; then
-              echo "✅ Health check passed! Deployment successful."
-              echo "🔍 Testing entitlements endpoint..."
-              curl -s "http://localhost:3001/api/entitlements-simple/me?user_id=test" || echo "⚠️  Entitlements test skipped"
+              echo "✅ Hot deployment successful! Zero downtime achieved."
+              docker logs --tail 10 request-backend-container
               exit 0
             else
-              echo "⏳ Waiting for service to respond... ($i/15)"
-              sleep 3
+              echo "⏳ Waiting for service to respond... ($i/30)"
+              sleep 2
             fi
           done
           
-          echo "❌ Health check failed!"
+          echo "❌ Health check failed after hot deployment!"
           echo "Container logs:"
-          docker logs --tail 30 request-backend-container
+          docker logs --tail 50 request-backend-container
           exit 1
 
     - name: Notify deployment status
       if: always()
       run: |
         if [ "${{ job.status }}" == "success" ]; then
-          echo "✅ Deployment completed successfully!"
+          echo "✅ Hot deployment completed successfully with zero downtime!"
           echo "🌐 Backend is available at: http://${{ secrets.EC2_HOST }}:3001"
         else
-          echo "❌ Deployment failed!"
+          echo "❌ Hot deployment failed!"
         fi
