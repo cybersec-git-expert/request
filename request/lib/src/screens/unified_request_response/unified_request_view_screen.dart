@@ -963,7 +963,43 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         }
       }
 
+      // Edge case: backend hides responses to others; if viewer_context indicates
+      // the user has responded but list is empty, fetch that response directly
+      if (myResponse == null && _request?.viewerContext?.hasResponded == true) {
+        final respId = _request?.viewerContext?.responseId;
+        if (respId != null && respId.isNotEmpty) {
+          // Try to fetch the response by id
+          _service.getResponseById(_request!.id, respId).then((r) {
+            if (!mounted) return;
+            if (r != null) {
+              setState(() {
+                _responses = [r];
+              });
+            }
+          });
+        }
+      }
+
       // If user has a response, show edit button
+      if (myResponse == null && _request?.viewerContext?.hasResponded == true) {
+        // Create a lightweight placeholder ResponseModel for navigation while we fetch full details
+        final respId = _request?.viewerContext?.responseId;
+        if (respId != null && respId.isNotEmpty) {
+          myResponse = rest.ResponseModel(
+            id: respId,
+            requestId: _request!.id,
+            userId: RestAuthService.instance.currentUser?.uid ?? '',
+            message: '...',
+            price: null,
+            currency: null,
+            imageUrls: const [],
+            metadata: const {},
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            userName: RestAuthService.instance.currentUser?.displayName,
+          );
+        }
+      }
       if (myResponse != null) {
         return FloatingActionButton.extended(
           onPressed: () => _navigateToResponseEdit(myResponse!),

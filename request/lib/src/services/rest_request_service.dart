@@ -665,6 +665,27 @@ class RestRequestService {
     }
   }
 
+  /// Get a single response by ID (owner/responder only)
+  Future<ResponseModel?> getResponseById(
+      String requestId, String responseId) async {
+    try {
+      final res = await _apiClient.get<Map<String, dynamic>>(
+        '/api/requests/$requestId/responses/$responseId',
+        queryParameters: {
+          '_t': DateTime.now().millisecondsSinceEpoch.toString()
+        },
+      );
+      if (res.isSuccess && res.data != null) {
+        final json = res.data!['data'] as Map<String, dynamic>?;
+        if (json != null) return ResponseModel.fromJson(json);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching response by id: $e');
+      return null;
+    }
+  }
+
   Future<ResponseModel?> createResponse(
       String requestId, CreateResponseData data) async {
     try {

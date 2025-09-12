@@ -247,6 +247,21 @@ app.get('/api/me/entitlements', authService.authMiddleware(), async (req, res) =
     return res.status(500).json({ success: false, error: 'failed', detail: e.message || String(e) });
   }
 });
+
+// Simple entitlements (no auth) – pass user_id explicitly
+app.get('/api/entitlements-simple/me', async (req, res) => {
+  try {
+    const userId = req.query.user_id;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'user_id parameter required' });
+    }
+    const data = await entitlementSvc.getEntitlements(userId);
+    return res.json({ success: true, data });
+  } catch (e) {
+    console.error('[entitlements-route] simple error', e?.message || e);
+    return res.status(500).json({ success: false, error: 'Failed to get entitlements' });
+  }
+});
 console.log('🔧 Driver-verifications route registered at /api/driver-verifications');
 console.log('🔧 Business-verifications route registered at /api/business-verifications');
 console.log('🔧 Business-types route registered at /api/business-types');

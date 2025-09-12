@@ -102,6 +102,45 @@ router.get('/', optionalAuth(async (req, res) => {
   }
 }));
 
+// Get a single response by ID (owner of request or responder only)
+router.get('/:responseId', optionalAuth(async (req, res) => {
+  try {
+    const requestId = req.params.requestId;
+    const responseId = req.params.responseId;
+    let userId = req.user?.id || req.user?.userId;
+    // Dev-only viewer override
+    if (!userId && process.env.NODE_ENV === 'development') {
+      const headerId = req.headers['x-user-id'] || req.headers['user-id'];
+      const queryId = req.query.viewer_id;
+      userId = (typeof headerId === 'string' && headerId.trim()) ? headerId.trim() : (typeof queryId === 'string' && queryId.trim() ? queryId.trim() : null);
+      if (userId) console.warn('[responses][getOne] DEV viewer override in use (no auth)', { userId });
+    }
+
+    const row = await db.queryOne(`
+      SELECT r.*, u.display_name as user_name
+      FROM responses r
+      LEFT JOIN users u ON r.user_id = u.id
+      WHERE r.id = $1 AND r.request_id = $2
+      LIMIT 1
+    `, [responseId, requestId]);
+    if (!row) return res.status(404).json({ success:false, message:'Response not found' });
+
+    const requestRow = await db.queryOne('SELECT id, user_id FROM requests WHERE id = $1', [requestId]);
+    if (!requestRow) return res.status(404).json({ success:false, message:'Request not found' });
+
+    const isOwner = userId && requestRow.user_id === userId;
+    const isResponder = userId && row.user_id === userId;
+    if (!isOwner && !isResponder) {
+      return res.status(403).json({ success:false, message:'Forbidden' });
+    }
+
+    return res.json({ success:true, data: row });
+  } catch (error) {
+    console.error('Error getting response:', error);
+    return res.status(500).json({ success:false, message:'Error getting response', error: error.message });
+  }
+}));
+
 // Create a response (one per user per request enforced by unique index)  
 // Check simple subscription limit before creating response
 router.post('/', auth.authMiddleware(), async (req, res) => {

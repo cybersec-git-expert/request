@@ -37,7 +37,9 @@ function applyContactGating(row, viewer) {
   const isOwner = viewerId && row.user_id === viewerId;
   const hasResponded = !!viewer?.hasResponded; // viewer responded to this request
   const ent = viewer?.entitlements || null;
-  const canViewContact = isOwner || hasResponded || (ent ? !!ent.canViewContact : false);
+  // Contact can be viewed ONLY by owner or if the viewer already responded
+  const canViewContact = isOwner || hasResponded;
+  // Messaging may be allowed by entitlements (and always by owner/responded)
   const canMessage = isOwner || hasResponded || (ent ? !!ent.canMessage : false);
   // Shallow copy to avoid mutating original
   const masked = { ...row };
