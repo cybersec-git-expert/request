@@ -882,17 +882,38 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.green.shade200),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.shield, color: Colors.green.shade600, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'This is a demo payment. All card details will be approved automatically.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green.shade700,
+                Row(
+                  children: [
+                    Icon(Icons.shield, color: Colors.green.shade600, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Demo Payment Mode',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade700,
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This is a demo payment system. All card details will be approved automatically.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Test Cards: 4242 4242 4242 4242 (Visa), 5555 5555 5555 4444 (Mastercard)',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.green.shade600,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
               ],

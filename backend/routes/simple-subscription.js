@@ -615,4 +615,47 @@ router.post('/check-renewals', auth.authMiddleware(), async (req, res) => {
     }
 });
 
+// Reset to free plan (for testing purposes)
+router.post('/reset-to-free', auth.authMiddleware(), async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const subscriptionStart = new Date();
+        const subscriptionEnd = new Date(subscriptionStart.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+
+        const updateQuery = `
+            INSERT INTO user_simple_subscriptions 
+            (user_id, plan_code, plan_name, status, subscription_start_date, subscription_end_date, payment_status, created_at, updated_at)
+            VALUES ($1, 'Free', 'Free Plan', 'active', $2, $3, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+                plan_code = 'Free',
+                plan_name = 'Free Plan',
+                status = 'active',
+                subscription_start_date = EXCLUDED.subscription_start_date,
+                subscription_end_date = EXCLUDED.subscription_end_date,
+                payment_status = 'completed',
+                payment_id = NULL,
+                grace_period_end = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `;
+
+        const result = await db.query(updateQuery, [userId, subscriptionStart, subscriptionEnd]);
+
+        res.json({
+            success: true,
+            message: 'Subscription reset to free plan',
+            subscription: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Reset subscription error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reset subscription'
+        });
+    }
+});
+
 module.exports = router;

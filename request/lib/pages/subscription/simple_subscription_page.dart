@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../src/theme/glass_theme.dart';
 import '../../src/services/simple_subscription_service.dart';
+import '../../services/payment_gateway_service.dart';
+import '../../models/payment_gateway.dart';
+import '../../screens/payment_processing_screen.dart';
+import '../../widgets/payment_method_selection_widget.dart';
+import '../../src/services/enhanced_user_service.dart';
 
 class SimpleSubscriptionPage extends StatefulWidget {
   const SimpleSubscriptionPage({Key? key}) : super(key: key);
@@ -440,8 +445,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
         // If payment is required, handle payment flow
         if (result.requiresPayment && result.paymentId != null) {
-          // TODO: Navigate to payment screen with result.paymentId
-          print('Payment required. Payment ID: ${result.paymentId}');
+          // INTEGRATION COMPLETE: Navigate to payment gateway system
+          await _handlePaymentFlow(result);
         }
       } else {
         // Show error message
@@ -464,6 +469,126 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         SnackBar(
           content: Text(
             'An error occurred. Please try again.',
+            style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
+          ),
+          backgroundColor: GlassTheme.colors.errorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Handle payment flow for paid subscriptions
+  Future<void> _handlePaymentFlow(SubscriptionResult result) async {
+    try {
+      // Get the selected plan details
+      final selectedPlan = plans.firstWhere(
+        (plan) => plan.code == selectedPlanId,
+        orElse: () => SubscriptionPlan(
+          id: '',
+          code: selectedPlanId,
+          name: selectedPlanId,
+          price: 0,
+          currency: 'LKR',
+          responseLimit: 3,
+          features: [],
+          isActive: true,
+        ),
+      );
+
+      // Get current user ID
+      String userId;
+      try {
+        final user = await EnhancedUserService.instance.getCurrentUser();
+        userId = user?.id ?? 'anonymous';
+      } catch (e) {
+        userId = 'anonymous';
+      }
+
+      // Get available payment gateways
+      final gateways =
+          await PaymentGatewayService.instance.getConfiguredPaymentGateways();
+
+      if (gateways.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Payment methods are not available. Please contact support.',
+              style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: GlassTheme.colors.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      // Show payment method selection
+      final selectedGateway = await showModalBottomSheet<PaymentGateway>(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          maxChildSize: 0.9,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (context, scrollController) => PaymentMethodSelectionWidget(
+            planCode: selectedPlan.code,
+            amount: selectedPlan.price,
+            currency: selectedPlan.currency,
+            onPaymentMethodSelected: (gateway) {
+              Navigator.of(context).pop(gateway);
+            },
+            onCancel: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+      );
+
+      if (selectedGateway == null) {
+        // User cancelled payment method selection
+        return;
+      }
+
+      // Navigate to payment processing screen
+      final paymentResult =
+          await Navigator.of(context).push<Map<String, dynamic>>(
+        MaterialPageRoute(
+          builder: (context) => PaymentProcessingScreen(
+            paymentGateway: selectedGateway,
+            planCode: selectedPlan.code,
+            amount: selectedPlan.price,
+            currency: selectedPlan.currency,
+            userId: userId,
+          ),
+        ),
+      );
+
+      if (paymentResult != null && paymentResult['success'] == true) {
+        // Payment successful, reload subscription data
+        await _loadSubscriptionData();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Payment successful! Your subscription has been activated.',
+              style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: GlassTheme.colors.successColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error handling payment flow: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Payment setup failed. Please try again.',
             style: GlassTheme.bodyMedium.copyWith(color: Colors.white),
           ),
           backgroundColor: GlassTheme.colors.errorColor,
