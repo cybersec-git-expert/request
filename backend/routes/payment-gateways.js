@@ -92,6 +92,7 @@ router.get('/gateways/:countryCode', auth.authMiddleware(), async (req, res) => 
         pg.configuration_fields,
         cpg.id as country_gateway_id,
         cpg.is_active as configured,
+        cpg.is_active,
         cpg.is_primary,
         cpg.created_at as configured_at
       FROM payment_gateways pg
