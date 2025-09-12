@@ -3,6 +3,55 @@ const router = express.Router();
 const db = require('../services/database');
 const auth = require('../services/auth');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+// Migration endpoint for setting up payment gateway tables
+router.post('/migrate', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
+  try {
+    // Read the migration file
+    const migrationPath = path.join(__dirname, '../database/migrations/create_payment_gateways.sql');
+    const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
+    
+    // Execute the migration
+    await db.query(migrationSQL);
+    
+    // Insert default payment gateways
+    const defaultGateways = `
+      INSERT INTO payment_gateways (name, code, description, supported_countries, configuration_fields) VALUES
+      ('Stripe', 'stripe', 'Global payment processing platform', ARRAY['US', 'CA', 'GB', 'AU', 'SG', 'IN', 'LK'], 
+       '{"api_key": {"type": "text", "label": "Publishable Key", "required": true}, 
+         "secret_key": {"type": "password", "label": "Secret Key", "required": true},
+         "webhook_secret": {"type": "password", "label": "Webhook Secret", "required": false}}'),
+      
+      ('PayPal', 'paypal', 'Global digital payments platform', ARRAY['US', 'CA', 'GB', 'AU', 'IN', 'LK'],
+       '{"client_id": {"type": "text", "label": "Client ID", "required": true},
+         "client_secret": {"type": "password", "label": "Client Secret", "required": true},
+         "environment": {"type": "select", "label": "Environment", "options": ["sandbox", "live"], "required": true}}'),
+      
+      ('PayHere', 'payhere', 'Sri Lankan payment gateway', ARRAY['LK'],
+       '{"merchant_id": {"type": "text", "label": "Merchant ID", "required": true},
+         "merchant_secret": {"type": "password", "label": "Merchant Secret", "required": true},
+         "environment": {"type": "select", "label": "Environment", "options": ["sandbox", "live"], "required": true}}')
+      
+      ON CONFLICT (code) DO NOTHING;
+    `;
+    
+    await db.query(defaultGateways);
+    
+    res.json({
+      success: true,
+      message: 'Payment gateway tables and default gateways created successfully'
+    });
+  } catch (error) {
+    console.error('Migration error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to run migration',
+      details: error.message
+    });
+  }
+});
 
 // Encryption key for sensitive data (should be in environment variables)
 const ENCRYPTION_KEY = process.env.GATEWAY_ENCRYPTION_KEY || 'default-key-change-in-production';
@@ -59,10 +108,21 @@ router.get('/gateways/:countryCode', auth.authMiddleware(), async (req, res) => 
     });
   } catch (error) {
     console.error('Error fetching payment gateways:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch payment gateways'
-    });
+    
+    // Check if it's a missing table error
+    if (error.message && error.message.includes('relation') && error.message.includes('does not exist')) {
+      res.json({
+        success: true,
+        gateways: [],
+        warning: 'Payment gateway tables not initialized. Please run database migrations.'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch payment gateways',
+        details: error.message
+      });
+    }
   }
 });
 
@@ -124,10 +184,21 @@ router.post('/gateways/:countryCode/configure',
       });
     } catch (error) {
       console.error('Error configuring payment gateway:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to configure payment gateway'
-      });
+      
+      // Check if it's a missing table error
+      if (error.message && error.message.includes('relation') && error.message.includes('does not exist')) {
+        res.status(500).json({
+          success: false,
+          error: 'Payment gateway tables not initialized. Please run database migrations.',
+          details: 'Missing payment gateway database tables'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to configure payment gateway',
+          details: error.message
+        });
+      }
     }
   }
 );
