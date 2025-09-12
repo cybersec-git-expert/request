@@ -80,9 +80,9 @@ The `EnhancedBrowseScreen` automatically applies all filtering rules and provide
 import '../screens/browse_screen.dart';
 const BrowseScreen()
 
-// New way
-import '../screens/enhanced_browse_screen.dart';
-const EnhancedBrowseScreen()
+// Current way
+import '../home/screens/browse_requests_screen.dart';
+const BrowseRequestsScreen()
 ```
 
 ### Use Filtering Service Directly

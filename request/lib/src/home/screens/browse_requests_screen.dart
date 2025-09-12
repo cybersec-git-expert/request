@@ -271,17 +271,8 @@ class _BrowseRequestsScreenState extends State<BrowseRequestsScreen> {
   }
 
   List<models.RequestModel> get _filteredRequests {
-    // First, enforce role-based gating (driver/delivery)
-    final roleGated = _requests.where((r) {
-      final mapped = _mapRequestModelToTypeKey(r);
-      return _allowedRequestTypes.contains(mapped);
-    }).toList();
-
-    // Next, enforce country-enabled module gating
-    Iterable<models.RequestModel> current = roleGated.where((r) {
-      final key = _mapRequestModelToTypeKey(r);
-      return _countryEnabledTypes.contains(key);
-    });
+    // Show all requests - removed business type restrictions
+    Iterable<models.RequestModel> current = _requests;
 
     // Public visibility: if not logged in, show only Price requests
     if (!_isLoggedIn) {
