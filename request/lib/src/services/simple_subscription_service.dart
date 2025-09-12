@@ -216,12 +216,20 @@ class SubscriptionPlan {
       code: json['code'] ?? '',
       name: json['name'] ?? '',
       description: json['description'],
-      price: (json['price'] ?? 0.0).toDouble(),
+      price: _parsePrice(json['price']),
       currency: json['currency'] ?? 'USD',
       responseLimit: json['response_limit'] ?? 3,
       features: List<String>.from(json['features'] ?? []),
       isActive: json['is_active'] ?? true,
     );
+  }
+
+  static double _parsePrice(dynamic price) {
+    if (price == null) return 0.0;
+    if (price is double) return price;
+    if (price is int) return price.toDouble();
+    if (price is String) return double.tryParse(price) ?? 0.0;
+    return 0.0;
   }
 
   bool get isUnlimited => responseLimit == -1;
