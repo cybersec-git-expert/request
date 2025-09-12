@@ -123,17 +123,18 @@ class _PaymentMethodSelectionWidgetState
               children: [
                 Text(
                   'Subscription Plan: ${widget.planCode}',
-                  style: TextStyle(
+                  style: GlassTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
-                    color: Colors.grey.shade700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Amount: ${PaymentGatewayService.instance.formatAmount(widget.amount, widget.currency)}',
-                  style: GlassTheme.titleMedium.copyWith(
+                  style: GlassTheme.bodyLarge.copyWith(
                     color: GlassTheme.colors.successColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
               ],

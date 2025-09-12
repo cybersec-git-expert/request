@@ -641,6 +641,10 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+      } else {
+        // Payment was not successful or user cancelled
+        print('🚀 [Payment Flow] Payment not completed or cancelled');
+        // Do NOT reload subscription data - keep current state
       }
     } catch (e) {
       print('🚀 [Payment Flow] ERROR: $e');
