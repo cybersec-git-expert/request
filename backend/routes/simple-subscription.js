@@ -270,7 +270,7 @@ router.get('/plans', async (req, res) => {
           3 as response_limit,
           false as country_pricing_active,
           created_at as pricing_created_at
-        FROM subscription_plan_templates 
+        FROM simple_subscription_plans 
         WHERE is_active = true 
         ORDER BY name ASC
       `);
