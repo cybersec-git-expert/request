@@ -172,9 +172,15 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           final rem = ent is Map<String, dynamic>
               ? (ent['remainingResponses'] as int?)
               : null;
+          print('DEBUG: Entitlements from viewer context: $ent');
+          print('DEBUG: Remaining responses from context: $rem');
           if (rem != null) {
             _remainingResponses = rem;
             _loadingRemaining = false;
+            print('DEBUG: Set _remainingResponses to $rem from viewer context');
+          } else {
+            print(
+                'DEBUG: No remainingResponses in viewer context, will use fallback');
           }
         });
         // Lazy fetch requester avatar after first frame
@@ -1291,66 +1297,97 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          _buildRequesterAvatar(r),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                if ((r.userId).isNotEmpty) {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          PublicProfileScreen(userId: r.userId),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Text(r.userName ?? 'Unknown User',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                            ),
-                          ),
-                          if (!_isOwner)
-                            IconButton(
-                              onPressed: () => _messageRequester(r),
-                              icon: Icon(
-                                Icons.message,
-                                color: _getTypeColor(_getCurrentRequestType()),
-                                size: 20,
-                              ),
-                              tooltip: 'Message Requester',
-                            ),
-                        ]),
-                        const SizedBox(height: 8),
-                        // Contact details: show if owner OR already responded;
-                        // For new requests, hide if user is at limit regardless of backend contactVisible
-                        if ((r.userPhone?.isNotEmpty == true) &&
-                            (_isOwner ||
-                                _hasResponded ||
-                                (!_reachedLimit && r.contactVisible)))
+                  // Show full requester info only if owner, already responded, or not at limit
+                  if (_isOwner || _hasResponded || !_reachedLimit)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Row(children: [
-                            Icon(Icons.phone,
-                                size: 16, color: Colors.grey[600]),
+                            _buildRequesterAvatar(r),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(r.userPhone!,
-                                  style: TextStyle(color: Colors.grey[700])),
+                              child: GestureDetector(
+                                onTap: () {
+                                  if ((r.userId).isNotEmpty) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => PublicProfileScreen(
+                                            userId: r.userId),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Text(r.userName ?? 'Unknown User',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors
+                                          .blue, // Indicate it's clickable
+                                    )),
+                              ),
                             ),
+                            // Message icon: show only if not owner
+                            if (!_isOwner)
+                              IconButton(
+                                onPressed: () => _messageRequester(r),
+                                icon: Icon(
+                                  Icons.message,
+                                  color:
+                                      _getTypeColor(_getCurrentRequestType()),
+                                  size: 20,
+                                ),
+                                tooltip: 'Message Requester',
+                              ),
                           ]),
-                      ],
+                          const SizedBox(height: 8),
+                          // Contact details: show if owner OR already responded;
+                          // For new requests, hide if user is at limit regardless of backend contactVisible
+                          if ((r.userPhone?.isNotEmpty == true) &&
+                              (_isOwner ||
+                                  _hasResponded ||
+                                  (!_reachedLimit && r.contactVisible))) ...[
+                            Row(children: [
+                              Icon(Icons.phone,
+                                  size: 16, color: Colors.grey[600]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(r.userPhone!,
+                                    style: TextStyle(color: Colors.grey[700])),
+                              ),
+                            ]),
+                          ],
+                        ],
+                      ),
+                    )
+                  else
+                    // Limited requester info for users at limit who haven't responded
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lock, size: 20, color: Colors.grey[600]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Upgrade to see requester details and contact information',
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
                   // Location Information Section
                   if (r.locationAddress != null &&
