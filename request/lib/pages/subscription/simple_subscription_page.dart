@@ -44,10 +44,10 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
   Future<void> _loadSubscriptionData() async {
     try {
       final service = SimpleSubscriptionService.instance;
-      
+
       // Load plans first (this usually works)
       final plansResult = await service.getAvailablePlans();
-      
+
       // Try to load subscription status (this might fail)
       SimpleSubscriptionStatus? statusResult;
       try {
@@ -76,17 +76,19 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
   Widget build(BuildContext context) {
     // Safe plan selection with proper null checks
     SubscriptionPlan? selectedPlan;
-    
+
     if (plans.isNotEmpty) {
       if (selectedPlanId.isNotEmpty) {
-        selectedPlan = plans.where((p) => p.code == selectedPlanId).firstOrNull ??
-            plans.where((p) => p.price == 0).firstOrNull ??
-            plans.first;
+        selectedPlan =
+            plans.where((p) => p.code == selectedPlanId).firstOrNull ??
+                plans.where((p) => p.price == 0).firstOrNull ??
+                plans.first;
       } else {
-        selectedPlan = plans.where((p) => p.price == 0).firstOrNull ?? plans.first;
+        selectedPlan =
+            plans.where((p) => p.price == 0).firstOrNull ?? plans.first;
       }
     }
-    
+
     // Return loading state if no plans available yet
     if (selectedPlan == null) {
       return Scaffold(
@@ -188,8 +190,23 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Plans list with modern cards
-                          ...plans.map((plan) => _buildModernPlanCard(plan)),
+                          // Horizontal plans list with modern cards
+                          SizedBox(
+                            height: 200, // Fixed height for horizontal scroll
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: plans.length,
+                              itemBuilder: (context, index) {
+                                return Container(
+                                  width: 280, // Fixed width for each card
+                                  margin: EdgeInsets.only(
+                                    right: index == plans.length - 1 ? 0 : 16,
+                                  ),
+                                  child: _buildHorizontalPlanCard(plans[index]),
+                                );
+                              },
+                            ),
+                          ),
 
                           const SizedBox(height: 100), // Extra space for button
                         ],
@@ -372,14 +389,13 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     );
   }
 
-  // Modern plan card matching the design
-  Widget _buildModernPlanCard(SubscriptionPlan plan) {
+  // Horizontal plan card for better mobile experience
+  Widget _buildHorizontalPlanCard(SubscriptionPlan plan) {
     final isSelected = selectedPlanId == plan.code;
     final isCurrent = currentStatus?.planCode == plan.code;
     final isFree = plan.price == 0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -407,78 +423,83 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Plan header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Plan header with price
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Text(
+                              _displayName(plan.name),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            if (isCurrent) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF34C759),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'CURRENT',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            _displayName(plan.name),
+                            '${plan.currency} ${plan.price.toStringAsFixed(0)}',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: Colors.black87,
                             ),
                           ),
-                          if (isCurrent) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF34C759),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'CURRENT',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                          Text(
+                            isFree ? 'Free' : '/month',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6C7B7F),
                             ),
-                          ],
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      if (plan.description?.isNotEmpty == true)
-                        Text(
-                          plan.description!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF6C7B7F),
-                          ),
-                        ),
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${plan.currency} ${plan.price.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
+                  const SizedBox(height: 8),
+                  if (plan.description?.isNotEmpty == true)
+                    Text(
+                      plan.description!,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6C7B7F),
                       ),
-                      Text(
-                        isFree ? 'Free' : '/month',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6C7B7F),
-                        ),
-                      ),
-                    ],
-                  ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
 
@@ -492,17 +513,21 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                         ? Icons.all_inclusive
                         : Icons.reply,
                     color: const Color(0xFF6C7B7F),
-                    size: 18,
+                    size: 16,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    plan.responseLimit == -1
-                        ? 'Unlimited responses per month'
-                        : '${plan.responseLimit} responses per month',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6C7B7F),
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Text(
+                      plan.responseLimit == -1
+                          ? 'Unlimited responses per month'
+                          : '${plan.responseLimit} responses per month',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6C7B7F),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -614,17 +639,18 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
       print('🚀 [Payment Flow] Starting payment flow...');
 
       // Get the selected plan details with safe fallback
-      final selectedPlan = plans.where((plan) => plan.code == selectedPlanId).firstOrNull ??
-          SubscriptionPlan(
-            id: '',
-            code: selectedPlanId,
-            name: selectedPlanId,
-            price: 0,
-            currency: 'LKR',
-            responseLimit: 3,
-            features: [],
-            isActive: true,
-          );
+      final selectedPlan =
+          plans.where((plan) => plan.code == selectedPlanId).firstOrNull ??
+              SubscriptionPlan(
+                id: '',
+                code: selectedPlanId,
+                name: selectedPlanId,
+                price: 0,
+                currency: 'LKR',
+                responseLimit: 3,
+                features: [],
+                isActive: true,
+              );
 
       print(
           '🚀 [Payment Flow] Selected plan: ${selectedPlan.code} - ${selectedPlan.price}');
