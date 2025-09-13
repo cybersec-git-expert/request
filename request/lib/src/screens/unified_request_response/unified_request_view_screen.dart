@@ -183,7 +183,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         final rem = ent is Map<String, dynamic>
             ? (ent['remainingResponses'] as int?)
             : null;
-        
+
         setState(() {
           _request = r;
           // Trust viewer_context when available
