@@ -33,7 +33,7 @@ import SubcategoriesModule from './pages/SubcategoriesModule';
 import PagesModule from './pages/PagesModule';
 import CentralizedPagesModule from './pages/CentralizedPagesModule';
 // Removed: Subscriptions module
-import PromoCodes from './pages/PromoCodes';
+import SubscriptionPromoCodes from './pages/SubscriptionPromoCodes';
 import CountryProductManagement from './pages/CountryProductManagement';
 import CountryCategoryManagement from './pages/CountryCategoryManagement';
 import CountrySubcategoryManagement from './pages/CountrySubcategoryManagement';
@@ -109,7 +109,7 @@ function App() {
               <Route path="responses" element={<ResponsesModule />} />
               <Route path="price-listings" element={<PriceListingsModule />} />
               {/* Removed: Subscriptions admin */}
-              <Route path="promo-codes" element={<PromoCodes />} />
+              <Route path="promo-codes" element={<SubscriptionPromoCodes />} />
               <Route path="pages" element={<PagesModule />} />
               <Route path="centralized-pages" element={<CentralizedPagesModule />} />
               <Route path="banners" element={<BannersModule />} />
