@@ -178,6 +178,12 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
         }
       }
       if (mounted) {
+        // Check for remainingResponses from viewer_context.entitlements
+        final ent = r?.viewerContext?.entitlements;
+        final rem = ent is Map<String, dynamic>
+            ? (ent['remainingResponses'] as int?)
+            : null;
+        
         setState(() {
           _request = r;
           // Trust viewer_context when available
@@ -185,10 +191,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           _responses = responses;
           _loading = false;
           // Prefer remainingResponses from viewer_context.entitlements when present
-          final ent = r?.viewerContext?.entitlements;
-          final rem = ent is Map<String, dynamic>
-              ? (ent['remainingResponses'] as int?)
-              : null;
           print('DEBUG: Entitlements from viewer context: $ent');
           print('DEBUG: Remaining responses from context: $rem');
           if (rem != null) {
