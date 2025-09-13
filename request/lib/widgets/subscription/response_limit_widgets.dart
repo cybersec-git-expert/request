@@ -242,56 +242,114 @@ class ResponseLimitBanner extends StatelessWidget {
         if (status.remainingResponses <= 1) {
           return Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(20),
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: status.remainingResponses == 0
-                  ? Colors.red.shade50
-                  : Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color:
-                    status.remainingResponses == 0 ? Colors.red : Colors.orange,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: status.remainingResponses == 0
+                    ? [
+                        const Color(0xFFE57373), // Light red
+                        const Color(0xFFD32F2F), // Darker red
+                      ]
+                    : [
+                        const Color(0xFFFFB74D), // Light orange
+                        const Color(0xFFFF9800), // Darker orange
+                      ],
               ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: (status.remainingResponses == 0
+                          ? const Color(0xFFD32F2F)
+                          : const Color(0xFFFF9800))
+                      .withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Row(
               children: [
-                Icon(
-                  status.remainingResponses == 0 ? Icons.warning : Icons.info,
-                  color: status.remainingResponses == 0
-                      ? Colors.red
-                      : Colors.orange,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
+                // Warning icon with background
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
                     status.remainingResponses == 0
-                        ? 'You\'ve used all your free responses for this month!'
-                        : 'Only ${status.remainingResponses} response${status.remainingResponses == 1 ? '' : 's'} remaining this month.',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
+                        ? Icons.block
+                        : Icons.schedule,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SimpleSubscriptionPage(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        status.remainingResponses == 0
+                            ? 'Limit Reached'
+                            : 'Almost at Limit',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const SizedBox(height: 4),
+                      Text(
+                        status.remainingResponses == 0
+                            ? 'Upgrade to Pro for unlimited responses'
+                            : '${status.remainingResponses} response${status.remainingResponses == 1 ? '' : 's'} remaining this month',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'Upgrade',
-                    style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(width: 12),
+                // Modern upgrade button
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SimpleSubscriptionPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.arrow_forward,
+                      color: Color(0xFF2196F3),
+                      size: 18,
+                    ),
+                    label: const Text(
+                      'Upgrade',
+                      style: TextStyle(
+                        color: Color(0xFF2196F3),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
                   ),
                 ),
               ],
