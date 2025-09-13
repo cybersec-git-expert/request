@@ -212,17 +212,19 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           _isOwner = r?.viewerContext?.isOwner ?? owner;
           _responses = responses;
           _loading = false;
-          // Prefer remainingResponses from viewer_context.entitlements when present
+
+          // Debug viewer context entitlements but don't use them for subscription logic
+          final ent = r?.viewerContext?.entitlements;
+          final rem = ent is Map<String, dynamic>
+              ? (ent['remainingResponses'] as int?)
+              : null;
           print('DEBUG: Entitlements from viewer context: $ent');
           print('DEBUG: Remaining responses from context: $rem');
-          if (rem != null) {
-            _remainingResponses = rem;
-            _loadingRemaining = false;
-            print('DEBUG: Set _remainingResponses to $rem from viewer context');
-          } else {
-            print(
-                'DEBUG: No remainingResponses in viewer context, will use fallback');
-          }
+          print(
+              'DEBUG: NOT using viewer context remainingResponses - using synced subscription status instead');
+
+          // We already synced subscription status properly, so don't override it
+          // The _refreshSubscriptionAndResponses() call should have set the correct values
         });
         // Lazy fetch requester avatar after first frame
         if (r != null && (r.userId).isNotEmpty) {
@@ -1176,42 +1178,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                         );
                       },
                       child: const Text('See Plans'),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () async {
-                        print('🔍 MANUAL DEBUG: Testing current state...');
-                        print('🔍   _remainingResponses: $_remainingResponses');
-                        print('🔍   _hasUnlimited: $_hasUnlimited');
-                        print('🔍   _reachedLimit: $_reachedLimit');
-                        print('🔍   _loadingRemaining: $_loadingRemaining');
-
-                        // Test the service directly
-                        final hasUnlimited =
-                            await ResponseLimitService.hasUnlimitedPlan();
-                        final remaining =
-                            await ResponseLimitService.getRemainingResponses();
-                        print('🔍   Service hasUnlimited: $hasUnlimited');
-                        print('🔍   Service remaining: $remaining');
-
-                        // Force refresh
-                        setState(() {
-                          _loadingRemaining = true;
-                        });
-                        await _refreshSubscriptionAndResponses();
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                'Debug: remaining=$remaining, unlimited=$hasUnlimited'),
-                            duration: Duration(seconds: 3),
-                          ),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.orange.withOpacity(0.1),
-                      ),
-                      child: const Text('Test', style: TextStyle(fontSize: 12)),
                     )
                   ],
                 ),
