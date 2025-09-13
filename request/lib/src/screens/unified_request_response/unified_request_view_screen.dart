@@ -177,27 +177,12 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF4A90E2), // Blue similar to the attachment
-            Color(0xFF357ABD),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: const Color(0xFF4A90E2), // Flat blue color
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      child: Row(
           children: [
             // Profile Avatar
             _buildRequesterAvatar(r),
@@ -287,7 +272,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
               ),
             ],
           ],
-        ),
       ),
     );
   }
@@ -1668,8 +1652,13 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     );
   }
 
-  Widget _sectionCard({required Widget child}) => GlassTheme.glassCard(
+  Widget _sectionCard({required Widget child}) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: child,
       );
 
