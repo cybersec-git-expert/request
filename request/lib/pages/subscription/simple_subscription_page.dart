@@ -287,21 +287,27 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
       ] else ...[
         _FeatureItem(
           icon: Icons.business_center,
-          color: const Color(0xFF007AFF),
+          color: const Color(0xFF007AFF), // Blue
           title: 'Business verification enabled',
           subtitle: 'Add prices on listings without limits',
         ),
         _FeatureItem(
-          icon: Icons.notifications_active,
-          color: const Color(0xFF007AFF),
+          icon: Icons.flash_on,
+          color: const Color(0xFFFF8C00), // Orange
           title: 'Instant notifications',
           subtitle: 'For new requests in your business categories',
         ),
         _FeatureItem(
           icon: Icons.all_inclusive,
-          color: const Color(0xFF007AFF),
+          color: const Color(0xFFFF3B30), // Red/Pink
           title: 'Unlimited responses',
           subtitle: 'Respond to as many requests as you want',
+        ),
+        _FeatureItem(
+          icon: Icons.verified,
+          color: const Color(0xFF007AFF), // Blue
+          title: 'Premium support',
+          subtitle: 'Priority customer support and assistance',
         ),
       ],
     ];
@@ -370,8 +376,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                             Text(
                               feature.title,
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15, // Slightly larger
+                                fontWeight: FontWeight.w700, // Bolder
                                 color: feature.color,
                                 height: 1.4,
                               ),
@@ -406,8 +412,13 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white, // Keep box white always
-        borderRadius: BorderRadius.circular(12),
-        // Removed borders and shadows for cleaner look
+        borderRadius: BorderRadius.circular(
+            16), // Increased border radius for more rounded look
+        border: isSelected
+            ? Border.all(color: const Color(0xFF007AFF), width: 2)
+            : Border.all(
+                color: Colors.grey.withOpacity(0.2),
+                width: 1), // Light gray border for unselected cards
       ),
       child: InkWell(
         onTap: () {
@@ -417,7 +428,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
             });
           }
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius:
+            BorderRadius.circular(16), // Match container border radius
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
