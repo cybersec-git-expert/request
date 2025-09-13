@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entitlements_service.dart';
+import '../../src/services/simple_subscription_service.dart';
 
 /// Simple subscription service to track response limits and subscription status
 /// Syncs with backend usage_monthly table for accurate counting
@@ -149,31 +150,55 @@ class ResponseLimitService {
   /// Sync subscription status with backend on app startup
   static Future<void> syncWithBackend() async {
     try {
-      print('DEBUG: syncWithBackend - triggering status refresh');
+      print(
+          'DEBUG: syncWithBackend - checking subscription status with backend');
 
-      // For immediate testing: check if user has an active Pro subscription
-      // This is a simplified version - in production you'd call the backend API
+      // Get current subscription status from backend
+      final subscriptionService = SimpleSubscriptionService.instance;
+      final status = await subscriptionService.getSubscriptionStatus();
 
-      // For now, let's add a manual trigger to refresh the unlimited status
-      // This will be called when the unified request screen loads
+      if (status != null) {
+        final isPro = status.planCode.toLowerCase() == 'pro';
+        print(
+            'DEBUG: syncWithBackend - got status: planCode=${status.planCode}, isPro=$isPro');
 
-      print('DEBUG: syncWithBackend completed - status should refresh');
+        // Update local cache based on backend status
+        await setUnlimitedPlan(isPro);
+        print('DEBUG: syncWithBackend - updated local cache: unlimited=$isPro');
+      } else {
+        print(
+            'DEBUG: syncWithBackend - no subscription status found, defaulting to basic');
+        await setUnlimitedPlan(false);
+      }
+
+      print('DEBUG: syncWithBackend completed successfully');
     } catch (e) {
       print('ERROR: syncWithBackend failed: $e');
+      // On error, don't change the current cache state
     }
   }
 
-  /// Force refresh subscription status (for testing)
+  /// Force refresh subscription status (for testing and immediate sync)
   static Future<void> forceRefreshSubscriptionStatus() async {
     try {
-      print(
-          'DEBUG: forceRefreshSubscriptionStatus - manually setting Pro plan');
-      // For immediate testing, manually set unlimited plan for Pro users
-      await setUnlimitedPlan(true);
-      print(
-          'DEBUG: forceRefreshSubscriptionStatus completed - set unlimited plan to true');
+      print('DEBUG: forceRefreshSubscriptionStatus - forcing backend sync');
+      await syncWithBackend();
+      print('DEBUG: forceRefreshSubscriptionStatus completed');
     } catch (e) {
       print('ERROR: forceRefreshSubscriptionStatus failed: $e');
+    }
+  }
+
+  /// Clear cache and force re-sync (useful for debugging)
+  static Future<void> clearCacheAndSync() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_hasUnlimitedPlanKey);
+      print('DEBUG: clearCacheAndSync - cleared cache, now syncing');
+      await syncWithBackend();
+      print('DEBUG: clearCacheAndSync completed');
+    } catch (e) {
+      print('ERROR: clearCacheAndSync failed: $e');
     }
   }
 }

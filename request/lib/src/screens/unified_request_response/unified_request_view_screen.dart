@@ -79,9 +79,21 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   void initState() {
     super.initState();
     _load();
-    _refreshRemaining();
-    // Sync subscription status with backend to ensure local cache is current
-    ResponseLimitService.syncWithBackend();
+    _refreshSubscriptionAndResponses();
+  }
+
+  Future<void> _refreshSubscriptionAndResponses() async {
+    try {
+      // Sync subscription status with backend to ensure local cache is current
+      await ResponseLimitService.syncWithBackend();
+
+      // Now refresh the UI with updated subscription status
+      await _refreshRemaining();
+    } catch (e) {
+      print('ERROR: Failed to refresh subscription status: $e');
+      // Still try to refresh remaining responses even if sync fails
+      await _refreshRemaining();
+    }
   }
 
   Future<void> _refreshRemaining() async {
@@ -143,6 +155,9 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
+      // First, refresh subscription status to ensure cache is current
+      await ResponseLimitService.syncWithBackend();
+
       final r = await _service.getRequestById(widget.requestId);
       final currentUserId = RestAuthService.instance.currentUser?.uid;
       bool owner =
@@ -197,6 +212,12 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
               });
             } catch (_) {}
           });
+        }
+
+        // Refresh remaining responses to ensure cache is current
+        if (rem == null) {
+          // Only refresh if we didn't get remaining responses from viewer context
+          await _refreshRemaining();
         }
       }
     } catch (e) {
