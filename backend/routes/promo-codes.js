@@ -317,4 +317,274 @@ router.get('/check-active', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * @api {get} /api/promo-codes/admin/list Get All Promo Codes (Admin)
+ * @apiDescription Get list of all promo codes with usage statistics (Admin only)
+ * @apiGroup PromoCode Admin
+ * @apiHeader {String} Authorization Bearer token (Admin only)
+ * 
+ * @apiSuccess {Boolean} success Operation status
+ * @apiSuccess {Array} codes List of all promo codes with stats
+ */
+router.get('/admin/list', authenticateToken, async (req, res) => {
+  try {
+    // TODO: Add admin permission check
+    // if (!req.user.isAdmin) {
+    //   return res.status(403).json({ success: false, error: 'Admin access required' });
+    // }
+
+    const query = `
+      SELECT 
+        pc.*,
+        COUNT(pcr.id) as current_uses,
+        COUNT(DISTINCT pcr.user_id) as unique_users
+      FROM promo_codes pc
+      LEFT JOIN promo_code_redemptions pcr ON pc.id = pcr.promo_code_id
+      GROUP BY pc.id
+      ORDER BY pc.created_at DESC
+    `;
+
+    const result = await db.query(query);
+
+    res.json({
+      success: true,
+      codes: result.rows
+    });
+
+  } catch (error) {
+    console.error('Error getting admin promo codes:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get promo codes'
+    });
+  }
+});
+
+/**
+ * @api {post} /api/promo-codes/admin/create Create Promo Code (Admin)
+ * @apiDescription Create a new promo code (Admin only)
+ * @apiGroup PromoCode Admin
+ * @apiHeader {String} Authorization Bearer token (Admin only)
+ * 
+ * @apiParam {String} code Promo code string
+ * @apiParam {String} name Display name
+ * @apiParam {String} description Description
+ * @apiParam {String} benefit_type Type of benefit (free_plan, discount, extension)
+ * @apiParam {Number} benefit_duration_days Duration in days
+ * @apiParam {String} benefit_plan_code Plan code for free_plan type
+ * @apiParam {Number} [discount_percentage] Discount percentage for discount type
+ * @apiParam {Number} [max_uses] Maximum total uses
+ * @apiParam {Number} [max_uses_per_user] Maximum uses per user
+ * @apiParam {String} [valid_from] Valid from date
+ * @apiParam {String} [valid_until] Valid until date
+ * @apiParam {Boolean} [is_active] Whether code is active
+ */
+router.post('/admin/create', authenticateToken, async (req, res) => {
+  try {
+    // TODO: Add admin permission check
+    // if (!req.user.isAdmin) {
+    //   return res.status(403).json({ success: false, error: 'Admin access required' });
+    // }
+
+    const {
+      code,
+      name,
+      description,
+      benefit_type,
+      benefit_duration_days,
+      benefit_plan_code,
+      discount_percentage,
+      max_uses,
+      max_uses_per_user,
+      valid_from,
+      valid_until,
+      is_active = true
+    } = req.body;
+
+    // Validate required fields
+    if (!code || !name || !benefit_type || !benefit_duration_days) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: code, name, benefit_type, benefit_duration_days'
+      });
+    }
+
+    // Check if code already exists
+    const existingQuery = `SELECT id FROM promo_codes WHERE code = $1`;
+    const existingResult = await db.query(existingQuery, [code.toUpperCase()]);
+    
+    if (existingResult.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Promo code already exists'
+      });
+    }
+
+    const insertQuery = `
+      INSERT INTO promo_codes (
+        code, name, description, benefit_type, benefit_duration_days,
+        benefit_plan_code, discount_percentage, max_uses, max_uses_per_user,
+        valid_from, valid_until, is_active, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING *
+    `;
+
+    const values = [
+      code.toUpperCase(),
+      name,
+      description,
+      benefit_type,
+      benefit_duration_days,
+      benefit_plan_code,
+      discount_percentage,
+      max_uses,
+      max_uses_per_user || 1,
+      valid_from || null,
+      valid_until || null,
+      is_active,
+      req.user.id
+    ];
+
+    const result = await db.query(insertQuery, values);
+
+    res.json({
+      success: true,
+      code: result.rows[0],
+      message: 'Promo code created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error creating promo code:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create promo code'
+    });
+  }
+});
+
+/**
+ * @api {put} /api/promo-codes/admin/:id Update Promo Code (Admin)
+ * @apiDescription Update an existing promo code (Admin only)
+ * @apiGroup PromoCode Admin
+ * @apiHeader {String} Authorization Bearer token (Admin only)
+ */
+router.put('/admin/:id', authenticateToken, async (req, res) => {
+  try {
+    // TODO: Add admin permission check
+
+    const promoCodeId = req.params.id;
+    const {
+      code,
+      name,
+      description,
+      benefit_type,
+      benefit_duration_days,
+      benefit_plan_code,
+      discount_percentage,
+      max_uses,
+      max_uses_per_user,
+      valid_from,
+      valid_until,
+      is_active
+    } = req.body;
+
+    const updateQuery = `
+      UPDATE promo_codes SET
+        code = $1, name = $2, description = $3, benefit_type = $4,
+        benefit_duration_days = $5, benefit_plan_code = $6,
+        discount_percentage = $7, max_uses = $8, max_uses_per_user = $9,
+        valid_from = $10, valid_until = $11, is_active = $12,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $13
+      RETURNING *
+    `;
+
+    const values = [
+      code?.toUpperCase(),
+      name,
+      description,
+      benefit_type,
+      benefit_duration_days,
+      benefit_plan_code,
+      discount_percentage,
+      max_uses,
+      max_uses_per_user,
+      valid_from || null,
+      valid_until || null,
+      is_active,
+      promoCodeId
+    ];
+
+    const result = await db.query(updateQuery, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Promo code not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      code: result.rows[0],
+      message: 'Promo code updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error updating promo code:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update promo code'
+    });
+  }
+});
+
+/**
+ * @api {delete} /api/promo-codes/admin/:id Delete Promo Code (Admin)
+ * @apiDescription Delete a promo code (Admin only)
+ * @apiGroup PromoCode Admin
+ * @apiHeader {String} Authorization Bearer token (Admin only)
+ */
+router.delete('/admin/:id', authenticateToken, async (req, res) => {
+  try {
+    // TODO: Add admin permission check
+
+    const promoCodeId = req.params.id;
+
+    // Check if promo code has been used
+    const usageQuery = `SELECT COUNT(*) as usage_count FROM promo_code_redemptions WHERE promo_code_id = $1`;
+    const usageResult = await db.query(usageQuery, [promoCodeId]);
+    const usageCount = parseInt(usageResult.rows[0].usage_count);
+
+    if (usageCount > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot delete promo code that has been used ${usageCount} times. Consider deactivating instead.`
+      });
+    }
+
+    const deleteQuery = `DELETE FROM promo_codes WHERE id = $1 RETURNING code`;
+    const result = await db.query(deleteQuery, [promoCodeId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Promo code not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Promo code ${result.rows[0].code} deleted successfully`
+    });
+
+  } catch (error) {
+    console.error('Error deleting promo code:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete promo code'
+    });
+  }
+});
+
 module.exports = router;

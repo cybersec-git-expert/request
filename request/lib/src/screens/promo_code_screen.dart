@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../services/api_service.dart';
+import '../services/api_client.dart';
 import '../../services/subscription/response_limit_service.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/gradient_button.dart';
-import '../../widgets/custom_text_field.dart';
+import '../theme/app_theme.dart';
 
 class PromoCodeScreen extends StatefulWidget {
   const PromoCodeScreen({Key? key}) : super(key: key);
@@ -16,14 +14,12 @@ class PromoCodeScreen extends StatefulWidget {
 class _PromoCodeScreenState extends State<PromoCodeScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _promoCodeController = TextEditingController();
-  final ResponseLimitService _responseLimitService = ResponseLimitService();
 
   bool _isLoading = false;
   bool _isValidating = false;
   bool _isCodeValid = false;
   String? _validationMessage;
   Map<String, dynamic>? _promoDetails;
-  Map<String, dynamic>? _validationResult;
 
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
@@ -57,7 +53,6 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
       _isCodeValid = false;
       _validationMessage = null;
       _promoDetails = null;
-      _validationResult = null;
     });
 
     if (value.length >= 3) {
@@ -73,17 +68,25 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
     });
 
     try {
-      final response = await ApiService.post('/promo-codes/validate', {
-        'code': code.trim().toUpperCase(),
-      });
+      final response = await ApiClient.instance.post<Map<String, dynamic>>(
+        '/api/promo-codes/validate',
+        data: {'code': code.trim().toUpperCase()},
+      );
 
-      setState(() {
-        _validationResult = response;
-        _isCodeValid =
-            response['valid'] == true && response['user_can_use'] == true;
-        _validationMessage = response['message'];
-        _promoDetails = response['promo'];
-      });
+      if (response.isSuccess && response.data != null) {
+        setState(() {
+          _isCodeValid = response.data!['valid'] == true &&
+              response.data!['user_can_use'] == true;
+          _validationMessage = response.data!['message'];
+          _promoDetails = response.data!['promo'];
+        });
+      } else {
+        setState(() {
+          _isCodeValid = false;
+          _validationMessage = response.error ?? 'Error validating promo code';
+          _promoDetails = null;
+        });
+      }
     } catch (e) {
       setState(() {
         _isCodeValid = false;
@@ -105,16 +108,19 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
     });
 
     try {
-      final response = await ApiService.post('/promo-codes/redeem', {
-        'code': _promoCodeController.text.trim().toUpperCase(),
-      });
+      final response = await ApiClient.instance.post<Map<String, dynamic>>(
+        '/api/promo-codes/redeem',
+        data: {'code': _promoCodeController.text.trim().toUpperCase()},
+      );
 
-      if (response['success'] == true) {
+      if (response.isSuccess &&
+          response.data != null &&
+          response.data!['success'] == true) {
         // Show success message
-        _showSuccessDialog(response);
+        _showSuccessDialog(response.data!);
 
         // Refresh subscription status
-        await _responseLimitService.syncWithBackend();
+        await ResponseLimitService.syncWithBackend();
 
         // Clear the form
         _promoCodeController.clear();
@@ -122,10 +128,11 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
           _isCodeValid = false;
           _validationMessage = null;
           _promoDetails = null;
-          _validationResult = null;
         });
       } else {
-        _showErrorSnackBar(response['error'] ?? 'Failed to redeem promo code');
+        _showErrorSnackBar(response.data?['error'] ??
+            response.error ??
+            'Failed to redeem promo code');
       }
     } catch (e) {
       _showErrorSnackBar('Error redeeming promo code: $e');
@@ -144,7 +151,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.celebration, color: AppTheme.successColor, size: 28),
+              Icon(Icons.celebration, color: AppTheme.primaryColor, size: 28),
               const SizedBox(width: 12),
               const Text('Promo Code Redeemed!'),
             ],
@@ -163,7 +170,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
                 Row(
                   children: [
                     Icon(Icons.verified,
-                        color: AppTheme.successColor, size: 20),
+                        color: AppTheme.primaryColor, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'Plan: ${response['benefit_plan']}',
@@ -206,7 +213,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppTheme.errorColor,
+        backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -236,7 +243,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
 
     return Icon(
       _isCodeValid ? Icons.check_circle : Icons.error,
-      color: _isCodeValid ? AppTheme.successColor : AppTheme.errorColor,
+      color: _isCodeValid ? Colors.green : Colors.red,
       size: 20,
     );
   }
@@ -249,16 +256,16 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: AppTheme.successColor.withOpacity(0.1),
+        color: Colors.green.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+        border: Border.all(color: Colors.green.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.local_offer, color: AppTheme.successColor, size: 24),
+              Icon(Icons.local_offer, color: Colors.green, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -340,7 +347,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
                     gradient: LinearGradient(
                       colors: [
                         AppTheme.primaryColor.withOpacity(0.1),
-                        AppTheme.secondaryColor.withOpacity(0.1),
+                        AppTheme.primaryColor.withOpacity(0.1),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -379,19 +386,24 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
                 const SizedBox(height: 32),
 
                 // Promo code input
-                CustomTextField(
+                TextField(
                   controller: _promoCodeController,
-                  labelText: 'Promo Code',
-                  hintText: 'Enter your promo code',
                   onChanged: _onPromoCodeChanged,
                   textCapitalization: TextCapitalization.characters,
                   inputFormatters: [
                     UpperCaseTextFormatter(),
                     FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')),
                   ],
-                  suffixIcon: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: _buildValidationIndicator(),
+                  decoration: InputDecoration(
+                    labelText: 'Promo Code',
+                    hintText: 'Enter your promo code',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: _buildValidationIndicator(),
+                    ),
                   ),
                 ),
 
@@ -401,9 +413,7 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
                   Text(
                     _validationMessage!,
                     style: TextStyle(
-                      color: _isCodeValid
-                          ? AppTheme.successColor
-                          : AppTheme.errorColor,
+                      color: _isCodeValid ? Colors.green : Colors.red,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -416,17 +426,27 @@ class _PromoCodeScreenState extends State<PromoCodeScreen>
                 const SizedBox(height: 32),
 
                 // Redeem button
-                GradientButton(
-                  onPressed:
-                      _isCodeValid && !_isLoading ? _redeemPromoCode : null,
-                  isLoading: _isLoading,
-                  child: Text(
-                    _isLoading ? 'Redeeming...' : 'Redeem Promo Code',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed:
+                        _isCodeValid && !_isLoading ? _redeemPromoCode : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Redeem Promo Code',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
 

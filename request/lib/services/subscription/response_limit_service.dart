@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entitlements_service.dart';
 import '../../src/services/simple_subscription_service.dart';
+import '../../src/services/api_client.dart';
 
 /// Simple subscription service to track response limits and subscription status
 /// Syncs with backend usage_monthly table for accurate counting
@@ -12,10 +13,17 @@ class ResponseLimitService {
   static Future<bool> canSendResponse() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Check if user has unlimited plan
+    // First check if user has unlimited plan
     final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
     if (hasUnlimited) {
       print('DEBUG: canSendResponse = true (unlimited plan)');
+      return true;
+    }
+
+    // Check for active promo benefits
+    final hasActivePromo = await _hasActivePromoBenefits();
+    if (hasActivePromo) {
+      print('DEBUG: canSendResponse = true (active promo benefits)');
       return true;
     }
 
@@ -37,6 +45,13 @@ class ResponseLimitService {
     if (hasUnlimited) {
       print('DEBUG: getRemainingResponses = -1 (unlimited)');
       return -1; // -1 indicates unlimited
+    }
+
+    // Check for active promo benefits
+    final hasActivePromo = await _hasActivePromoBenefits();
+    if (hasActivePromo) {
+      print('DEBUG: getRemainingResponses = -1 (promo unlimited)');
+      return -1; // -1 indicates unlimited from promo
     }
 
     // Get current response count from backend
@@ -97,23 +112,44 @@ class ResponseLimitService {
     print('DEBUG: setUnlimitedPlan = $hasUnlimited');
   }
 
-  /// Check if user has unlimited plan
+  /// Check if user has unlimited plan (including promo benefits)
   static Future<bool> hasUnlimitedPlan() async {
     final prefs = await SharedPreferences.getInstance();
     final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
-    print('DEBUG: hasUnlimitedPlan = $hasUnlimited');
-    return hasUnlimited;
+
+    if (hasUnlimited) {
+      print('DEBUG: hasUnlimitedPlan = true (permanent plan)');
+      return true;
+    }
+
+    // Check for active promo benefits
+    final hasActivePromo = await _hasActivePromoBenefits();
+    if (hasActivePromo) {
+      print('DEBUG: hasUnlimitedPlan = true (promo benefits)');
+      return true;
+    }
+
+    print('DEBUG: hasUnlimitedPlan = false');
+    return false;
   }
 
   /// Get current plan status for display
   static Future<String> getPlanStatus() async {
-    final hasUnlimited = await hasUnlimitedPlan();
+    final prefs = await SharedPreferences.getInstance();
+    final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
+
     if (hasUnlimited) {
       return 'Pro Plan - Unlimited responses';
-    } else {
-      final remaining = await getRemainingResponses();
-      return 'Free Plan - $remaining responses remaining this month';
     }
+
+    // Check for active promo benefits
+    final hasActivePromo = await _hasActivePromoBenefits();
+    if (hasActivePromo) {
+      return 'Promo Active - Unlimited responses';
+    }
+
+    final remaining = await getRemainingResponses();
+    return 'Free Plan - $remaining responses remaining this month';
   }
 
   /// Testing methods for debugging
@@ -137,13 +173,25 @@ class ResponseLimitService {
 
   /// Get user's subscription status info
   static Future<SubscriptionStatus> getSubscriptionStatus() async {
-    final hasUnlimited = await hasUnlimitedPlan();
+    final prefs = await SharedPreferences.getInstance();
+    final hasUnlimited = prefs.getBool(_hasUnlimitedPlanKey) ?? false;
+    final hasActivePromo = await _hasActivePromoBenefits();
+    final hasAnyUnlimited = hasUnlimited || hasActivePromo;
     final remaining = await getRemainingResponses();
 
+    String planType;
+    if (hasUnlimited) {
+      planType = 'pro';
+    } else if (hasActivePromo) {
+      planType = 'promo';
+    } else {
+      planType = 'free';
+    }
+
     return SubscriptionStatus(
-      hasUnlimitedPlan: hasUnlimited,
+      hasUnlimitedPlan: hasAnyUnlimited,
       remainingResponses: remaining,
-      planType: hasUnlimited ? 'pro' : 'free',
+      planType: planType,
     );
   }
 
@@ -256,6 +304,27 @@ class ResponseLimitService {
       print('❌ ERROR: debugSubscriptionStatus failed: $e');
     }
   }
+
+  /// Check if user has active promo benefits
+  static Future<bool> _hasActivePromoBenefits() async {
+    try {
+      final response = await ApiClient.instance.get<Map<String, dynamic>>(
+        '/api/promo-codes/check-active',
+      );
+
+      if (response.isSuccess && response.data != null) {
+        final hasActivePromo = response.data!['has_active_promo'] == true;
+        print('DEBUG: _hasActivePromoBenefits = $hasActivePromo');
+        return hasActivePromo;
+      }
+
+      print('DEBUG: _hasActivePromoBenefits = false (no valid response)');
+      return false;
+    } catch (e) {
+      print('ERROR: _hasActivePromoBenefits failed: $e');
+      return false;
+    }
+  }
 }
 
 /// Data class for subscription status
@@ -274,7 +343,11 @@ class SubscriptionStatus {
 
   String get statusText {
     if (hasUnlimitedPlan) {
-      return 'Pro Plan - Unlimited Responses';
+      if (planType == 'promo') {
+        return 'Promo Active - Unlimited Responses';
+      } else {
+        return 'Pro Plan - Unlimited Responses';
+      }
     } else {
       return 'Free Plan - $remainingResponses responses remaining this month';
     }
