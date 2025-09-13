@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/payment_gateway.dart';
 import '../src/theme/glass_theme.dart';
+import 'payment_success_screen.dart';
 
 class CardPaymentScreen extends StatefulWidget {
   final PaymentGateway paymentGateway;
@@ -539,13 +540,27 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment processed successfully'),
-            backgroundColor: GlassTheme.colors.successColor,
+        // Generate invoice number and date
+        final invoiceNumber =
+            'INV${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+        final paymentDate =
+            'Paid at ${DateTime.now().day} ${_getMonthName(DateTime.now().month)} ${DateTime.now().year}';
+
+        // Navigate to success screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentSuccessScreen(
+              amount: widget.amount.toStringAsFixed(2),
+              currency: widget.currency,
+              invoiceNumber: invoiceNumber,
+              paymentDate: paymentDate,
+              planCode: widget.planCode,
+              note:
+                  'Please ensure payment is made by the due date to avoid any late fees.',
+            ),
           ),
         );
-        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -561,6 +576,25 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
         setState(() => _isProcessing = false);
       }
     }
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    return months[month];
   }
 }
 
