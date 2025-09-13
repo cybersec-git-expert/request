@@ -152,18 +152,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: Text(
-            'Get ${_displayName(selectedPlan.name)}',
-            key: ValueKey(selectedPlan.code),
-            style: const TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-            ),
-          ),
-        ),
+        title: null, // Remove the title from app bar
         centerTitle: true,
       ),
       body: isLoading
@@ -286,18 +275,6 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         ),
       ] else ...[
         _FeatureItem(
-          icon: Icons.business_center,
-          color: const Color(0xFF007AFF), // Blue
-          title: 'Business verification enabled',
-          subtitle: 'Add prices on listings without limits',
-        ),
-        _FeatureItem(
-          icon: Icons.flash_on,
-          color: const Color(0xFFFF8C00), // Orange
-          title: 'Instant notifications',
-          subtitle: 'For new requests in your business categories',
-        ),
-        _FeatureItem(
           icon: Icons.all_inclusive,
           color: const Color(0xFFFF3B30), // Red/Pink
           title: 'Unlimited responses',
@@ -353,12 +330,12 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
               isFree ? 'Free Plan Features' : 'Pro+ Features',
               textAlign: TextAlign.center, // Center the existing heading
               style: const TextStyle(
-                fontSize: 22,
+                fontSize: 18, // Reduced from 22
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6), // Reduced spacing
             Text(
               isFree
                   ? 'Start with essential features'
@@ -377,20 +354,10 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 40, // Fixed width for consistency
-                        height: 40, // Fixed height for consistency
-                        decoration: BoxDecoration(
-                          color: feature.color
-                              .withOpacity(0.12), // Slightly more opacity
-                          borderRadius:
-                              BorderRadius.circular(12), // More rounded
-                        ),
-                        child: Icon(
-                          feature.icon,
-                          color: feature.color,
-                          size: 20, // Slightly larger icon
-                        ),
+                      Icon(
+                        feature.icon,
+                        color: feature.color,
+                        size: 24, // Slightly larger since no background
                       ),
                       const SizedBox(width: 16), // More spacing
                       Expanded(
@@ -400,18 +367,17 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                             Text(
                               feature.title,
                               style: TextStyle(
-                                fontSize: 16, // Larger title
-                                fontWeight: FontWeight
-                                    .w600, // Less bold for modern look
-                                color: feature.color, // Use same color as icon
+                                fontSize: 14, // Reduced from 16
+                                fontWeight: FontWeight.w600,
+                                color: feature.color,
                                 height: 1.3,
                               ),
                             ),
-                            const SizedBox(height: 4), // More spacing
+                            const SizedBox(height: 3), // Reduced spacing
                             Text(
                               feature.subtitle,
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 12, // Reduced from 14
                                 color: Color(0xFF6C7B7F),
                                 height: 1.4,
                               ),
@@ -422,6 +388,116 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                     ],
                   ),
                 )),
+
+            // Additional verification features section for Pro plan
+            if (!isFree) ...[
+              const SizedBox(height: 16),
+              // Plus symbol divider - standalone icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add,
+                    color: const Color(0xFF007AFF),
+                    size: 28, // Larger standalone icon
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Business verification heading
+              Text(
+                'If you verify your business',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Business verification features with same style
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.price_change,
+                      color: const Color(0xFF007AFF),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Unlimited pricing',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF007AFF),
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Add unlimited prices on the product pricing',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6C7B7F),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.notifications_active,
+                      color: const Color(0xFFFF8C00),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Instant notifications',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFF8C00),
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Receive notification as soon as the user create a request in your business category',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6C7B7F),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
