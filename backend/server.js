@@ -146,6 +146,9 @@ const paymentMethodsRoutes = require('./routes/payment-methods'); // Country pay
 
 const priceStagingService = require('./services/price_staging_service');
 
+// Initialize subscription expiration service
+const subscriptionExpirationService = require('./services/subscription_expiration_service');
+
 
 
 const app = express();
@@ -615,9 +618,11 @@ app.listen(PORT, HOST, () => {
   console.log(`🤖 Android emulator: http://10.0.2.2:${PORT}/api`);
 
   console.log(`📶 Ping: http://localhost:${PORT}/api/ping`);
-
   console.log(`🌍 CORS allowed origins: ${allowedOrigins.join(', ')}`);
-
+  
+  // Initialize subscription expiration service
+  subscriptionExpirationService.initialize();
+  console.log('✅ Subscription expiration service initialized');
 });
 
 // Entitlements API endpoints - Using proper service

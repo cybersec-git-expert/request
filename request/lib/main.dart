@@ -31,6 +31,7 @@ import 'src/services/notification_center.dart';
 import 'pages/subscription/simple_subscription_page.dart';
 import 'src/screens/simple_subscription_screen.dart';
 import 'src/screens/role_registration_screen.dart';
+import 'services/subscription_monitoring_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +79,9 @@ void main() async {
 
       // Start foreground polling (badges + local toasts)
       await NotificationCenter.instance.start();
+
+      // Initialize subscription monitoring service
+      await SubscriptionMonitoringService.instance.initialize();
 
       debugPrint('✅ REST API services initialized successfully');
     } catch (e, s) {

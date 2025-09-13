@@ -18,8 +18,8 @@
     "test:watch": "jest --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-  "schema:audit": "node tools/schema_audit.js",
-  "migrate:hiring-to-job": "node ./scripts/run-migration-iam.js ./database/migrations/034_rename_hiring_to_job.sql"
+    "schema:audit": "node tools/schema_audit.js",
+    "migrate:hiring-to-job": "node ./scripts/run-migration-iam.js ./database/migrations/034_rename_hiring_to_job.sql"
   },
   "keywords": [
     "nodejs",
