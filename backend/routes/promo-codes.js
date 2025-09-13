@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../services/database');
 const auth = require('../services/auth');
-const { body, validationResult, param } = require('express-validator');
+// Temporarily removed express-validator for deployment compatibility
+// const { body, validationResult, param } = require('express-validator');
 
 /**
  * @api {post} /api/promo-codes/validate Validate Promo Code
@@ -24,20 +25,17 @@ const { body, validationResult, param } = require('express-validator');
  */
 router.post('/validate', 
   auth.authMiddleware(),
-  [
-    body('code').trim().isLength({ min: 1, max: 50 }).withMessage('Promo code is required')
-  ],
   async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Basic validation without express-validator
+      const { code } = req.body;
+      if (!code || typeof code !== 'string' || code.trim().length === 0 || code.length > 50) {
         return res.status(400).json({
           success: false,
-          errors: errors.array()
+          error: 'Promo code is required and must be between 1 and 50 characters'
         });
       }
 
-      const { code } = req.body;
       const userId = req.user.id;
 
       // Get promo code details
@@ -141,20 +139,17 @@ router.post('/validate',
  */
 router.post('/redeem',
   auth.authMiddleware(),
-  [
-    body('code').trim().isLength({ min: 1, max: 50 }).withMessage('Promo code is required')
-  ],
   async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Basic validation without express-validator
+      const { code } = req.body;
+      if (!code || typeof code !== 'string' || code.trim().length === 0 || code.length > 50) {
         return res.status(400).json({
           success: false,
-          errors: errors.array()
+          error: 'Promo code is required and must be between 1 and 50 characters'
         });
       }
 
-      const { code } = req.body;
       const userId = req.user.id;
       const ipAddress = req.ip;
       const userAgent = req.get('User-Agent');
