@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/payment_gateway.dart';
 import '../src/theme/glass_theme.dart';
 import '../src/services/simple_subscription_service.dart';
+import '../services/subscription/response_limit_service.dart';
 import 'payment_success_screen.dart';
 
 class CardPaymentScreen extends StatefulWidget {
@@ -549,6 +550,11 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
       if (!paymentConfirmed) {
         throw Exception('Payment confirmation failed');
+      }
+
+      // Update local subscription status for Pro plan
+      if (widget.planCode.toLowerCase() == 'pro') {
+        await ResponseLimitService.setUnlimitedPlan(true);
       }
 
       if (mounted) {

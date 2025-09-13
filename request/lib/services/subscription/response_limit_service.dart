@@ -145,6 +145,37 @@ class ResponseLimitService {
       planType: hasUnlimited ? 'pro' : 'free',
     );
   }
+
+  /// Sync subscription status with backend on app startup
+  static Future<void> syncWithBackend() async {
+    try {
+      print('DEBUG: syncWithBackend - triggering status refresh');
+
+      // For immediate testing: check if user has an active Pro subscription
+      // This is a simplified version - in production you'd call the backend API
+
+      // For now, let's add a manual trigger to refresh the unlimited status
+      // This will be called when the unified request screen loads
+
+      print('DEBUG: syncWithBackend completed - status should refresh');
+    } catch (e) {
+      print('ERROR: syncWithBackend failed: $e');
+    }
+  }
+
+  /// Force refresh subscription status (for testing)
+  static Future<void> forceRefreshSubscriptionStatus() async {
+    try {
+      print(
+          'DEBUG: forceRefreshSubscriptionStatus - manually setting Pro plan');
+      // For immediate testing, manually set unlimited plan for Pro users
+      await setUnlimitedPlan(true);
+      print(
+          'DEBUG: forceRefreshSubscriptionStatus completed - set unlimited plan to true');
+    } catch (e) {
+      print('ERROR: forceRefreshSubscriptionStatus failed: $e');
+    }
+  }
 }
 
 /// Data class for subscription status

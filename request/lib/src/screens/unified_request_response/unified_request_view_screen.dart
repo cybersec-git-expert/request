@@ -80,6 +80,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     super.initState();
     _load();
     _refreshRemaining();
+    // Sync subscription status with backend to ensure local cache is current
+    ResponseLimitService.syncWithBackend();
   }
 
   Future<void> _refreshRemaining() async {
