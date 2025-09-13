@@ -63,7 +63,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         plans = plansResult;
         // Default to Pro plan if available, otherwise use current status or empty
         if (plans.isNotEmpty) {
-          final proPlan = plans.where((p) => p.code.toLowerCase() == 'pro').firstOrNull;
+          final proPlan =
+              plans.where((p) => p.code.toLowerCase() == 'pro').firstOrNull;
           selectedPlanId = proPlan?.code ?? currentStatus?.planCode ?? '';
         } else {
           selectedPlanId = currentStatus?.planCode ?? '';
@@ -404,18 +405,9 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white, // Keep box white always
         borderRadius: BorderRadius.circular(12),
-        border: isSelected
-            ? Border.all(color: const Color(0xFF007AFF), width: 2)
-            : Border.all(color: Colors.grey.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        // Removed borders and shadows for cleaner look
       ),
       child: InkWell(
         onTap: () {
@@ -439,12 +431,31 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   // Icon or empty space
                   Icon(
                     plan.responseLimit == -1 ? Icons.bolt : Icons.star_border,
-                    color: plan.responseLimit == -1 
-                        ? const Color(0xFF007AFF) 
+                    color: plan.responseLimit == -1
+                        ? const Color(0xFF007AFF)
                         : const Color(0xFF6C7B7F),
                     size: 20,
                   ),
-                  if (isCurrent)
+                  if (isSelected && !isFree)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF007AFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Pro Plan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  else if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -473,7 +484,10 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _displayName(plan.name) + (isFree ? '' : ' ${plan.responseLimit == -1 ? "monthly" : "yearly"}'),
+                    _displayName(plan.name) +
+                        (isFree
+                            ? ''
+                            : ' ${plan.responseLimit == -1 ? "monthly" : "yearly"}'),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -491,9 +505,9 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    plan.description?.isNotEmpty == true 
+                    plan.description?.isNotEmpty == true
                         ? plan.description!
-                        : plan.responseLimit == -1 
+                        : plan.responseLimit == -1
                             ? 'Perfect for individual with daily pro search needs'
                             : 'Most of the user choose yearly subscription',
                     style: const TextStyle(
