@@ -159,8 +159,14 @@ class ResponseLimitService {
 
       if (status != null) {
         final isPro = status.planCode.toLowerCase() == 'pro';
-        print(
-            'DEBUG: syncWithBackend - got status: planCode=${status.planCode}, isPro=$isPro');
+        print('DEBUG: syncWithBackend - FULL STATUS DETAILS:');
+        print('  planCode: ${status.planCode}');
+        print('  planName: ${status.planName}');
+        print('  responsesUsed: ${status.responsesUsed}');
+        print('  responsesLimit: ${status.responsesLimit}');
+        print('  responsesRemaining: ${status.responsesRemaining}');
+        print('  canRespond: ${status.canRespond}');
+        print('  isPro: $isPro');
 
         // Update local cache based on backend status
         await setUnlimitedPlan(isPro);
@@ -199,6 +205,55 @@ class ResponseLimitService {
       print('DEBUG: clearCacheAndSync completed');
     } catch (e) {
       print('ERROR: clearCacheAndSync failed: $e');
+    }
+  }
+
+  /// Debug function to manually test subscription status
+  static Future<void> debugSubscriptionStatus() async {
+    try {
+      print('🔍 DEBUG: Starting subscription status test...');
+
+      // Test the backend API directly
+      final subscriptionService = SimpleSubscriptionService.instance;
+      final status = await subscriptionService.getSubscriptionStatus();
+
+      if (status != null) {
+        print('✅ Backend returned subscription status:');
+        print('  Plan Code: ${status.planCode}');
+        print('  Plan Name: ${status.planName}');
+        print('  Responses Used: ${status.responsesUsed}');
+        print('  Responses Limit: ${status.responsesLimit}');
+        print('  Responses Remaining: ${status.responsesRemaining}');
+        print('  Can Respond: ${status.canRespond}');
+        print('  Is Verified Business: ${status.isVerifiedBusiness}');
+        print('  Features: ${status.features}');
+
+        final isPro = status.planCode.toLowerCase() == 'pro';
+        print('  Is Pro Plan: $isPro');
+      } else {
+        print('❌ Backend returned null subscription status');
+      }
+
+      // Check current local cache
+      final hasUnlimited = await hasUnlimitedPlan();
+      final remaining = await getRemainingResponses();
+      print('📱 Current local cache:');
+      print('  Has Unlimited: $hasUnlimited');
+      print('  Remaining Responses: $remaining');
+
+      print('🔄 Now syncing with backend...');
+      await syncWithBackend();
+
+      // Check cache after sync
+      final hasUnlimitedAfter = await hasUnlimitedPlan();
+      final remainingAfter = await getRemainingResponses();
+      print('📱 Local cache after sync:');
+      print('  Has Unlimited: $hasUnlimitedAfter');
+      print('  Remaining Responses: $remainingAfter');
+
+      print('🔍 DEBUG: Subscription status test completed');
+    } catch (e) {
+      print('❌ ERROR: debugSubscriptionStatus failed: $e');
     }
   }
 }

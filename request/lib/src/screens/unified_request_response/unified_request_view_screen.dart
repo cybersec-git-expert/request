@@ -78,8 +78,13 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
-    _refreshSubscriptionAndResponses();
+    _loadWithSync();
+  }
+
+  Future<void> _loadWithSync() async {
+    // First sync subscription status, then load the UI
+    await _refreshSubscriptionAndResponses();
+    await _load();
   }
 
   Future<void> _refreshSubscriptionAndResponses() async {
@@ -155,9 +160,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      // First, refresh subscription status to ensure cache is current
-      await ResponseLimitService.syncWithBackend();
-
       final r = await _service.getRequestById(widget.requestId);
       final currentUserId = RestAuthService.instance.currentUser?.uid;
       bool owner =
@@ -1102,7 +1104,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
           ),
       ],
       body: RefreshIndicator(
-        onRefresh: _load,
+        onRefresh: _loadWithSync,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
