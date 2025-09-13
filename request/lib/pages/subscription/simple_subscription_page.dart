@@ -7,6 +7,21 @@ import '../../models/payment_gateway.dart';
 import '../../screens/payment_processing_screen.dart';
 import '../../src/services/enhanced_user_service.dart';
 
+// Feature item helper class for subscription features
+class _FeatureItem {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+
+  const _FeatureItem({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+  });
+}
+
 class SimpleSubscriptionPage extends StatefulWidget {
   const SimpleSubscriptionPage({Key? key}) : super(key: key);
 
@@ -48,6 +63,11 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedPlan = selectedPlanId.isNotEmpty
+        ? plans.firstWhere((p) => p.code == selectedPlanId,
+            orElse: () => plans.firstWhere((p) => p.price == 0))
+        : plans.firstWhere((p) => p.price == 0);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -66,12 +86,16 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Pro+ Plans',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+        title: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            'Get ${_displayName(selectedPlan.name)}',
+            key: ValueKey(selectedPlan.code),
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
         ),
         centerTitle: true,
@@ -92,8 +116,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Pro+ intro card with modern icons
-                          _buildModernProIntroCard(),
+                          // Dynamic intro card based on selected plan
+                          _buildDynamicIntroCard(selectedPlan),
                           const SizedBox(height: 24),
 
                           // Available Plans section
@@ -161,8 +185,45 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     );
   }
 
-  // Modern Pro+ intro card matching the design
-  Widget _buildModernProIntroCard() {
+  // Dynamic intro card that updates based on selected plan
+  Widget _buildDynamicIntroCard(SubscriptionPlan plan) {
+    final isFree = plan.price == 0;
+    final planFeatures = [
+      if (isFree) ...[
+        _FeatureItem(
+          icon: Icons.reply_outlined,
+          color: const Color(0xFF6C7B7F),
+          title: '${plan.responseLimit} responses per month',
+          subtitle: 'Perfect for small businesses starting out',
+        ),
+        _FeatureItem(
+          icon: Icons.notifications_outlined,
+          color: const Color(0xFF6C7B7F),
+          title: 'Basic notifications',
+          subtitle: 'Get notified about new requests',
+        ),
+      ] else ...[
+        _FeatureItem(
+          icon: Icons.business_center,
+          color: const Color(0xFF007AFF),
+          title: 'Business verification enabled',
+          subtitle: 'Add prices on listings without limits',
+        ),
+        _FeatureItem(
+          icon: Icons.notifications_active,
+          color: const Color(0xFF007AFF),
+          title: 'Instant notifications',
+          subtitle: 'For new requests in your business categories',
+        ),
+        _FeatureItem(
+          icon: Icons.all_inclusive,
+          color: const Color(0xFF007AFF),
+          title: 'Unlimited responses',
+          subtitle: 'Respond to as many requests as you want',
+        ),
+      ],
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -176,69 +237,80 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         ],
       ),
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Business verification feature
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6C7B7F).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.business_center,
-                  color: Color(0xFF6C7B7F),
-                  size: 18,
-                ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Column(
+          key: ValueKey(plan.code),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isFree ? 'Free Plan Features' : 'Pro+ Features',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Verify your business to add prices on listings without limits.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6C7B7F),
-                    height: 1.4,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isFree
+                  ? 'Start with essential features'
+                  : 'Unlock the most powerful business tools',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6C7B7F),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ...planFeatures.map((feature) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: feature.color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          feature.icon,
+                          color: feature.color,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              feature.title,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: feature.color,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              feature.subtitle,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6C7B7F),
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Instant notifications feature
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6C7B7F).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.notifications_active,
-                  color: Color(0xFF6C7B7F),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Get notified instantly when new requests arrive in your business categories.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6C7B7F),
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+                )),
+          ],
+        ),
       ),
     );
   }
