@@ -99,9 +99,9 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     // Return loading state if no plans available yet
     if (selectedPlan == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: GlassTheme.backgroundColor,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF8F9FA),
+          backgroundColor: GlassTheme.backgroundColor,
           elevation: 0,
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
@@ -128,16 +128,16 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007AFF)),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4B5563)),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: GlassTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: GlassTheme.backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -158,7 +158,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007AFF)),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4B5563)),
               ),
             )
           : SafeArea(
@@ -167,89 +167,75 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   // Scrollable content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 20),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Dynamic intro card based on selected plan
-                          _buildDynamicIntroCard(selectedPlan),
+                          // Top icon - simple and clean
+                          Icon(
+                            Icons.auto_awesome,
+                            size: 60,
+                            color: Colors.blue,
+                          ),
                           const SizedBox(height: 24),
 
-                          // Available Plans section
-                          const Text(
-                            'Available Plans',
+                          // Main heading
+                          Text(
+                            'Try Pro+ Features for free',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 22,
+                              fontSize: 24,
                               fontWeight: FontWeight.w700,
                               color: Colors.black87,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
 
-                          // Horizontal plans list with equal-sized cards
-                          SizedBox(
-                            height: 160, // Fixed height for cards
-                            child: Row(
-                              children: plans.asMap().entries.map((entry) {
-                                int index = entry.key;
-                                SubscriptionPlan plan = entry.value;
-                                return Expanded(
-                                  child: Container(
-                                    margin: EdgeInsets.only(
-                                      right: index == plans.length - 1 ? 0 : 12,
-                                    ),
-                                    child: _buildHorizontalPlanCard(plan),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-
-                          const SizedBox(height: 100), // Extra space for button
+                          // Features list with checkmarks
+                          _buildFeaturesList(),
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
                   ),
 
-                  // Fixed bottom button
-                  if (selectedPlanId.isNotEmpty &&
-                      selectedPlanId != currentStatus?.planCode)
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                      color: const Color(0xFFF8F9FA),
-                      child: SafeArea(
-                        top: false,
-                        child: SizedBox(
+                  // Bottom plan cards
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    color: GlassTheme.backgroundColor,
+                    child: Column(
+                      children: [
+                        // Vertical plan cards
+                        ...plans.map((plan) =>
+                            _buildVerticalPlanCard(plan, selectedPlan)),
+                        const SizedBox(height: 24),
+
+                        // Subscribe button
+                        SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
                             onPressed: _subscribeToPlan,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF007AFF),
+                              backgroundColor: GlassTheme.colors.primaryBlue,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.download, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Subscribe To ${_getSelectedPlanName()}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),
@@ -300,18 +286,18 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         duration: const Duration(milliseconds: 300),
         child: Column(
           key: ValueKey(plan.code),
-          crossAxisAlignment: CrossAxisAlignment.center, // Center alignment
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Top icon for Pro features
             if (!isFree) ...[
               Container(
-                width: 60,
-                height: 60,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.blue.withOpacity(0.1),
-                      Colors.purple.withOpacity(0.1),
+                      Colors.blue.withOpacity(0.15),
+                      Colors.purple.withOpacity(0.15),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -320,7 +306,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                 ),
                 child: Icon(
                   Icons.auto_awesome,
-                  size: 30,
+                  size: 40,
                   color: Colors.blue,
                 ),
               ),
@@ -328,61 +314,54 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
             ],
             Text(
               isFree ? 'Free Plan Features' : 'Pro+ Features',
-              textAlign: TextAlign.center, // Center the existing heading
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 18, // Reduced from 22
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 6), // Reduced spacing
+            const SizedBox(height: 8),
             Text(
               isFree
                   ? 'Start with essential features'
                   : 'Unlock the most powerful business tools',
-              textAlign: TextAlign.center, // Center the existing subtitle
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 color: Color(0xFF6C7B7F),
                 height: 1.4,
               ),
             ),
             const SizedBox(height: 24),
             ...planFeatures.map((feature) => Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: 20), // Increased spacing
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(
-                        feature.icon,
-                        color: feature.color,
-                        size: 24, // Slightly larger since no background
+                      // Checkmark icon like in reference
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
-                      const SizedBox(width: 16), // More spacing
+                      const SizedBox(width: 16),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              feature.title,
-                              style: TextStyle(
-                                fontSize: 14, // Reduced from 16
-                                fontWeight: FontWeight.w600,
-                                color: feature.color,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 3), // Reduced spacing
-                            Text(
-                              feature.subtitle,
-                              style: const TextStyle(
-                                fontSize: 12, // Reduced from 14
-                                color: Color(0xFF6C7B7F),
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          feature.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ],
@@ -391,67 +370,36 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
             // Additional verification features section for Pro plan
             if (!isFree) ...[
-              const SizedBox(height: 16),
-              // Plus symbol divider - standalone icon
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add,
-                    color: const Color(0xFF007AFF),
-                    size: 28, // Larger standalone icon
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
 
-              // Business verification heading
-              Text(
-                'If you verify your business',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Business verification features with same style
+              // Business verification features with checkmark style
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.price_change,
-                      color: const Color(0xFF007AFF),
-                      size: 24,
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Unlimited pricing',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF007AFF),
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            'Add unlimited prices on the product pricing',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF6C7B7F),
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'Unlimited pricing',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ],
@@ -461,37 +409,30 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.notifications_active,
-                      color: const Color(0xFFFF8C00),
-                      size: 24,
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Instant notifications',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFFFF8C00),
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            'Receive notification as soon as the user create a request in your business category',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF6C7B7F),
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'Instant notifications',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ],
@@ -903,5 +844,110 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         ),
       );
     }
+  }
+
+  // Build features list with checkmarks
+  Widget _buildFeaturesList() {
+    final features = [
+      'Unlimited responses',
+      'Premium support',
+      'Unlimited pricing',
+      'Instant notifications',
+    ];
+
+    return Column(
+      children: features
+          .map((feature) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.blue,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        feature,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  // Build vertical plan card like in reference
+  Widget _buildVerticalPlanCard(
+      SubscriptionPlan plan, SubscriptionPlan? selectedPlan) {
+    final isSelected = plan.code == selectedPlan?.code;
+    final isFree = plan.price == 0;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedPlanId = plan.code;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isFree ? 'Free Plan' : '${plan.name} Plan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                if (!isFree && isSelected)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Best value',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isFree
+                  ? 'LKR 0.00 Free'
+                  : 'LKR ${plan.price.toStringAsFixed(2)} per month',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
