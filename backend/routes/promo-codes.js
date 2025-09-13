@@ -369,7 +369,7 @@ router.get('/admin/list', auth.authMiddleware(), auth.roleMiddleware(['super_adm
  * @apiParam {String} [valid_until] Valid until date
  * @apiParam {Boolean} [is_active] Whether code is active
  */
-router.post('/admin/create', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
+router.post('/admin/create', auth.authMiddleware(), auth.roleMiddleware(['super_admin', 'country_admin']), async (req, res) => {
   try {
     const {
       code,
@@ -453,7 +453,7 @@ router.post('/admin/create', auth.authMiddleware(), auth.roleMiddleware(['super_
  * @apiGroup PromoCode Admin
  * @apiHeader {String} Authorization Bearer token (Admin only)
  */
-router.put('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
+router.put('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admin', 'country_admin']), async (req, res) => {
   try {
     const promoCodeId = req.params.id;
     const {
@@ -528,7 +528,7 @@ router.put('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admi
  * @apiGroup PromoCode Admin
  * @apiHeader {String} Authorization Bearer token (Admin only)
  */
-router.delete('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
+router.delete('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admin', 'country_admin']), async (req, res) => {
   try {
     const promoCodeId = req.params.id;
 
