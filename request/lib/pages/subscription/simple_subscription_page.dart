@@ -450,28 +450,6 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   ),
                 ],
               ),
-
-              // Selection indicator
-              if (isSelected && !isCurrent) ...[
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F4FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Selected - Tap Subscribe below',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF007AFF),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
