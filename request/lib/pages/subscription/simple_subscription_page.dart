@@ -171,17 +171,23 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                           horizontal: 24, vertical: 20),
                       child: Column(
                         children: [
-                          // Top icon - simple and clean
+                          // Top icon - dynamic based on selected plan
                           Icon(
-                            Icons.auto_awesome,
+                            selectedPlan.price == 0
+                                ? Icons.star_outline
+                                : Icons.auto_awesome,
                             size: 60,
-                            color: Colors.blue,
+                            color: selectedPlan.price == 0
+                                ? Colors.orange
+                                : Colors.blue,
                           ),
                           const SizedBox(height: 24),
 
-                          // Main heading
+                          // Main heading - dynamic based on selected plan
                           Text(
-                            'Try Pro+ Features for free',
+                            selectedPlan.price == 0
+                                ? 'Free Plan Features'
+                                : 'Try Pro+ Features for free',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 24,
@@ -192,7 +198,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                           const SizedBox(height: 24),
 
                           // Features list with checkmarks
-                          _buildFeaturesList(),
+                          _buildFeaturesList(selectedPlan),
                           const SizedBox(height: 32),
                         ],
                       ),
@@ -847,13 +853,22 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
   }
 
   // Build features list with checkmarks
-  Widget _buildFeaturesList() {
-    final features = [
-      'Unlimited responses',
-      'Premium support',
-      'Unlimited pricing',
-      'Instant notifications',
-    ];
+  Widget _buildFeaturesList(SubscriptionPlan selectedPlan) {
+    final isFree = selectedPlan.price == 0;
+
+    final features = isFree
+        ? [
+            'Basic responses (${selectedPlan.responseLimit} per month)',
+            'Standard support',
+            'Basic notifications',
+            'Essential features',
+          ]
+        : [
+            'Unlimited responses',
+            'Premium support',
+            'Unlimited pricing',
+            'Instant notifications',
+          ];
 
     return Column(
       children: features
@@ -863,7 +878,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   children: [
                     Icon(
                       Icons.check_circle,
-                      color: Colors.blue,
+                      color: isFree ? Colors.orange : Colors.blue,
                       size: 24,
                     ),
                     const SizedBox(width: 16),
@@ -901,6 +916,12 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
+          border: isSelected
+              ? Border.all(
+                  color: GlassTheme.colors.primaryBlue,
+                  width: 2,
+                )
+              : null,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -919,7 +940,8 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                 ),
                 if (!isFree && isSelected)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.green,
                       borderRadius: BorderRadius.circular(12),
