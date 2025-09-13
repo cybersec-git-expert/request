@@ -89,13 +89,19 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
   Future<void> _refreshSubscriptionAndResponses() async {
     try {
+      print('🔄 DEBUG: _refreshSubscriptionAndResponses starting...');
+
       // Sync subscription status with backend to ensure local cache is current
       await ResponseLimitService.syncWithBackend();
 
+      print('🔄 DEBUG: Backend sync completed, now refreshing remaining...');
+
       // Now refresh the UI with updated subscription status
       await _refreshRemaining();
+
+      print('🔄 DEBUG: _refreshSubscriptionAndResponses completed');
     } catch (e) {
-      print('ERROR: Failed to refresh subscription status: $e');
+      print('❌ ERROR: Failed to refresh subscription status: $e');
       // Still try to refresh remaining responses even if sync fails
       await _refreshRemaining();
     }
@@ -103,14 +109,28 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
 
   Future<void> _refreshRemaining() async {
     try {
+      print('🔄 DEBUG: _refreshRemaining starting...');
+
+      // Check if we have unlimited plan first
+      final hasUnlimited = await ResponseLimitService.hasUnlimitedPlan();
+      print('🔄 DEBUG: hasUnlimitedPlan = $hasUnlimited');
+
       final remaining = await ResponseLimitService.getRemainingResponses();
+      print('🔄 DEBUG: getRemainingResponses = $remaining');
+
       if (!mounted) return;
       setState(() {
         _remainingResponses = remaining;
         _loadingRemaining = false;
       });
-      print('DEBUG: Remaining free responses this month: $remaining');
+
+      // Debug the computed properties
+      print('🔄 DEBUG: _remainingResponses = $_remainingResponses');
+      print('🔄 DEBUG: _hasUnlimited = $_hasUnlimited');
+      print('🔄 DEBUG: _reachedLimit = $_reachedLimit');
+      print('🔄 DEBUG: Remaining free responses this month: $remaining');
     } catch (e) {
+      print('❌ DEBUG: Failed to load remaining responses: $e');
       if (!mounted) return;
       setState(() {
         _remainingResponses = 0; // default to 0 if unknown
@@ -1156,6 +1176,42 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                         );
                       },
                       child: const Text('See Plans'),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () async {
+                        print('🔍 MANUAL DEBUG: Testing current state...');
+                        print('🔍   _remainingResponses: $_remainingResponses');
+                        print('🔍   _hasUnlimited: $_hasUnlimited');
+                        print('🔍   _reachedLimit: $_reachedLimit');
+                        print('🔍   _loadingRemaining: $_loadingRemaining');
+
+                        // Test the service directly
+                        final hasUnlimited =
+                            await ResponseLimitService.hasUnlimitedPlan();
+                        final remaining =
+                            await ResponseLimitService.getRemainingResponses();
+                        print('🔍   Service hasUnlimited: $hasUnlimited');
+                        print('🔍   Service remaining: $remaining');
+
+                        // Force refresh
+                        setState(() {
+                          _loadingRemaining = true;
+                        });
+                        await _refreshSubscriptionAndResponses();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Debug: remaining=$remaining, unlimited=$hasUnlimited'),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.orange.withOpacity(0.1),
+                      ),
+                      child: const Text('Test', style: TextStyle(fontSize: 12)),
                     )
                   ],
                 ),
