@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/payment_gateway.dart';
 import '../src/theme/glass_theme.dart';
+import '../src/services/simple_subscription_service.dart';
 import 'payment_success_screen.dart';
 
 class CardPaymentScreen extends StatefulWidget {
@@ -10,6 +11,7 @@ class CardPaymentScreen extends StatefulWidget {
   final double amount;
   final String currency;
   final String userId;
+  final String paymentId;
 
   const CardPaymentScreen({
     Key? key,
@@ -18,6 +20,7 @@ class CardPaymentScreen extends StatefulWidget {
     required this.amount,
     required this.currency,
     required this.userId,
+    required this.paymentId,
   }) : super(key: key);
 
   @override
@@ -536,8 +539,17 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // TODO: Implement actual payment processing
+      // TODO: Implement actual payment gateway processing
+      // For now, simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
+
+      // Simulate successful payment and confirm with backend
+      final paymentConfirmed = await SimpleSubscriptionService.instance
+          .confirmPayment(widget.paymentId);
+
+      if (!paymentConfirmed) {
+        throw Exception('Payment confirmation failed');
+      }
 
       if (mounted) {
         // Generate invoice number and date

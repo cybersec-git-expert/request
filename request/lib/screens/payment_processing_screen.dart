@@ -28,10 +28,8 @@ class PaymentProcessingScreen extends StatefulWidget {
 class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   PaymentSession? _paymentSession;
   bool _isLoading = true;
-  bool _isProcessing = false;
   String? _error;
   String? _successMessage;
-  String _selectedPaymentMethod = '';
 
   @override
   void initState() {
@@ -327,7 +325,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   void _selectPaymentMethod(PaymentGateway gateway) {
     // Handle payment method selection
     setState(() {
-      _selectedPaymentMethod = gateway.code;
+      // Gateway selected - removed unused _selectedPaymentMethod tracking
     });
 
     // Navigate to card payment screen for card-based gateways
@@ -341,6 +339,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
             amount: widget.amount,
             currency: widget.currency,
             userId: widget.userId,
+            paymentId: _paymentSession!.id,
           ),
         ),
       );
