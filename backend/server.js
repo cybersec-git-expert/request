@@ -1,8 +1,8 @@
 console.log('🚀 Request Backend Production Server Starting...');
 console.log('📅 Server started at:', new Date().toISOString());
-// Zero-downtime CI/CD deployment test
+// Zero-downtime CI/CD deployment test - Updated with promo codes system
 
-// Request Backend API Server - Updated for CI/CD deployment
+// Request Backend API Server - Updated for CI/CD deployment with promo codes
 const express = require('express');
 
 const cors = require('cors');
