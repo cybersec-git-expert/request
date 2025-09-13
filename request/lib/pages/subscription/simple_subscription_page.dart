@@ -48,37 +48,38 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Flat, modern page styling (no gradients or glass)
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF8F9FA),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness:
-              GlassTheme.isDarkMode ? Brightness.light : Brightness.dark,
+          statusBarIconBrightness: Brightness.dark,
         ),
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios,
-            color: GlassTheme.colors.textPrimary,
+            color: Colors.black87,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           'Pro+ Plans',
-          style: GlassTheme.titleMedium,
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
       ),
       body: isLoading
-          ? Center(
+          ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                    GlassTheme.colors.primaryBlue),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007AFF)),
               ),
             )
           : SafeArea(
@@ -91,72 +92,23 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Pro+ intro / benefits
-                          _buildProPlusIntroCard(),
-                          const SizedBox(height: 16),
-                          // Current status header
-                          if (currentStatus != null) ...[
-                            _flatCard(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.verified_user,
-                                        color: GlassTheme.colors.primaryBlue,
-                                        size: 24,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'Current Plan: ${_displayName(currentStatus!.planName)}',
-                                        style: GlassTheme.titleSmall,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (currentStatus!.responsesLimit !=
-                                      null) ...[
-                                    Text(
-                                      'Responses Used: ${currentStatus!.responsesUsed}/${currentStatus!.responsesLimit}',
-                                      style: GlassTheme.bodyMedium,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    LinearProgressIndicator(
-                                      value: currentStatus!.responsesUsed /
-                                          (currentStatus!.responsesLimit ?? 1),
-                                      backgroundColor:
-                                          GlassTheme.colors.glassBorder,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        currentStatus!.canRespond
-                                            ? GlassTheme.colors.successColor
-                                            : GlassTheme.colors.errorColor,
-                                      ),
-                                    ),
-                                  ] else ...[
-                                    Text(
-                                      'Unlimited Responses',
-                                      style: GlassTheme.bodyMedium.copyWith(
-                                        color: GlassTheme.colors.successColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
+                          // Pro+ intro card with modern icons
+                          _buildModernProIntroCard(),
+                          const SizedBox(height: 24),
 
-                          // Plans section
-                          Text(
+                          // Available Plans section
+                          const Text(
                             'Available Plans',
-                            style: GlassTheme.titleMedium,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 16),
 
-                          // Plans list
-                          ...plans.map((plan) => _buildPlanCard(plan)),
+                          // Plans list with modern cards
+                          ...plans.map((plan) => _buildModernPlanCard(plan)),
 
                           const SizedBox(height: 100), // Extra space for button
                         ],
@@ -168,301 +120,289 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                   if (selectedPlanId.isNotEmpty &&
                       selectedPlanId != currentStatus?.planCode)
                     Container(
-                      padding: const EdgeInsets.all(20),
-                      color: Colors.white,
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                      color: const Color(0xFFF8F9FA),
                       child: SafeArea(
                         top: false,
                         child: SizedBox(
                           width: double.infinity,
-                          height: 50, // Smaller button height
+                          height: 56,
                           child: ElevatedButton(
                             onPressed: _subscribeToPlan,
-                            style: GlassTheme.primaryButton.copyWith(
-                              shape: MaterialStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF007AFF),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: Text(
-                              'Subscribe to ${_displayName(plans.firstWhere((p) => p.code == selectedPlanId).name)}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildPlanCard(SubscriptionPlan plan) {
-    final isSelected = selectedPlanId == plan.code;
-    final isCurrent = currentStatus?.planCode == plan.code;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: _flatCard(
-        child: InkWell(
-          onTap: () {
-            if (!isCurrent) {
-              setState(() {
-                selectedPlanId = plan.code;
-              });
-            }
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: isSelected || isCurrent
-                  ? Border.all(
-                      color: isCurrent
-                          ? GlassTheme.colors.successColor
-                          : GlassTheme.colors.primaryBlue,
-                      width: 2,
-                    )
-                  : null,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                const Icon(Icons.download, size: 20),
+                                const SizedBox(width: 8),
                                 Text(
-                                  _displayName(plan.name),
-                                  style: GlassTheme.titleSmall,
-                                ),
-                                if (isCurrent) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: GlassTheme.colors.successColor,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'CURRENT',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                  'Subscribe To ${_displayName(plans.firstWhere((p) => p.code == selectedPlanId).name)}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                ],
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            if (plan.description?.isNotEmpty == true)
-                              Text(
-                                plan.description!,
-                                style: GlassTheme.bodyMedium,
-                              ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${plan.currency} ${plan.price.toStringAsFixed(0)}',
-                            style: GlassTheme.titleMedium.copyWith(
-                              color: GlassTheme.colors.primaryBlue,
-                              fontWeight: FontWeight.bold,
-                            ),
                           ),
-                          Text(
-                            plan.price == 0 ? 'Free' : '/month',
-                            style: GlassTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Response limit info
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: GlassTheme.colors.glassBorder.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          plan.responseLimit == -1
-                              ? Icons.all_inclusive
-                              : Icons.reply,
-                          color: GlassTheme.colors.primaryBlue,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          plan.responseLimit == -1
-                              ? 'Unlimited responses per month'
-                              : '${plan.responseLimit} responses per month',
-                          style: GlassTheme.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Features list
-                  if (plan.features.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    ...plan.features.map((feature) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: GlassTheme.colors.successColor,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  feature,
-                                  style: GlassTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )),
-                  ],
-
-                  // Selection indicator
-                  if (isSelected && !isCurrent) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: GlassTheme.colors.primaryBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: GlassTheme.colors.primaryBlue.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Text(
-                        'Selected - Tap Subscribe below',
-                        textAlign: TextAlign.center,
-                        style: GlassTheme.bodyMedium.copyWith(
-                          color: GlassTheme.colors.primaryBlue,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
-  // Flat card helper for consistent styling across the page
-  Widget _flatCard(
-      {required Widget child, EdgeInsets padding = const EdgeInsets.all(16)}) {
+  // Modern Pro+ intro card matching the design
+  Widget _buildModernProIntroCard() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(padding: padding, child: child),
-    );
-  }
-
-  // Pro+ intro card with business verification note and instant notifications
-  Widget _buildProPlusIntroCard() {
-    return _flatCard(
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Business verification feature
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: GlassTheme.colors.primaryBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFF6C7B7F).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'Pro+',
-                  style: GlassTheme.titleSmall.copyWith(
-                    color: GlassTheme.colors.primaryBlue,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: const Icon(
+                  Icons.business_center,
+                  color: Color(0xFF6C7B7F),
+                  size: 18,
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Unlock more with Pro+',
-                  style: GlassTheme.titleSmall,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.business_center,
-                  color: GlassTheme.colors.primaryBlue, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
+              const Expanded(
                 child: Text(
                   'Verify your business to add prices on listings without limits.',
-                  style: GlassTheme.bodyMedium,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6C7B7F),
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
+          // Instant notifications feature
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.notifications_active,
-                  color: GlassTheme.colors.primaryBlue, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C7B7F).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.notifications_active,
+                  color: Color(0xFF6C7B7F),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Text(
                   'Get notified instantly when new requests arrive in your business categories.',
-                  style: GlassTheme.bodyMedium,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6C7B7F),
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // Modern plan card matching the design
+  Widget _buildModernPlanCard(SubscriptionPlan plan) {
+    final isSelected = selectedPlanId == plan.code;
+    final isCurrent = currentStatus?.planCode == plan.code;
+    final isFree = plan.price == 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: isSelected
+            ? Border.all(color: const Color(0xFF007AFF), width: 2)
+            : Border.all(color: Colors.grey.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          if (!isCurrent) {
+            setState(() {
+              selectedPlanId = plan.code;
+            });
+          }
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Plan header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _displayName(plan.name),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          if (isCurrent) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF34C759),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'CURRENT',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      if (plan.description?.isNotEmpty == true)
+                        Text(
+                          plan.description!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6C7B7F),
+                          ),
+                        ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${plan.currency} ${plan.price.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        isFree ? 'Free' : '/month',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6C7B7F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Response limit info with icon
+              Row(
+                children: [
+                  Icon(
+                    plan.responseLimit == -1
+                        ? Icons.all_inclusive
+                        : Icons.reply,
+                    color: const Color(0xFF6C7B7F),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    plan.responseLimit == -1
+                        ? 'Unlimited responses per month'
+                        : '${plan.responseLimit} responses per month',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6C7B7F),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Selection indicator
+              if (isSelected && !isCurrent) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F4FF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Selected - Tap Subscribe below',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF007AFF),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
