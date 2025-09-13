@@ -11,11 +11,11 @@ import 'unified_response_create_screen.dart';
 import 'unified_request_edit_screen.dart';
 import 'view_all_responses_screen.dart';
 import 'unified_response_edit_screen.dart';
-import '../chat/conversation_screen.dart';
-import '../../services/chat_service.dart';
+import '../messaging/conversation_screen.dart';
+import '../../models/message_model.dart' show ConversationModel;
 import '../../services/rest_request_service.dart' show ReviewsService;
-import '../account/public_profile_screen.dart';
-import '../../services/rest_user_service.dart';
+// import '../account/public_profile_screen.dart';
+// import '../../services/rest_user_service.dart';
 // Removed unused membership navigation imports after simplification
 import '../../../services/subscription/response_limit_service.dart';
 import '../../../pages/subscription/simple_subscription_page.dart';
@@ -43,7 +43,6 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   bool _deletingRequest = false;
   bool _submittingReview = false;
   bool _alreadyReviewed = false;
-  String? _requesterPhotoUrl;
   // Simplified gating state
   int? _remainingResponses; // null while loading
   bool _loadingRemaining = true;
@@ -90,15 +89,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _refreshSubscriptionAndResponses() async {
     try {
       print('🔄 DEBUG: _refreshSubscriptionAndResponses starting...');
-
       // Sync subscription status with backend to ensure local cache is current
       await ResponseLimitService.syncWithBackend();
-
       print('🔄 DEBUG: Backend sync completed, now refreshing remaining...');
-
       // Now refresh the UI with updated subscription status
       await _refreshRemaining();
-
       print('🔄 DEBUG: _refreshSubscriptionAndResponses completed');
     } catch (e) {
       print('❌ ERROR: Failed to refresh subscription status: $e');
@@ -110,499 +105,20 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Future<void> _refreshRemaining() async {
     try {
       print('🔄 DEBUG: _refreshRemaining starting...');
-
-      // Check if we have unlimited plan first
-      final hasUnlimited = await ResponseLimitService.hasUnlimitedPlan();
-      print('🔄 DEBUG: hasUnlimitedPlan = $hasUnlimited');
-
       final remaining = await ResponseLimitService.getRemainingResponses();
-      print('🔄 DEBUG: getRemainingResponses = $remaining');
-
       if (!mounted) return;
       setState(() {
         _remainingResponses = remaining;
         _loadingRemaining = false;
       });
-
-      // Debug the computed properties
-      print('🔄 DEBUG: _remainingResponses = $_remainingResponses');
-      print('🔄 DEBUG: _hasUnlimited = $_hasUnlimited');
-      print('🔄 DEBUG: _reachedLimit = $_reachedLimit');
-      print('🔄 DEBUG: Remaining free responses this month: $remaining');
     } catch (e) {
-      print('❌ DEBUG: Failed to load remaining responses: $e');
+      print('❌ ERROR: _refreshRemaining failed: $e');
       if (!mounted) return;
       setState(() {
-        _remainingResponses = 0; // default to 0 if unknown
+        _remainingResponses = 0;
         _loadingRemaining = false;
       });
-      print('DEBUG: Failed to load remaining responses, defaulting to 0: $e');
     }
-  }
-
-  Widget _buildRequesterAvatar(rest.RequestModel r) {
-    final name = (r.userName ?? 'User').trim();
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    const double size = 50; // Increased size for the card
-    final url = _requesterPhotoUrl;
-    if (url != null && url.isNotEmpty) {
-      return CircleAvatar(
-        radius: size / 2,
-        backgroundColor: Colors.transparent,
-        child: ClipOval(
-          child: SmartNetworkImage(
-            imageUrl: url,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            placeholder: Container(
-              width: size,
-              height: size,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEAEAEA),
-                shape: BoxShape.circle,
-              ),
-            ),
-            errorBuilder: (c, e, st) => _initialsAvatar(initial, size),
-          ),
-        ),
-      );
-    }
-    return _initialsAvatar(initial, size);
-  }
-
-  Widget _buildRequesterCard(rest.RequestModel r) {
-    // Check if user has verified phone number
-    final hasVerifiedPhone = r.userPhone != null && r.userPhone!.isNotEmpty;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4A90E2), // Flat blue color
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-          children: [
-            // Profile Avatar
-            _buildRequesterAvatar(r),
-            const SizedBox(width: 16),
-
-            // User Information
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // User Name with verification icon
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            if ((r.userId).isNotEmpty) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      PublicProfileScreen(userId: r.userId),
-                                ),
-                              );
-                            }
-                          },
-                          child: Text(
-                            r.userName ?? 'Unknown User',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Phone verification icon
-                      if (hasVerifiedPhone) ...[
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.verified,
-                          size: 18,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Message/Contact Button
-            if (_isOwner || _hasResponded || !_reachedLimit) ...[
-              const SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: IconButton(
-                  onPressed: () => _messageRequester(r),
-                  icon: const Icon(
-                    Icons.message,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  tooltip: 'Message Requester',
-                ),
-              ),
-            ] else ...[
-              // Locked state for users at limit
-              const SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: IconButton(
-                  onPressed: null,
-                  icon: Icon(
-                    Icons.lock,
-                    color: Colors.white.withOpacity(0.6),
-                    size: 20,
-                  ),
-                  tooltip: 'Upgrade to contact',
-                ),
-              ),
-            ],
-          ],
-      ),
-    );
-  }
-
-  Widget _initialsAvatar(String ch, double size) => CircleAvatar(
-        radius: size / 2,
-        backgroundColor: Colors.grey.shade300,
-        child: Text(ch, style: const TextStyle(fontWeight: FontWeight.w700)),
-      );
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final r = await _service.getRequestById(widget.requestId);
-      final currentUserId = RestAuthService.instance.currentUser?.uid;
-      bool owner =
-          r != null && currentUserId != null && r.userId == currentUserId;
-      List<rest.ResponseModel> responses = [];
-      if (r != null) {
-        try {
-          final page = await _service.getResponses(r.id, page: 1, limit: 50);
-          responses = page.responses;
-        } catch (_) {}
-        // Check if current user already reviewed (if owner)
-        if (owner) {
-          try {
-            final mine =
-                await ReviewsService.instance.getMyReviewForRequest(r.id);
-            _alreadyReviewed = mine != null;
-          } catch (_) {}
-        }
-      }
-      if (mounted) {
-        // Check for remainingResponses from viewer_context.entitlements
-        final ent = r?.viewerContext?.entitlements;
-        final rem = ent is Map<String, dynamic>
-            ? (ent['remainingResponses'] as int?)
-            : null;
-
-        setState(() {
-          _request = r;
-          // Trust viewer_context when available
-          _isOwner = r?.viewerContext?.isOwner ?? owner;
-          _responses = responses;
-          _loading = false;
-
-          // Debug viewer context entitlements but don't use them for subscription logic
-          final ent = r?.viewerContext?.entitlements;
-          final rem = ent is Map<String, dynamic>
-              ? (ent['remainingResponses'] as int?)
-              : null;
-          print('DEBUG: Entitlements from viewer context: $ent');
-          print('DEBUG: Remaining responses from context: $rem');
-          print(
-              'DEBUG: NOT using viewer context remainingResponses - using synced subscription status instead');
-
-          // We already synced subscription status properly, so don't override it
-          // The _refreshSubscriptionAndResponses() call should have set the correct values
-        });
-        // Lazy fetch requester avatar after first frame
-        if (r != null && (r.userId).isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            try {
-              final profile =
-                  await RestUserService.instance.getPublicProfile(r.userId);
-              if (!mounted) return;
-              setState(() {
-                _requesterPhotoUrl = profile?.photoUrl;
-              });
-            } catch (_) {}
-          });
-        }
-
-        // Refresh remaining responses to ensure cache is current
-        if (rem == null) {
-          // Only refresh if we didn't get remaining responses from viewer context
-          await _refreshRemaining();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load request: $e')));
-      }
-    }
-  }
-
-  Future<void> _reloadResponses() async {
-    if (_request == null) return;
-    setState(() => _responsesLoading = true);
-    try {
-      print('DEBUG: Reloading responses for request ${_request!.id}');
-
-      // Reduced delay for faster refresh - backend is usually ready quickly
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      final page =
-          await _service.getResponses(_request!.id, page: 1, limit: 50);
-
-      print('DEBUG: Loaded ${page.responses.length} responses');
-      if (page.responses.isNotEmpty) {
-        final firstResponse = page.responses.first;
-        print('DEBUG: First response message: "${firstResponse.message}"');
-        print('DEBUG: First response updated_at: ${firstResponse.updatedAt}');
-      }
-
-      if (mounted) setState(() => _responses = page.responses);
-      // Also refresh remaining count after reload (in case user just responded)
-      await _refreshRemaining();
-    } catch (e) {
-      print('DEBUG: Error reloading responses: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to reload responses: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _responsesLoading = false);
-    }
-  }
-
-  // Removed _navigateToSubscriptionPlans per simplified gating rules
-
-  void _openCreateResponseSheet() {
-    if (_request == null) return;
-    () async {
-      if (!mounted) return;
-      final requestModel = _convertToRequestModel(_request!);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              UnifiedResponseCreateScreen(request: requestModel),
-        ),
-      ).then((_) async {
-        // Immediately refresh data for responsive UI - backend sync will handle count updates
-        _reloadResponses();
-        await _refreshRemaining(); // Refresh remaining counter after a response
-      });
-    }();
-  }
-
-  Future<void> _messageRequester(rest.RequestModel r) async {
-    final currentUserId = RestAuthService.instance.currentUser?.uid;
-    if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You must be logged in to chat')));
-      return;
-    }
-    if (currentUserId == r.userId) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content:
-              Text('This is your own request. You cannot message yourself.')));
-      return;
-    }
-    // Skip old canMessage check for messaging - now using entitlements
-    // New entitlements system will handle this via checkCanSendMessages
-    try {
-      final (convo, messages) = await ChatService.instance.openConversation(
-          requestId: r.id, currentUserId: currentUserId, otherUserId: r.userId);
-      if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ConversationScreen(
-              conversation: convo, initialMessages: messages),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to open chat: $e')));
-    }
-  }
-
-  void _navigateToRequestEdit() {
-    if (_request == null) return;
-
-    // Convert REST model to enhanced model
-    final requestModel = _convertToRequestModel(_request!);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UnifiedRequestEditScreen(request: requestModel),
-      ),
-    ).then((_) => _load()); // Refresh when returning
-  }
-
-  void _navigateToViewAllResponses() {
-    if (_request == null) return;
-
-    // Convert REST model to enhanced model
-    final requestModel = _convertToRequestModel(_request!);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ViewAllResponsesScreen(request: requestModel),
-      ),
-    ).then((_) => _reloadResponses()); // Refresh responses when returning
-  }
-  // Removed _navigateToResponseEdit (individual response editing hidden here)
-
-  void _navigateToResponseEdit(rest.ResponseModel response) {
-    if (_request == null) return;
-    final requestModel = _convertToRequestModel(_request!);
-    final responseModel = _convertToResponseModel(response);
-
-    print('DEBUG: Navigating to edit screen with response:');
-    print('  Response ID: ${response.id}');
-    print('  Message: "${response.message}"');
-    print('  Price: ${response.price}');
-    print('  Updated At: ${response.updatedAt}');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UnifiedResponseEditScreen(
-          request: requestModel,
-          response: responseModel,
-        ),
-      ),
-    ).then((updatedResponse) async {
-      print('DEBUG: Response edit completed');
-
-      // Always reload responses to ensure we have the latest data
-      // This is more reliable than trying to map between different model types
-      print('DEBUG: Reloading responses after edit');
-      await _reloadResponses();
-
-      if (updatedResponse != null) {
-        print(
-            'DEBUG: Response was updated successfully: ${updatedResponse.id}');
-      }
-    });
-  }
-
-  RequestType _getCurrentRequestType() {
-    if (_request == null) return RequestType.item;
-
-    // Check multiple possible locations for the type
-    String? typeString;
-
-    // First check metadata
-    if (_request!.metadata != null) {
-      typeString = _request!.metadata!['type']?.toString();
-    }
-
-    // If no type in metadata, try to infer from category name
-    if (typeString == null || typeString.isEmpty) {
-      typeString = _inferTypeFromCategory(_request!.categoryName);
-    }
-
-    // If still no type, try to infer from title
-    if (typeString.isEmpty || typeString == 'item') {
-      final titleType = _inferTypeFromTitle(_request!.title);
-      if (titleType != 'item') {
-        typeString = titleType;
-      }
-    }
-
-    return _getRequestTypeFromString(
-        typeString.isNotEmpty ? typeString : 'item');
-  }
-
-  String _inferTypeFromCategory(String? categoryName) {
-    if (categoryName == null) return 'item';
-    final category = categoryName.toLowerCase();
-
-    if (category.contains('delivery') ||
-        category.contains('transport') ||
-        category.contains('shipping') ||
-        category.contains('courier')) {
-      return 'delivery';
-    } else if (category.contains('service') ||
-        category.contains('repair') ||
-        category.contains('maintenance') ||
-        category.contains('installation')) {
-      return 'service';
-    } else if (category.contains('rental') ||
-        category.contains('rent') ||
-        category.contains('hire') ||
-        category.contains('lease')) {
-      return 'rental';
-    } else if (category.contains('ride') ||
-        category.contains('taxi') ||
-        category.contains('uber') ||
-        category.contains('transport')) {
-      return 'ride';
-    } else if (category.contains('price') ||
-        category.contains('quote') ||
-        category.contains('estimate') ||
-        category.contains('valuation')) {
-      return 'price';
-    }
-
-    return 'item'; // Default to item
-  }
-
-  String _inferTypeFromTitle(String? title) {
-    if (title == null) return 'item';
-    final titleLower = title.toLowerCase();
-
-    if (titleLower.contains('delivery') ||
-        titleLower.contains('transport') ||
-        titleLower.contains('shipping') ||
-        titleLower.contains('courier')) {
-      return 'delivery';
-    } else if (titleLower.contains('service') ||
-        titleLower.contains('repair') ||
-        titleLower.contains('fix') ||
-        titleLower.contains('install')) {
-      return 'service';
-    } else if (titleLower.contains('rental') ||
-        titleLower.contains('rent') ||
-        titleLower.contains('hire') ||
-        titleLower.contains('lease')) {
-      return 'rental';
-    } else if (titleLower.contains('ride') ||
-        titleLower.contains('taxi') ||
-        titleLower.contains('uber') ||
-        titleLower.contains('trip')) {
-      return 'ride';
-    } else if (titleLower.contains('price') ||
-        titleLower.contains('quote') ||
-        titleLower.contains('estimate') ||
-        titleLower.contains('cost')) {
-      return 'price';
-    }
-
-    return 'item'; // Default to item
   }
 
   Color _getTypeColor(RequestType type) {
@@ -1020,6 +536,110 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
     if (mounted) setState(() => _deletingRequest = false);
   }
 
+  // Determine the current request type from metadata
+  RequestType _getCurrentRequestType() {
+    final r = _request;
+    if (r == null) return RequestType.item;
+    final type = r.metadata?['type']?.toString();
+    if (type != null && type.isNotEmpty) {
+      return _getRequestTypeFromString(type);
+    }
+    return RequestType.item;
+  }
+
+  // Load request and responses from REST service
+  Future<void> _load() async {
+    try {
+      setState(() => _loading = true);
+      final req = await _service.getRequestById(widget.requestId);
+      List<rest.ResponseModel> responses = [];
+      if (req != null) {
+        final page = await _service.getResponses(req.id, limit: 50);
+        responses = page.responses;
+      }
+      if (!mounted) return;
+      setState(() {
+        _request = req;
+        _responses = responses;
+        _isOwner = (RestAuthService.instance.currentUser?.uid == req?.userId);
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load request: $e')),
+      );
+    }
+  }
+
+  Future<void> _reloadResponses() async {
+    if (_request == null) return;
+    setState(() => _responsesLoading = true);
+    try {
+      final page = await _service.getResponses(_request!.id, limit: 50);
+      if (!mounted) return;
+      setState(() {
+        _responses = page.responses;
+        _responsesLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _responsesLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to reload responses: $e')),
+      );
+    }
+  }
+
+  void _navigateToRequestEdit() {
+    if (_request == null) return;
+    final uiRequest = _convertToRequestModel(_request!);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => UnifiedRequestEditScreen(request: uiRequest),
+      ),
+    );
+  }
+
+  void _navigateToResponseEdit(rest.ResponseModel response) {
+    if (_request == null) return;
+    final uiRequest = _convertToRequestModel(_request!);
+    final uiResponse = _convertToResponseModel(response);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => UnifiedResponseEditScreen(
+          request: uiRequest,
+          response: uiResponse,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToViewAllResponses() {
+    if (_request == null) return;
+    final uiRequest = _convertToRequestModel(_request!);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => ViewAllResponsesScreen(request: uiRequest),
+      ),
+    );
+  }
+
+  void _openCreateResponseSheet() async {
+    if (_request == null) return;
+    final uiRequest = _convertToRequestModel(_request!);
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => UnifiedResponseCreateScreen(request: uiRequest),
+      ),
+    );
+    // After returning, reload responses
+    if (mounted) {
+      _reloadResponses();
+    }
+  }
+
   // (Removed obsolete placeholder _messageRequester definition; real implementation placed earlier.)
 
   void _showImageFullScreen(String imageUrl) {
@@ -1067,6 +687,117 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Simple flat requester card per spec
+  Widget _buildRequesterCard(rest.RequestModel r) {
+    final name = r.userName ?? 'Requester';
+    final phone = r.userPhone;
+    final canMessage = r.canMessage;
+    final initials = name.isNotEmpty
+        ? name.trim().split(RegExp(r"\s+")).map((p) => p[0]).take(2).join()
+        : 'R';
+
+    return _sectionCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: Colors.blue[100],
+            child: Text(
+              initials.toUpperCase(),
+              style: const TextStyle(
+                color: Color(0xFF1976D2),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (phone != null && phone.isNotEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 6),
+                        child: Icon(
+                          Icons.verified,
+                          size: 16,
+                          color: Colors.green,
+                        ),
+                      ),
+                  ],
+                ),
+                if (r.cityName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      r.cityName!,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: canMessage ? () => _startConversation(r) : null,
+            icon: const Icon(Icons.chat_bubble_outline, size: 16),
+            label: const Text('Message'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _startConversation(rest.RequestModel r) {
+    final currentUserId = RestAuthService.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to message')),
+      );
+      return;
+    }
+    final otherUserId = r.userId;
+    if (otherUserId.isEmpty || otherUserId == currentUserId) {
+      return; // don't open chat to self
+    }
+
+    final convo = ConversationModel(
+      id: '',
+      requestId: r.id,
+      requestTitle: r.title,
+      participantIds: [currentUserId, otherUserId],
+      lastMessage: '',
+      lastMessageTime: DateTime.now(),
+      requesterId: r.userId,
+      responderId: currentUserId,
+      createdAt: DateTime.now(),
+      readStatus: const {},
+    );
+
+    final uiRequest = _convertToRequestModel(r);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => ConversationScreen(
+          conversation: convo,
+          request: uiRequest,
         ),
       ),
     );
@@ -1343,10 +1074,11 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                   ],
                 ),
               ),
+            // Request Title & Description Card
             _sectionCard(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(r.title,
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
@@ -1354,13 +1086,67 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                   Text(r.description,
                       style: TextStyle(color: Colors.grey[700], height: 1.4)),
 
-                  // Images Section
-                  if (r.imageUrls != null && r.imageUrls!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                  // Category and Status Information
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (r.categoryName != null)
+                        _chip(Icons.category, r.categoryName!),
+                      if (r.cityName != null)
+                        _chip(Icons.location_on, r.cityName!),
+                      if (r.countryCode.isNotEmpty)
+                        _chip(Icons.flag, r.countryCode),
+                      _chip(
+                        Icons.event,
+                        '${r.createdAt.year}-${r.createdAt.month.toString().padLeft(2, '0')}-${r.createdAt.day.toString().padLeft(2, '0')}',
+                      ),
+                      if (r.status.toUpperCase() == 'ACTIVE')
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('ACTIVE',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green[700],
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      if (r.isUrgent)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('Urgent',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Images Card (if images exist)
+            if (r.imageUrls != null && r.imageUrls!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _sectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     const Text('Images',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Builder(
                       builder: (context) {
                         // Clean and filter valid image URLs
@@ -1466,183 +1252,197 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                         );
                       },
                     ),
-                  ],
-
-                  const SizedBox(height: 16),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    _chip(Icons.category, r.categoryName ?? r.categoryId),
-                    if (r.cityName != null)
-                      _chip(Icons.location_on, r.cityName!),
-                    _chip(Icons.flag, r.countryCode),
-                    _chip(Icons.access_time, _relativeTime(r.createdAt)),
-                    _chip(Icons.info_outline, r.status.toUpperCase()),
-                    if (r.isUrgent)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.red.shade200),
+                    const SizedBox(height: 16),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      _chip(Icons.category, r.categoryName ?? r.categoryId),
+                      if (r.cityName != null)
+                        _chip(Icons.location_on, r.cityName!),
+                      _chip(Icons.flag, r.countryCode),
+                      _chip(Icons.access_time, _relativeTime(r.createdAt)),
+                      _chip(Icons.info_outline, r.status.toUpperCase()),
+                      if (r.isUrgent)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.priority_high,
+                                  size: 14, color: Colors.redAccent),
+                              SizedBox(width: 4),
+                              Text('Urgent',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.redAccent,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ),
                         ),
+                    ]),
+                  ],
+                ),
+              ),
+            ],
+
+            // Requester Information Card
+            const SizedBox(height: 20),
+            _buildRequesterCard(r),
+
+            // Location Information Card
+            if (r.locationAddress != null && r.locationAddress!.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              _sectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Location Information',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on,
+                            size: 18, color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            r.locationAddress!,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Request Details Card
+            if (r.metadata != null && r.metadata!.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              _sectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Request Details',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    if (r.budget != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.priority_high,
-                                size: 14, color: Colors.redAccent),
-                            SizedBox(width: 4),
-                            Text('Urgent',
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              width: 80,
+                              child: Text(
+                                'Budget:',
                                 style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.redAccent,
-                                    fontWeight: FontWeight.w600)),
+                                    fontWeight: FontWeight.w500, fontSize: 12),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                _formatBudget(r),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                  ]),
-
-                  // Requester Information Card
-                  const SizedBox(height: 20),
-                  _buildRequesterCard(r),
-
-                  // Location Information Card
-                  if (r.locationAddress != null &&
-                      r.locationAddress!.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    _sectionCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Location Information',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          Row(children: [
-                            Icon(Icons.location_on,
-                                size: 18, color: Colors.grey[600]),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(r.locationAddress!,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
-                            ),
-                          ]),
-                          // Coordinates intentionally hidden per requirement: show only human-readable location
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // Request Details Card
-                  if (r.metadata != null && r.metadata!.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    _sectionCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Request Details',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          // Budget first
-                          if (r.budget != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(
-                                    width: 80,
-                                    child: Text('Budget:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12)),
+                    if (_getCurrentRequestType() == RequestType.service)
+                      ..._buildServiceModuleContext(r),
+                    ...r.metadata!.entries
+                        .where((e) => !_shouldHideField(e.key))
+                        .take(10)
+                        .map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 80,
+                                  child: Text(
+                                    '${_formatKey(e.key)}:',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12),
                                   ),
-                                  Expanded(
-                                    child: Text(_formatBudget(r),
-                                        style: const TextStyle(fontSize: 12)),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    _formatValue(e.value),
+                                    style: const TextStyle(fontSize: 12),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          // Service module context (if applicable)
-                          if (_getCurrentRequestType() == RequestType.service)
-                            ..._buildServiceModuleContext(r),
-                          // Then metadata entries with proper formatting (excluding IDs)
-                          ...r.metadata!.entries
-                              .where((e) => !_shouldHideField(e.key))
-                              .take(10)
-                              .map((e) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 80,
-                                            child: Text('${_formatKey(e.key)}:',
-                                                style: const TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 12)),
-                                          ),
-                                          Expanded(
-                                            child: Text(_formatValue(e.value),
-                                                style: const TextStyle(
-                                                    fontSize: 12)),
-                                          ),
-                                        ]),
-                                  )),
-                          if (r.metadata!.length > 10)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                  '+${r.metadata!.length - 10} more details',
-                                  style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 11,
-                                      fontStyle: FontStyle.italic)),
-                            ),
-                        ],
+                          ),
+                        ),
+                    if (r.metadata!.length > 10)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '+${r.metadata!.length - 10} more details',
+                          style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic),
+                        ),
                       ),
-                    ),
                   ],
-                  if (_isOwner) ...[
-                    const SizedBox(height: 24),
-                    Row(children: [
-                      if (_updatingRequest)
-                        const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2)),
-                      Text('Status: ${r.status}',
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
-                    ]),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      TextButton.icon(
-                          onPressed: _toggleStatus,
-                          icon: Icon(
-                              r.status.toLowerCase() == 'active'
-                                  ? Icons.lock
-                                  : Icons.lock_open,
-                              size: 16),
-                          label: Text(r.status.toLowerCase() == 'active'
-                              ? 'Close'
-                              : 'Reopen')),
-                      TextButton.icon(
-                          onPressed: _navigateToRequestEdit,
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Edit')),
-                      TextButton.icon(
-                          onPressed: _confirmDeleteRequest,
-                          icon: const Icon(Icons.delete_outline, size: 16),
-                          label: const Text('Delete')),
-                    ]),
-                    const SizedBox(height: 8),
-                    _ownerActions(),
-                  ],
-                ])),
+                ),
+              ),
+            ],
+
+            if (_isOwner) ...[
+              const SizedBox(height: 24),
+              Row(children: [
+                if (_updatingRequest)
+                  const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                Text('Status: ${r.status}',
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600)),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                TextButton.icon(
+                    onPressed: _toggleStatus,
+                    icon: Icon(
+                        r.status.toLowerCase() == 'active'
+                            ? Icons.lock
+                            : Icons.lock_open,
+                        size: 16),
+                    label: Text(r.status.toLowerCase() == 'active'
+                        ? 'Close'
+                        : 'Reopen')),
+                TextButton.icon(
+                    onPressed: _navigateToRequestEdit,
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: const Text('Edit')),
+                TextButton.icon(
+                    onPressed: _confirmDeleteRequest,
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Delete')),
+              ]),
+              const SizedBox(height: 8),
+              _ownerActions(),
+            ],
+
             const SizedBox(height: 20),
             _responsesSection(),
           ]),
@@ -1653,7 +1453,8 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   }
 
   Widget _sectionCard({required Widget child}) => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+        margin: EdgeInsets.zero,
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
