@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../services/database');
-const { authenticateToken } = require('../middleware/auth');
+const auth = require('../services/auth');
 const { body, validationResult, param } = require('express-validator');
 
 /**
@@ -23,7 +23,7 @@ const { body, validationResult, param } = require('express-validator');
  * @apiSuccess {Boolean} user_can_use Whether current user can use this code
  */
 router.post('/validate', 
-  authenticateToken,
+  auth.authMiddleware(),
   [
     body('code').trim().isLength({ min: 1, max: 50 }).withMessage('Promo code is required')
   ],
@@ -140,7 +140,7 @@ router.post('/validate',
  * @apiSuccess {String} message Success message
  */
 router.post('/redeem',
-  authenticateToken,
+  auth.authMiddleware(),
   [
     body('code').trim().isLength({ min: 1, max: 50 }).withMessage('Promo code is required')
   ],
@@ -198,7 +198,7 @@ router.post('/redeem',
  * @apiSuccess {Boolean} success Operation status
  * @apiSuccess {Array} redemptions List of user's promo redemptions
  */
-router.get('/my-redemptions', authenticateToken, async (req, res) => {
+router.get('/my-redemptions', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -263,7 +263,7 @@ router.get('/my-redemptions', authenticateToken, async (req, res) => {
  * @apiSuccess {Boolean} has_active_promo Whether user has active promo benefits
  * @apiSuccess {Object} active_promo Details of active promo (if any)
  */
-router.get('/check-active', authenticateToken, async (req, res) => {
+router.get('/check-active', auth.authMiddleware(), async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -326,13 +326,8 @@ router.get('/check-active', authenticateToken, async (req, res) => {
  * @apiSuccess {Boolean} success Operation status
  * @apiSuccess {Array} codes List of all promo codes with stats
  */
-router.get('/admin/list', authenticateToken, async (req, res) => {
+router.get('/admin/list', auth.authMiddleware(), auth.roleMiddleware(['super_admin', 'country_admin']), async (req, res) => {
   try {
-    // TODO: Add admin permission check
-    // if (!req.user.isAdmin) {
-    //   return res.status(403).json({ success: false, error: 'Admin access required' });
-    // }
-
     const query = `
       SELECT 
         pc.*,
@@ -379,13 +374,8 @@ router.get('/admin/list', authenticateToken, async (req, res) => {
  * @apiParam {String} [valid_until] Valid until date
  * @apiParam {Boolean} [is_active] Whether code is active
  */
-router.post('/admin/create', authenticateToken, async (req, res) => {
+router.post('/admin/create', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
   try {
-    // TODO: Add admin permission check
-    // if (!req.user.isAdmin) {
-    //   return res.status(403).json({ success: false, error: 'Admin access required' });
-    // }
-
     const {
       code,
       name,
@@ -468,10 +458,8 @@ router.post('/admin/create', authenticateToken, async (req, res) => {
  * @apiGroup PromoCode Admin
  * @apiHeader {String} Authorization Bearer token (Admin only)
  */
-router.put('/admin/:id', authenticateToken, async (req, res) => {
+router.put('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
   try {
-    // TODO: Add admin permission check
-
     const promoCodeId = req.params.id;
     const {
       code,
@@ -545,10 +533,8 @@ router.put('/admin/:id', authenticateToken, async (req, res) => {
  * @apiGroup PromoCode Admin
  * @apiHeader {String} Authorization Bearer token (Admin only)
  */
-router.delete('/admin/:id', authenticateToken, async (req, res) => {
+router.delete('/admin/:id', auth.authMiddleware(), auth.roleMiddleware(['super_admin']), async (req, res) => {
   try {
-    // TODO: Add admin permission check
-
     const promoCodeId = req.params.id;
 
     // Check if promo code has been used
