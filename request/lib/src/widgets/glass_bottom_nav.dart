@@ -79,9 +79,8 @@ class GlassBottomNavBar extends StatelessWidget {
                         for (int i = 0; i < items!.length; i++)
                           Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: i == 0 || i == items!.length - 1
-                                    ? 12
-                                    : 10),
+                                horizontal:
+                                    i == 0 || i == items!.length - 1 ? 12 : 10),
                             child: _NavButton(
                               item: items![i],
                               hideSelectedIcon: false,
@@ -92,10 +91,8 @@ class GlassBottomNavBar extends StatelessWidget {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _NavItems(
-                            items: leftItems, hideSelectedIcon: false),
-                        SizedBox(
-                            width: centerIcon != null ? centerSize : 0),
+                        _NavItems(items: leftItems, hideSelectedIcon: false),
+                        SizedBox(width: centerIcon != null ? centerSize : 0),
                         _NavItems(
                             items: rightItems,
                             alignEnd: true,
