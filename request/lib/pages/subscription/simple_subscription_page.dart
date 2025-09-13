@@ -44,8 +44,19 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
   Future<void> _loadSubscriptionData() async {
     try {
       final service = SimpleSubscriptionService.instance;
-      final statusResult = await service.getSubscriptionStatus();
+      
+      // Load plans first (this usually works)
       final plansResult = await service.getAvailablePlans();
+      
+      // Try to load subscription status (this might fail)
+      SimpleSubscriptionStatus? statusResult;
+      try {
+        statusResult = await service.getSubscriptionStatus();
+      } catch (e) {
+        print('Warning: Failed to load subscription status: $e');
+        // Continue without status - we can still show plans
+        statusResult = null;
+      }
 
       setState(() {
         currentStatus = statusResult;
@@ -63,10 +74,56 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedPlan = selectedPlanId.isNotEmpty
-        ? plans.firstWhere((p) => p.code == selectedPlanId,
-            orElse: () => plans.firstWhere((p) => p.price == 0))
-        : plans.firstWhere((p) => p.price == 0);
+    // Safe plan selection with proper null checks
+    SubscriptionPlan? selectedPlan;
+    
+    if (plans.isNotEmpty) {
+      if (selectedPlanId.isNotEmpty) {
+        selectedPlan = plans.where((p) => p.code == selectedPlanId).firstOrNull ??
+            plans.where((p) => p.price == 0).firstOrNull ??
+            plans.first;
+      } else {
+        selectedPlan = plans.where((p) => p.price == 0).firstOrNull ?? plans.first;
+      }
+    }
+    
+    // Return loading state if no plans available yet
+    if (selectedPlan == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF8F9FA),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+          ),
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: Colors.black87,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Subscription Plans',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007AFF)),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -167,7 +224,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                                 const Icon(Icons.download, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Subscribe To ${_displayName(plans.firstWhere((p) => p.code == selectedPlanId).name)}',
+                                  'Subscribe To ${_getSelectedPlanName()}',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -463,6 +520,12 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     return name;
   }
 
+  String _getSelectedPlanName() {
+    if (selectedPlanId.isEmpty || plans.isEmpty) return 'Plan';
+    final plan = plans.where((p) => p.code == selectedPlanId).firstOrNull;
+    return _displayName(plan?.name ?? 'Plan');
+  }
+
   Future<void> _subscribeToPlan() async {
     if (selectedPlanId.isEmpty) return;
 
@@ -550,20 +613,18 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     try {
       print('🚀 [Payment Flow] Starting payment flow...');
 
-      // Get the selected plan details
-      final selectedPlan = plans.firstWhere(
-        (plan) => plan.code == selectedPlanId,
-        orElse: () => SubscriptionPlan(
-          id: '',
-          code: selectedPlanId,
-          name: selectedPlanId,
-          price: 0,
-          currency: 'LKR',
-          responseLimit: 3,
-          features: [],
-          isActive: true,
-        ),
-      );
+      // Get the selected plan details with safe fallback
+      final selectedPlan = plans.where((plan) => plan.code == selectedPlanId).firstOrNull ??
+          SubscriptionPlan(
+            id: '',
+            code: selectedPlanId,
+            name: selectedPlanId,
+            price: 0,
+            currency: 'LKR',
+            responseLimit: 3,
+            features: [],
+            isActive: true,
+          );
 
       print(
           '🚀 [Payment Flow] Selected plan: ${selectedPlan.code} - ${selectedPlan.price}');
