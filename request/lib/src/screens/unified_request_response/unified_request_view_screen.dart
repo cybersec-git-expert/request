@@ -143,7 +143,7 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
   Widget _buildRequesterAvatar(rest.RequestModel r) {
     final name = (r.userName ?? 'User').trim();
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    const double size = 24;
+    const double size = 50; // Increased size for the card
     final url = _requesterPhotoUrl;
     if (url != null && url.isNotEmpty) {
       return CircleAvatar(
@@ -169,6 +169,127 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
       );
     }
     return _initialsAvatar(initial, size);
+  }
+
+  Widget _buildRequesterCard(rest.RequestModel r) {
+    // Check if user has verified phone number
+    final hasVerifiedPhone = r.userPhone != null && r.userPhone!.isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF4A90E2), // Blue similar to the attachment
+            Color(0xFF357ABD),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Profile Avatar
+            _buildRequesterAvatar(r),
+            const SizedBox(width: 16),
+
+            // User Information
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // User Name with verification icon
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            if ((r.userId).isNotEmpty) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      PublicProfileScreen(userId: r.userId),
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(
+                            r.userName ?? 'Unknown User',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Phone verification icon
+                      if (hasVerifiedPhone) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.verified,
+                          size: 18,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Message/Contact Button
+            if (_isOwner || _hasResponded || !_reachedLimit) ...[
+              const SizedBox(width: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: IconButton(
+                  onPressed: () => _messageRequester(r),
+                  icon: const Icon(
+                    Icons.message,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  tooltip: 'Message Requester',
+                ),
+              ),
+            ] else ...[
+              // Locked state for users at limit
+              const SizedBox(width: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: IconButton(
+                  onPressed: null,
+                  icon: Icon(
+                    Icons.lock,
+                    color: Colors.white.withOpacity(0.6),
+                    size: 20,
+                  ),
+                  tooltip: 'Upgrade to contact',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _initialsAvatar(String ch, double size) => CircleAvatar(
@@ -1396,121 +1517,22 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                       ),
                   ]),
 
-                  // Requester Information Section
+                  // Requester Information Card
                   const SizedBox(height: 20),
-                  const Text('Requester Information',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  // Show full requester info only if owner, already responded, or not at limit
-                  if (_isOwner || _hasResponded || !_reachedLimit)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(children: [
-                            _buildRequesterAvatar(r),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  if ((r.userId).isNotEmpty) {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => PublicProfileScreen(
-                                            userId: r.userId),
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Text(r.userName ?? 'Unknown User',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors
-                                          .blue, // Indicate it's clickable
-                                    )),
-                              ),
-                            ),
-                            // Message icon: show only if not owner
-                            if (!_isOwner)
-                              IconButton(
-                                onPressed: () => _messageRequester(r),
-                                icon: Icon(
-                                  Icons.message,
-                                  color:
-                                      _getTypeColor(_getCurrentRequestType()),
-                                  size: 20,
-                                ),
-                                tooltip: 'Message Requester',
-                              ),
-                          ]),
-                          const SizedBox(height: 8),
-                          // Contact details: show if owner OR already responded;
-                          // For new requests, hide if user is at limit regardless of backend contactVisible
-                          if ((r.userPhone?.isNotEmpty == true) &&
-                              (_isOwner ||
-                                  _hasResponded ||
-                                  (!_reachedLimit && r.contactVisible))) ...[
-                            Row(children: [
-                              Icon(Icons.phone,
-                                  size: 16, color: Colors.grey[600]),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(r.userPhone!,
-                                    style: TextStyle(color: Colors.grey[700])),
-                              ),
-                            ]),
-                          ],
-                        ],
-                      ),
-                    )
-                  else
-                    // Limited requester info for users at limit who haven't responded
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.lock, size: 20, color: Colors.grey[600]),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Upgrade to see requester details and contact information',
-                              style: TextStyle(
-                                color: Colors.grey[700],
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _buildRequesterCard(r),
 
-                  // Location Information Section
+                  // Location Information Card
                   if (r.locationAddress != null &&
                       r.locationAddress!.isNotEmpty) ...[
                     const SizedBox(height: 20),
-                    const Text('Location Information',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    _sectionCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const Text('Location Information',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
                           Row(children: [
                             Icon(Icons.location_on,
                                 size: 18, color: Colors.grey[600]),
@@ -1527,22 +1549,17 @@ class _UnifiedRequestViewScreenState extends State<UnifiedRequestViewScreen> {
                     ),
                   ],
 
-                  // Request Details Section
+                  // Request Details Card
                   if (r.metadata != null && r.metadata!.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Text('Request Details',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    const SizedBox(height: 20),
+                    _sectionCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const Text('Request Details',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
                           // Budget first
                           if (r.budget != null)
                             Padding(
