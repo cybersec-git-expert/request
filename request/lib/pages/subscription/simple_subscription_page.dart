@@ -48,167 +48,156 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: GlassTheme.backgroundGradient,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          surfaceTintColor: Colors.transparent,
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness:
-                GlassTheme.isDarkMode ? Brightness.light : Brightness.dark,
-          ),
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: GlassTheme.colors.textPrimary,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Choose Your Plan',
-            style: GlassTheme.titleMedium,
-          ),
-          centerTitle: true,
+    // Flat, modern page styling (no gradients or glass)
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness:
+              GlassTheme.isDarkMode ? Brightness.light : Brightness.dark,
         ),
-        body: isLoading
-            ? Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                      GlassTheme.colors.primaryBlue),
-                ),
-              )
-            : SafeArea(
-                child: Column(
-                  children: [
-                    // Scrollable content
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Current status header
-                            if (currentStatus != null) ...[
-                              GlassTheme.glassCard(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.verified_user,
-                                          color: GlassTheme.colors.primaryBlue,
-                                          size: 24,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'Current Plan: ${currentStatus!.planName}',
-                                          style: GlassTheme.titleSmall,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    if (currentStatus!.responsesLimit !=
-                                        null) ...[
-                                      Text(
-                                        'Responses Used: ${currentStatus!.responsesUsed}/${currentStatus!.responsesLimit}',
-                                        style: GlassTheme.bodyMedium,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: GlassTheme.colors.textPrimary,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Pro+ Plans',
+          style: GlassTheme.titleMedium,
+        ),
+        centerTitle: true,
+      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    GlassTheme.colors.primaryBlue),
+              ),
+            )
+          : SafeArea(
+              child: Column(
+                children: [
+                  // Scrollable content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Pro+ intro / benefits
+                          _buildProPlusIntroCard(),
+                          const SizedBox(height: 16),
+                          // Current status header
+                          if (currentStatus != null) ...[
+                            _flatCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.verified_user,
+                                        color: GlassTheme.colors.primaryBlue,
+                                        size: 24,
                                       ),
-                                      const SizedBox(height: 4),
-                                      LinearProgressIndicator(
-                                        value: currentStatus!.responsesUsed /
-                                            (currentStatus!.responsesLimit ??
-                                                1),
-                                        backgroundColor:
-                                            GlassTheme.colors.glassBorder,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          currentStatus!.canRespond
-                                              ? GlassTheme.colors.successColor
-                                              : GlassTheme.colors.errorColor,
-                                        ),
-                                      ),
-                                    ] else ...[
+                                      const SizedBox(width: 12),
                                       Text(
-                                        'Unlimited Responses',
-                                        style: GlassTheme.bodyMedium.copyWith(
-                                          color: GlassTheme.colors.successColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        'Current Plan: ${_displayName(currentStatus!.planName)}',
+                                        style: GlassTheme.titleSmall,
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (currentStatus!.responsesLimit !=
+                                      null) ...[
+                                    Text(
+                                      'Responses Used: ${currentStatus!.responsesUsed}/${currentStatus!.responsesLimit}',
+                                      style: GlassTheme.bodyMedium,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    LinearProgressIndicator(
+                                      value: currentStatus!.responsesUsed /
+                                          (currentStatus!.responsesLimit ?? 1),
+                                      backgroundColor:
+                                          GlassTheme.colors.glassBorder,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        currentStatus!.canRespond
+                                            ? GlassTheme.colors.successColor
+                                            : GlassTheme.colors.errorColor,
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Text(
+                                      'Unlimited Responses',
+                                      style: GlassTheme.bodyMedium.copyWith(
+                                        color: GlassTheme.colors.successColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
-                                ),
+                                ],
                               ),
-                              const SizedBox(height: 24),
-                            ],
-
-                            // Plans section
-                            Text(
-                              'Available Plans',
-                              style: GlassTheme.titleMedium,
                             ),
-                            const SizedBox(height: 16),
-
-                            // Plans list
-                            ...plans.map((plan) => _buildPlanCard(plan)),
-
-                            const SizedBox(
-                                height: 100), // Extra space for button
+                            const SizedBox(height: 24),
                           ],
-                        ),
+
+                          // Plans section
+                          Text(
+                            'Available Plans',
+                            style: GlassTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Plans list
+                          ...plans.map((plan) => _buildPlanCard(plan)),
+
+                          const SizedBox(height: 100), // Extra space for button
+                        ],
                       ),
                     ),
+                  ),
 
-                    // Fixed bottom button
-                    if (selectedPlanId.isNotEmpty &&
-                        selectedPlanId != currentStatus?.planCode)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, -2),
-                            ),
-                          ],
-                        ),
-                        child: SafeArea(
-                          top: false,
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 50, // Smaller button height
-                            child: ElevatedButton(
-                              onPressed: _subscribeToPlan,
-                              style: GlassTheme.primaryButton.copyWith(
-                                shape: MaterialStateProperty.all(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                  // Fixed bottom button
+                  if (selectedPlanId.isNotEmpty &&
+                      selectedPlanId != currentStatus?.planCode)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      color: Colors.white,
+                      child: SafeArea(
+                        top: false,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 50, // Smaller button height
+                          child: ElevatedButton(
+                            onPressed: _subscribeToPlan,
+                            style: GlassTheme.primaryButton.copyWith(
+                              shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: Text(
-                                'Subscribe to ${plans.firstWhere((p) => p.code == selectedPlanId).name}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            ),
+                            child: Text(
+                              'Subscribe to ${_displayName(plans.firstWhere((p) => p.code == selectedPlanId).name)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-      ),
+            ),
     );
   }
 
@@ -218,7 +207,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: GlassTheme.glassCard(
+      child: _flatCard(
         child: InkWell(
           onTap: () {
             if (!isCurrent) {
@@ -256,7 +245,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                             Row(
                               children: [
                                 Text(
-                                  plan.name,
+                                  _displayName(plan.name),
                                   style: GlassTheme.titleSmall,
                                 ),
                                 if (isCurrent) ...[
@@ -395,6 +384,93 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
         ),
       ),
     );
+  }
+
+  // Flat card helper for consistent styling across the page
+  Widget _flatCard(
+      {required Widget child, EdgeInsets padding = const EdgeInsets.all(16)}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Padding(padding: padding, child: child),
+    );
+  }
+
+  // Pro+ intro card with business verification note and instant notifications
+  Widget _buildProPlusIntroCard() {
+    return _flatCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: GlassTheme.colors.primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Pro+',
+                  style: GlassTheme.titleSmall.copyWith(
+                    color: GlassTheme.colors.primaryBlue,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Unlock more with Pro+',
+                  style: GlassTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.business_center,
+                  color: GlassTheme.colors.primaryBlue, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Verify your business to add prices on listings without limits.',
+                  style: GlassTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.notifications_active,
+                  color: GlassTheme.colors.primaryBlue, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Get notified instantly when new requests arrive in your business categories.',
+                  style: GlassTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _displayName(String name) {
+    final lower = name.trim().toLowerCase();
+    if (lower == 'pro') return 'Pro+';
+    return name;
   }
 
   Future<void> _subscribeToPlan() async {
