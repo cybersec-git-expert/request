@@ -316,25 +316,44 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        // Removed shadow for cleaner modern look
       ),
       padding: const EdgeInsets.all(20),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: Column(
           key: ValueKey(plan.code),
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center, // Center alignment
           children: [
+            // Top icon for Pro features
+            if (!isFree) ...[
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blue.withOpacity(0.1),
+                      Colors.purple.withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  size: 30,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             Text(
               isFree ? 'Free Plan Features' : 'Pro+ Features',
+              textAlign: TextAlign.center, // Center the existing heading
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
@@ -344,6 +363,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
               isFree
                   ? 'Start with essential features'
                   : 'Unlock the most powerful business tools',
+              textAlign: TextAlign.center, // Center the existing subtitle
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF6C7B7F),
@@ -352,23 +372,27 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
             ),
             const SizedBox(height: 24),
             ...planFeatures.map((feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
+                  padding:
+                      const EdgeInsets.only(bottom: 20), // Increased spacing
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 40, // Fixed width for consistency
+                        height: 40, // Fixed height for consistency
                         decoration: BoxDecoration(
-                          color: feature.color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          color: feature.color
+                              .withOpacity(0.12), // Slightly more opacity
+                          borderRadius:
+                              BorderRadius.circular(12), // More rounded
                         ),
                         child: Icon(
                           feature.icon,
                           color: feature.color,
-                          size: 18,
+                          size: 20, // Slightly larger icon
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16), // More spacing
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,13 +400,14 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                             Text(
                               feature.title,
                               style: TextStyle(
-                                fontSize: 15, // Slightly larger
-                                fontWeight: FontWeight.w700, // Bolder
-                                color: feature.color,
-                                height: 1.4,
+                                fontSize: 16, // Larger title
+                                fontWeight: FontWeight
+                                    .w600, // Less bold for modern look
+                                color: feature.color, // Use same color as icon
+                                height: 1.3,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4), // More spacing
                             Text(
                               feature.subtitle,
                               style: const TextStyle(
