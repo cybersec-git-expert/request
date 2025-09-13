@@ -61,7 +61,13 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
       setState(() {
         currentStatus = statusResult;
         plans = plansResult;
-        selectedPlanId = currentStatus?.planCode ?? '';
+        // Default to Pro plan if available, otherwise use current status or empty
+        if (plans.isNotEmpty) {
+          final proPlan = plans.where((p) => p.code.toLowerCase() == 'pro').firstOrNull;
+          selectedPlanId = proPlan?.code ?? currentStatus?.planCode ?? '';
+        } else {
+          selectedPlanId = currentStatus?.planCode ?? '';
+        }
         isLoading = false;
       });
     } catch (e) {
@@ -190,21 +196,22 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Horizontal plans list with modern cards
+                          // Horizontal plans list with equal-sized cards
                           SizedBox(
-                            height: 200, // Fixed height for horizontal scroll
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: plans.length,
-                              itemBuilder: (context, index) {
-                                return Container(
-                                  width: 280, // Fixed width for each card
-                                  margin: EdgeInsets.only(
-                                    right: index == plans.length - 1 ? 0 : 16,
+                            height: 160, // Fixed height for cards
+                            child: Row(
+                              children: plans.asMap().entries.map((entry) {
+                                int index = entry.key;
+                                SubscriptionPlan plan = entry.value;
+                                return Expanded(
+                                  child: Container(
+                                    margin: EdgeInsets.only(
+                                      right: index == plans.length - 1 ? 0 : 12,
+                                    ),
+                                    child: _buildHorizontalPlanCard(plan),
                                   ),
-                                  child: _buildHorizontalPlanCard(plans[index]),
                                 );
-                              },
+                              }).toList(),
                             ),
                           ),
 
@@ -389,7 +396,7 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     );
   }
 
-  // Horizontal plan card for better mobile experience
+  // Compact horizontal plan card
   Widget _buildHorizontalPlanCard(SubscriptionPlan plan) {
     final isSelected = selectedPlanId == plan.code;
     final isCurrent = currentStatus?.planCode == plan.code;
@@ -398,14 +405,14 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: isSelected
             ? Border.all(color: const Color(0xFF007AFF), width: 2)
             : Border.all(color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -418,117 +425,83 @@ class _SimpleSubscriptionPageState extends State<SimpleSubscriptionPage> {
             });
           }
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Plan header with price
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Top section with current badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Row(
-                          children: [
-                            Text(
-                              _displayName(plan.name),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            if (isCurrent) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF34C759),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'CURRENT',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                  // Icon or empty space
+                  Icon(
+                    plan.responseLimit == -1 ? Icons.bolt : Icons.star_border,
+                    color: plan.responseLimit == -1 
+                        ? const Color(0xFF007AFF) 
+                        : const Color(0xFF6C7B7F),
+                    size: 20,
+                  ),
+                  if (isCurrent)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF007AFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Free 2 months',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${plan.currency} ${plan.price.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            isFree ? 'Free' : '/month',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF6C7B7F),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (plan.description?.isNotEmpty == true)
-                    Text(
-                      plan.description!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF6C7B7F),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
-              // Response limit info with icon
-              Row(
+              // Plan name and details
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    plan.responseLimit == -1
-                        ? Icons.all_inclusive
-                        : Icons.reply,
-                    color: const Color(0xFF6C7B7F),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      plan.responseLimit == -1
-                          ? 'Unlimited responses per month'
-                          : '${plan.responseLimit} responses per month',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF6C7B7F),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    _displayName(plan.name) + (isFree ? '' : ' ${plan.responseLimit == -1 ? "monthly" : "yearly"}'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${plan.currency} ${plan.price.toStringAsFixed(2)} ${isFree ? "Free" : "per ${plan.responseLimit == -1 ? "month" : "year"}"}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    plan.description?.isNotEmpty == true 
+                        ? plan.description!
+                        : plan.responseLimit == -1 
+                            ? 'Perfect for individual with daily pro search needs'
+                            : 'Most of the user choose yearly subscription',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6C7B7F),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
